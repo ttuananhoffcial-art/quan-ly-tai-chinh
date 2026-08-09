@@ -5,153 +5,153 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản Lý Tài Chính Cá Nhân</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     .sticky-header { position: sticky; top: 0; z-index: 50; background: white; }
     .card-box { user-select: none; cursor: pointer; transition: transform 0.1s; }
-    .card-box:active { transform: scale(0.98); }
+    .card-box:active { transform: scale(0.97); }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-10">
+<body class="bg-slate-100 text-slate-900 font-sans min-h-screen pb-12">
 
-  <!-- MAN HINH CHUA DANG NHAP -->
-  <div id="auth-screen" class="max-w-md mx-auto my-10 p-6 bg-white rounded-2xl shadow-md border space-y-6">
-    <h1 class="text-2xl font-black text-center text-slate-800">💰 Quản Lý Tài Chính</h1>
+  <!-- ==================== MAN HINH AUTHENTICATION ==================== -->
+  <div id="auth-screen" class="max-w-md mx-auto my-10 p-6 bg-white rounded-2xl shadow-lg border border-slate-200 space-y-6">
+    <h1 class="text-2xl font-black text-center text-slate-800">💰 Quản Lý Tài Chính Cá Nhân</h1>
     
-    <div class="flex border-b">
-      <button onclick="setAuthTab('login')" id="tab-login-btn" class="w-1/3 py-2 font-bold border-b-2 border-blue-600 text-blue-600">Đăng Nhập</button>
-      <button onclick="setAuthTab('register')" id="tab-reg-btn" class="w-1/3 py-2 font-bold text-slate-400">Đăng Ký</button>
-      <button onclick="setAuthTab('forgot')" id="tab-forgot-btn" class="w-1/3 py-2 font-bold text-slate-400">Quên MK</button>
+    <div class="flex border-b border-slate-200">
+      <button onclick="setAuthTab('login')" id="tab-login-btn" class="w-1/3 py-2 font-black text-sm border-b-2 border-blue-600 text-blue-600">🔐 Đăng Nhập</button>
+      <button onclick="setAuthTab('register')" id="tab-reg-btn" class="w-1/3 py-2 font-black text-sm text-slate-400">📝 Đăng Ký</button>
+      <button onclick="setAuthTab('forgot')" id="tab-forgot-btn" class="w-1/3 py-2 font-black text-sm text-slate-400">🔑 Quên MK</button>
     </div>
 
-    <!-- FORM DANG NHAP -->
+    <!-- Form Đăng Nhập -->
     <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
       <div>
-        <label class="block text-xs font-bold mb-1">Tài khoản / SĐT</label>
-        <input type="text" id="login-acc" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Tên tài khoản hoặc SĐT</label>
+        <input type="text" id="login-acc" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Mật khẩu</label>
-        <input type="password" id="login-pwd" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Mật khẩu</label>
+        <input type="password" id="login-pwd" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl">ĐĂNG NHẬP NGAY</button>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition">ĐĂNG NHẬP NGAY</button>
     </form>
 
-    <!-- FORM DANG KY -->
+    <!-- Form Đăng Ký -->
     <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
       <div>
-        <label class="block text-xs font-bold mb-1">Số điện thoại</label>
-        <input type="text" id="reg-phone" class="w-full border rounded-lg p-2.5 font-bold" placeholder="vd: 0912345678" required />
+        <label class="block text-xs font-black mb-1">Số điện thoại</label>
+        <input type="text" id="reg-phone" placeholder="vd: 0912345678" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Tên tài khoản</label>
-        <input type="text" id="reg-user" class="w-full border rounded-lg p-2.5 font-bold" placeholder="vd: chuong123" required />
+        <label class="block text-xs font-black mb-1">Tên tài khoản</label>
+        <input type="text" id="reg-user" placeholder="vd: chuong123" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Mật khẩu</label>
-        <input type="password" id="reg-pass" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Mật khẩu</label>
+        <input type="password" id="reg-pass" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Nhập lại mật khẩu</label>
-        <input type="password" id="reg-pass-confirm" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Nhập lại mật khẩu</label>
+        <input type="password" id="reg-pass-confirm" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
-      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl">TẠO TÀI KHOẢN MỚI</button>
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition">TẠO TÀI KHOẢN MỚI</button>
     </form>
 
-    <!-- FORM QUEN MAT KHAU -->
+    <!-- Form Quên Mật Khẩu -->
     <form id="form-forgot" onsubmit="handleForgot(event)" class="space-y-4 hidden">
       <div>
-        <label class="block text-xs font-bold mb-1">Số điện thoại đăng ký</label>
-        <input type="text" id="forgot-phone" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Nhập Số Điện Thoại</label>
+        <input type="text" id="forgot-phone" placeholder="vd: 0912345678" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Mật khẩu mới</label>
-        <input type="password" id="forgot-pass" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Mật khẩu mới</label>
+        <input type="password" id="forgot-pass" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
       <div>
-        <label class="block text-xs font-bold mb-1">Xác nhận mật khẩu mới</label>
-        <input type="password" id="forgot-pass-confirm" class="w-full border rounded-lg p-2.5 font-bold" required />
+        <label class="block text-xs font-black mb-1">Nhập lại mật khẩu mới</label>
+        <input type="password" id="forgot-pass-confirm" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" required />
       </div>
-      <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-3 rounded-xl">ĐỔI MẬT KHẨU</button>
+      <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-3 rounded-xl transition">✅ ĐỔI MẬT KHẨU</button>
     </form>
   </div>
 
 
-  <!-- MAN HINH CHINH APPLICATON -->
+  <!-- ==================== MAN HINH UNG DUNG CHINH ==================== -->
   <div id="main-screen" class="hidden max-w-5xl mx-auto space-y-4 p-2 md:p-4">
 
-    <!-- USER BAR -->
-    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border text-xs md:text-sm font-bold">
+    <!-- USER INFO BAR -->
+    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-xs md:text-sm font-black">
       <div>
         👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-600"></span> | 
-        📞 <b>SĐT:</b> <span id="user-display-phone"></span>
+        📞 <b>SĐT:</b> <span id="user-display-phone" class="text-slate-600"></span>
       </div>
-      <button onclick="handleLogout()" class="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 font-bold">
+      <button onclick="handleLogout()" class="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 font-black transition">
         🚪 Đăng Xuất
       </button>
     </div>
 
-    <!-- 4 CARD THONG KE STICKY HEADER (TRIPLE CLICK DE CHINHS) -->
-    <div id="sticky-summary" class="sticky-header pt-2 pb-3 border-b border-slate-300">
-      <h1 class="text-center font-black text-xl md:text-2xl mb-2 text-slate-800">💰 Quản Lý Tài Chính Cá Nhân</h1>
+    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH STICKY HEADER (NHẤP 3 LẦN ĐỂ MỞ BẢNG BÍ MẬT) -->
+    <div id="sticky-summary" class="sticky-header pt-2 pb-3 border-b-2 border-slate-300">
+      <h1 class="text-center font-black text-lg md:text-2xl mb-2 text-slate-800">💰 Quản Lý Tài Chính Cá Nhân</h1>
       <div class="grid grid-cols-4 gap-1.5 md:gap-3 text-center">
-        <div class="card-box bg-green-50 border-2 border-green-500 rounded-xl p-2" onclick="handleCardClick()">
-          <p class="text-[10px] md:text-xs font-black text-green-700">💵 THU NHẬP</p>
-          <p id="card-income" class="text-xs md:text-lg font-black text-green-800">0 đ</p>
+        <div class="card-box bg-[#f0fdf4] border-2 border-[#22c55e] rounded-xl p-2 shadow-sm" onclick="handleCardClick()">
+          <p class="text-[9px] md:text-xs font-black text-[#15803d]">💵 THU NHẬP</p>
+          <p id="card-income" class="text-xs md:text-xl font-black text-[#166534]">0 đ</p>
         </div>
-        <div class="card-box bg-red-50 border-2 border-red-500 rounded-xl p-2" onclick="handleCardClick()">
-          <p class="text-[10px] md:text-xs font-black text-red-700">💸 CHI TIÊU</p>
-          <p id="card-expense" class="text-xs md:text-lg font-black text-red-800">0 đ</p>
+        <div class="card-box bg-[#fef2f2] border-2 border-[#ef4444] rounded-xl p-2 shadow-sm" onclick="handleCardClick()">
+          <p class="text-[9px] md:text-xs font-black text-[#b91c1c]">💸 CHI TIÊU</p>
+          <p id="card-expense" class="text-xs md:text-xl font-black text-[#991b1b]">0 đ</p>
         </div>
-        <div class="card-box bg-orange-50 border-2 border-orange-500 rounded-xl p-2" onclick="handleCardClick()">
-          <p class="text-[10px] md:text-xs font-black text-orange-700">🤝 NỢ MÌNH</p>
-          <p id="card-debt" class="text-xs md:text-lg font-black text-orange-800">0 đ</p>
+        <div class="card-box bg-[#fff7ed] border-2 border-[#f97316] rounded-xl p-2 shadow-sm" onclick="handleCardClick()">
+          <p class="text-[9px] md:text-xs font-black text-[#c2410c]">🤝 NỢ MÌNH</p>
+          <p id="card-debt" class="text-xs md:text-xl font-black text-[#9a3412]">0 đ</p>
         </div>
-        <div class="card-box bg-blue-50 border-2 border-blue-500 rounded-xl p-2" onclick="handleCardClick()">
-          <p class="text-[10px] md:text-xs font-black text-blue-700">💳 TỔNG SỐ DƯ</p>
-          <p id="card-balance" class="text-xs md:text-lg font-black text-blue-800">0 đ</p>
+        <div class="card-box bg-[#eff6ff] border-2 border-[#3b82f6] rounded-xl p-2 shadow-sm" onclick="handleCardClick()">
+          <p class="text-[9px] md:text-xs font-black text-[#1d4ed8]">💳 TỔNG SỐ DƯ</p>
+          <p id="card-balance" class="text-xs md:text-xl font-black text-[#1e40af]">0 đ</p>
         </div>
       </div>
     </div>
 
-    <!-- BANG DIEU CHINH BI MAT (TRIPLE CLICK PANEL) -->
-    <div id="secret-panel" class="hidden bg-yellow-50 border-2 border-yellow-400 p-4 rounded-xl space-y-4">
-      <div class="flex justify-between items-center border-b border-yellow-200 pb-2">
-        <h3 class="font-black text-yellow-900">⚙️ Bảng Điều Chỉnh Số Tiền Chính Xác & Reset Dữ Liệu</h3>
-        <button onclick="toggleSecretPanel(false)" class="text-red-600 font-black text-sm">❌ Đóng Bảng</button>
+    <!-- BẢNG ĐIỀU CHỈNH BÍ MẬT (MỞ BẰNG TRIPLE CLICK) -->
+    <div id="secret-panel" class="hidden bg-yellow-50 border-2 border-yellow-400 p-4 rounded-xl shadow-md space-y-4">
+      <div class="flex justify-between items-center border-b border-yellow-300 pb-2">
+        <h3 class="font-black text-yellow-900 text-sm md:text-base">⚙️ Bảng Điều Chỉnh Số Tiền Chính Xác & Reset Dữ Liệu</h3>
+        <button onclick="toggleSecretPanel(false)" class="text-red-600 font-black text-xs md:text-sm">❌ Đóng Bảng</button>
       </div>
 
       <div class="space-y-3">
-        <p class="text-xs font-bold text-slate-700">💡 Cài đặt Tổng Số Dư Còn Lại chính xác theo thực tế:</p>
+        <p class="text-xs font-bold text-slate-700">💡 Cài đặt Tổng Số Dư Còn Lại chính xác theo thực tế (VNĐ):</p>
         <div class="flex gap-2">
-          <input type="number" id="adj-balance-input" placeholder="Nhập tổng số dư thực tế..." class="border rounded-lg p-2 text-sm font-bold flex-1" />
-          <button onclick="saveAdjustBalance()" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-sm">LƯU ĐIỀU CHỈNH</button>
+          <input type="number" id="adj-balance-input" oninput="previewMoneyWords(this.value, 'adj-money-words')" placeholder="Gõ số tiền..." class="border-2 border-blue-400 rounded-lg p-2 text-sm font-black flex-1 bg-white" />
+          <button onclick="saveAdjustBalance()" class="bg-blue-600 text-white font-black px-4 py-2 rounded-lg text-xs md:text-sm hover:bg-blue-700">LƯU ĐIỀU CHỈNH SỐ DƯ</button>
         </div>
+        <p id="adj-money-words" class="text-xs text-blue-700 font-bold italic"></p>
 
-        <div class="flex gap-2 pt-2 border-t">
-          <button onclick="clearAllTransactions()" class="bg-red-500 text-white font-bold p-2 rounded-lg text-xs flex-1">🗑️ XÓA TOÀN BỘ CHI TIÊU</button>
-          <button onclick="clearAllDebts()" class="bg-orange-500 text-white font-bold p-2 rounded-lg text-xs flex-1">🗑️ XÓA TOÀN BỘ KHOẢN NỢ</button>
-          <button onclick="resetAppZero()" class="bg-black text-white font-bold p-2 rounded-lg text-xs flex-1">🔥 RESET VỀ 0</button>
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-yellow-200">
+          <button onclick="clearAllTransactions()" class="bg-red-600 text-white font-black p-2 rounded-lg text-xs flex-1 hover:bg-red-700">🗑️ XÓA TOÀN BỘ LỊCH SỬ CHI TIÊU</button>
+          <button onclick="clearAllDebts()" class="bg-orange-600 text-white font-black p-2 rounded-lg text-xs flex-1 hover:bg-orange-700">🗑️ XÓA TOÀN BỘ KHOẢN NỢ</button>
+          <button onclick="resetAppZero()" class="bg-black text-white font-black p-2 rounded-lg text-xs flex-1 hover:bg-slate-800">🔥 RESET TOÀN BỘ PHẦN MỀM VỀ 0</button>
         </div>
       </div>
     </div>
 
-    <!-- MAIN MENU RADIO TABS -->
+    <!-- MENU ĐIỀU HƯỚNG DẠNG THẺ NGANG -->
     <div class="flex flex-wrap gap-1.5 justify-center bg-slate-200 p-1.5 rounded-xl text-xs md:text-sm font-black">
       <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="px-3 py-2 rounded-lg bg-white shadow-sm text-blue-600">🏠 Tổng Quan</button>
-      <button onclick="switchTab('tab-add')" id="btn-tab-add" class="px-3 py-2 rounded-lg text-slate-600">➕ Thêm Giao Dịch</button>
-      <button onclick="switchTab('tab-debts')" id="btn-tab-debts" class="px-3 py-2 rounded-lg text-slate-600">🤝 Quản Lý Nợ</button>
-      <button onclick="switchTab('tab-bill')" id="btn-tab-bill" class="px-3 py-2 rounded-lg text-slate-600">🍕 Chia Bill</button>
-      <button onclick="switchTab('tab-reports')" id="btn-tab-reports" class="px-3 py-2 rounded-lg text-slate-600">📊 Báo Cáo Chi Tiết</button>
+      <button onclick="switchTab('tab-add')" id="btn-tab-add" class="px-3 py-2 rounded-lg text-slate-700 hover:text-blue-600">➕ Thêm Giao Dịch</button>
+      <button onclick="switchTab('tab-debts')" id="btn-tab-debts" class="px-3 py-2 rounded-lg text-slate-700 hover:text-blue-600">🤝 Quản Lý Nợ</button>
+      <button onclick="switchTab('tab-bill')" id="btn-tab-bill" class="px-3 py-2 rounded-lg text-slate-700 hover:text-blue-600">🍕 Chia Bill</button>
+      <button onclick="switchTab('tab-reports')" id="btn-tab-reports" class="px-3 py-2 rounded-lg text-slate-700 hover:text-blue-600">📊 Báo Cáo Chi Tiết</button>
     </div>
 
-    <!-- TAB 1: TONG QUAN -->
-    <div id="tab-overview" class="bg-white p-4 rounded-xl border shadow-sm space-y-3">
-      <h3 class="font-bold text-base border-b pb-2">📋 Giao Dịch Gần Đây</h3>
+    <!-- TAB 1: TỔNG QUAN -->
+    <div id="tab-overview" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="font-black text-base border-b pb-2 text-slate-800">📋 Giao Dịch Gần Đây</h3>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs md:text-sm font-medium">
-          <thead class="bg-slate-50 border-b font-bold">
+          <thead class="bg-slate-50 border-b font-black text-slate-700">
             <tr><th class="p-2">Ngày</th><th class="p-2">Loại</th><th class="p-2">Danh mục</th><th class="p-2">Số tiền</th><th class="p-2">Ghi chú</th></tr>
           </thead>
           <tbody id="table-recent-body"></tbody>
@@ -159,18 +159,18 @@
       </div>
     </div>
 
-    <!-- TAB 2: THEM GIAO DICH -->
-    <div id="tab-add" class="hidden bg-white p-4 rounded-xl border shadow-sm max-w-lg mx-auto space-y-4">
-      <h3 class="font-bold text-base border-b pb-2">➕ Nhập Giao Dịch / Khoản Nợ Mới</h3>
+    <!-- TAB 2: THÊM GIAO DỊCH -->
+    <div id="tab-add" class="hidden bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm max-w-lg mx-auto space-y-4">
+      <h3 class="font-black text-base border-b pb-2 text-slate-800">➕ Nhập Giao Dịch / Khoản Nợ Mới</h3>
       
       <div>
-        <label class="block text-xs font-bold mb-1">🗓️ Ngày thực hiện</label>
-        <input type="date" id="trans-date" class="w-full border rounded-lg p-2 font-bold text-sm" />
+        <label class="block text-xs font-black mb-1">🗓️ Ngày thực hiện</label>
+        <input type="date" id="trans-date" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
       </div>
 
       <div>
-        <label class="block text-xs font-bold mb-1">Loại giao dịch</label>
-        <select id="trans-type" onchange="toggleTransFields()" class="w-full border rounded-lg p-2 font-bold text-sm">
+        <label class="block text-xs font-black mb-1">Loại giao dịch</label>
+        <select id="trans-type" onchange="toggleTransFields()" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50">
           <option value="Chi tiêu">Chi tiêu</option>
           <option value="Thu nhập">Thu nhập</option>
           <option value="Cho vay (Người khác nợ mình)">Cho vay (Người khác nợ mình)</option>
@@ -178,129 +178,170 @@
         </select>
       </div>
 
-      <div id="field-person" class="hidden">
-        <label class="block text-xs font-bold mb-1">👤 Tên đối phương</label>
-        <select id="select-person" onchange="handlePersonSelect()" class="w-full border rounded-lg p-2 font-bold text-sm mb-2"></select>
-        <input type="text" id="input-person-new" placeholder="Gõ tên đối phương mới..." class="w-full border rounded-lg p-2 font-bold text-sm hidden" />
+      <div id="field-person" class="hidden space-y-1">
+        <label class="block text-xs font-black mb-1">👤 Tên đối phương</label>
+        <select id="select-person" onchange="handlePersonSelect()" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50"></select>
+        <input type="text" id="input-person-new" placeholder="Nhập tên người mới..." class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50 hidden" />
       </div>
 
       <div id="field-category">
-        <label class="block text-xs font-bold mb-1">Danh mục</label>
-        <input type="text" id="trans-category" placeholder="vd: Cafe, Ăn uống, Lương..." class="w-full border rounded-lg p-2 font-bold text-sm" />
+        <label class="block text-xs font-black mb-1">Danh mục (vd: Cafe, Ăn uống, Lương...)</label>
+        <input type="text" id="trans-category" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
       </div>
 
       <div>
-        <label class="block text-xs font-bold mb-1">Số tiền (VNĐ)</label>
-        <input type="number" id="trans-amount" oninput="previewMoneyWords(this.value, 'add-money-preview')" placeholder="Gõ số tiền..." class="w-full border rounded-lg p-2 font-bold text-sm" />
-        <p id="add-money-preview" class="text-xs text-blue-600 font-bold italic mt-1"></p>
+        <label class="block text-xs font-black mb-1">Số tiền (VNĐ)</label>
+        <input type="number" id="trans-amount" oninput="previewMoneyWords(this.value, 'add-money-preview')" placeholder="Gõ số tiền..." class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
+        <div id="add-money-box" class="mt-2 p-2.5 bg-blue-50 border border-blue-400 rounded-lg text-xs font-bold text-blue-900 hidden">
+          💵 <b>Số tiền:</b> <span id="add-money-num"></span> VNĐ<br />
+          🔤 <b>Bằng chữ:</b> <i id="add-money-preview"></i>
+        </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold mb-1">Ghi chú</label>
-        <textarea id="trans-note" class="w-full border rounded-lg p-2 font-bold text-sm" rows="2"></textarea>
+        <label class="block text-xs font-black mb-1">Ghi chú</label>
+        <textarea id="trans-note" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" rows="2"></textarea>
       </div>
 
-      <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white font-black py-3 rounded-xl hover:bg-blue-700">LƯU GIAO DỊCH</button>
+      <button onclick="saveTransaction()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition">LƯU GIAO DỊCH</button>
     </div>
 
-    <!-- TAB 3: QUAN LY NO -->
-    <div id="tab-debts" class="hidden bg-white p-4 rounded-xl border shadow-sm space-y-4">
-      <h3 class="font-bold text-base border-b pb-2">📋 Danh Sách Khoản Nợ & Cho Vay Chi Tiết</h3>
+    <!-- TAB 3: QUẢN LÝ NỢ -->
+    <div id="tab-debts" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+      <h3 class="font-black text-base border-b pb-2 text-slate-800">📋 Danh Sách Khoản Nợ & Cho Vay Chi Tiết</h3>
       <div id="debt-accordion-list" class="space-y-3"></div>
     </div>
 
     <!-- TAB 4: CHIA BILL -->
-    <div id="tab-bill" class="hidden bg-white p-4 rounded-xl border shadow-sm max-w-lg mx-auto space-y-4">
-      <h3 class="font-bold text-base border-b pb-2">🍕 Chia Tiền Hóa Đơn Mới</h3>
+    <div id="tab-bill" class="hidden bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm max-w-lg mx-auto space-y-4">
+      <h3 class="font-black text-base border-b pb-2 text-slate-800">🍕 Chia Tiền Hóa Đơn Mới</h3>
       
       <div>
-        <label class="block text-xs font-bold mb-1">🗓️ Ngày ăn uống / chia bill</label>
-        <input type="date" id="bill-date" class="w-full border rounded-lg p-2 font-bold text-sm" />
+        <label class="block text-xs font-black mb-1">🗓️ Ngày ăn uống / chia bill</label>
+        <input type="date" id="bill-date" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
       </div>
 
       <div>
-        <label class="block text-xs font-bold mb-1">Tên bữa ăn / Hóa đơn</label>
-        <input type="text" id="bill-title" placeholder="vd: Lẩu Kichi, Thuê sân bóng..." class="w-full border rounded-lg p-2 font-bold text-sm" />
+        <label class="block text-xs font-black mb-1">Tên bữa ăn / Hóa đơn (vd: Lẩu Kichi, Thuê sân bóng...)</label>
+        <input type="text" id="bill-title" class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
       </div>
 
       <div>
-        <label class="block text-xs font-bold mb-1">Tổng số tiền hóa đơn (VNĐ)</label>
-        <input type="number" id="bill-amount" oninput="calculateBill()" placeholder="Gõ số tiền..." class="w-full border rounded-lg p-2 font-bold text-sm" />
+        <label class="block text-xs font-black mb-1">Tổng số tiền hóa đơn (VNĐ)</label>
+        <input type="number" id="bill-amount" oninput="calculateBill()" placeholder="Gõ số tiền..." class="w-full border rounded-lg p-2.5 font-bold text-sm bg-slate-50" />
       </div>
 
       <div class="border-t pt-3 space-y-2">
         <div class="flex justify-between items-center">
-          <label class="block text-xs font-bold">👥 Danh Sách Những Người Nợ Bạn</label>
+          <label class="block text-xs font-black text-slate-800">👥 Danh Sách Những Người Nợ Bạn</label>
           <div class="space-x-1">
-            <button onclick="addBillMember()" class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-bold">+ Thêm người</button>
-            <button onclick="removeBillMember()" class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-bold">- Xóa bớt</button>
+            <button onclick="addBillMember()" class="bg-blue-100 text-blue-700 text-xs px-2.5 py-1 rounded-lg font-black hover:bg-blue-200">+ Thêm người</button>
+            <button onclick="removeBillMember()" class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-lg font-black hover:bg-red-200">- Xóa bớt</button>
           </div>
         </div>
+        <p class="text-[11px] text-slate-500 font-bold">Mặc định hóa đơn đã bao gồm <b>Bạn</b>. Bấm nút trên để thêm người nợ:</p>
         <div id="bill-members-container" class="space-y-2"></div>
       </div>
 
-      <div id="bill-summary-box" class="bg-green-50 border-2 border-green-500 rounded-xl p-3 text-xs md:text-sm font-bold text-green-800 space-y-1 hidden">
+      <div id="bill-summary-box" class="bg-[#f0fdf4] border-2 border-[#22c55e] rounded-xl p-3 text-xs md:text-sm font-bold text-[#15803d] space-y-1 hidden">
         <p>👥 <b>Tổng cộng:</b> <span id="bill-count-text"></span> người (Bạn + <span id="bill-others-count"></span> người khác)</p>
-        <p>💰 <b>Mỗi người trả:</b> <span id="bill-per-person" class="text-base font-black text-green-700"></span></p>
-        <p class="italic text-slate-600" id="bill-per-person-words"></p>
+        <p class="text-base md:text-lg">💰 <b>Mỗi người trả:</b> <span id="bill-per-person" class="text-lg md:text-xl font-black text-[#166534]"></span></p>
+        <p>🔤 <b>Bằng chữ:</b> <i id="bill-per-person-words" class="font-normal"></i></p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <input type="checkbox" id="bill-auto-debt" checked class="w-4 h-4" />
-        <label for="bill-auto-debt" class="text-xs font-bold">🤝 Tự động lưu phần của bạn vào 'Chi tiêu' và ghi nợ cho người khác</label>
+      <div class="flex items-center gap-2 pt-2">
+        <input type="checkbox" id="bill-auto-debt" checked class="w-4 h-4 accent-blue-600" />
+        <label for="bill-auto-debt" class="text-xs font-bold text-slate-800">🤝 Tự động lưu phần của bạn vào 'Chi tiêu' và ghi nợ cho những người trên</label>
       </div>
 
-      <button onclick="saveBill()" class="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700">LƯU & TỰ ĐỘNG PHÂN CHIA</button>
+      <button onclick="saveBill()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition">LƯU & TỰ ĐỘNG PHÂN CHIA</button>
     </div>
 
-    <!-- TAB 5: BAO CAO CHI TIET -->
-    <div id="tab-reports" class="hidden bg-white p-4 rounded-xl border shadow-sm space-y-4">
-      <h3 class="font-bold text-base border-b pb-2">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền & Nợ</h3>
+    <!-- TAB 5: BÁO CÁO CHI TIẾT -->
+    <div id="tab-reports" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+      <h3 class="font-black text-base border-b pb-2 text-slate-800">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền & Nợ</h3>
       
-      <div class="flex flex-wrap gap-2 items-center text-xs font-bold">
-        <span>🔍 Khoảng thời gian:</span>
-        <select id="report-filter-type" onchange="renderReports()" class="border rounded-lg p-2 font-bold">
-          <option value="ALL">🌐 Tất cả thời gian</option>
-          <option value="DAY">📆 Theo Ngày</option>
-          <option value="MONTH">📅 Theo Tháng</option>
-        </select>
-        <input type="date" id="report-filter-date" onchange="renderReports()" class="border rounded-lg p-1.5 hidden" />
-        <input type="month" id="report-filter-month" onchange="renderReports()" class="border rounded-lg p-1.5 hidden" />
+      <!-- BỘ LỌC THỜI GIAN THEO 5 MỐC chuẩn Python -->
+      <div class="bg-slate-50 p-3 rounded-xl border space-y-3">
+        <div class="flex flex-wrap gap-2 items-center text-xs font-black">
+          <span>🔍 Chọn khoảng thời gian muốn lọc:</span>
+          <select id="report-filter-type" onchange="handleReportFilterChange()" class="border-2 border-slate-300 rounded-lg p-2 font-black bg-white">
+            <option value="ALL">🌐 Tất cả thời gian</option>
+            <option value="DAY">📆 Theo Ngày</option>
+            <option value="WEEK">🗓️ Theo Tuần (Từ T2 -> CN)</option>
+            <option value="MONTH">📅 Theo Tháng</option>
+            <option value="YEAR">📅 Theo Năm</option>
+          </select>
+        </div>
+
+        <div id="filter-controls-day" class="hidden">
+          <label class="block text-xs font-bold mb-1">🗓️ Chọn ngày xem báo cáo:</label>
+          <input type="date" id="rep-date-input" onchange="renderReports()" class="border rounded-lg p-2 text-xs font-bold bg-white" />
+        </div>
+
+        <div id="filter-controls-week" class="hidden space-y-1">
+          <label class="block text-xs font-bold mb-1">🗓️ Chọn 1 ngày nằm trong tuần cần xem:</label>
+          <input type="date" id="rep-week-input" onchange="renderReports()" class="border rounded-lg p-2 text-xs font-bold bg-white" />
+          <p id="rep-week-text" class="text-xs text-blue-700 font-bold italic"></p>
+        </div>
+
+        <div id="filter-controls-month" class="hidden flex gap-2">
+          <div>
+            <label class="block text-xs font-bold mb-1">🗓️ Chọn Tháng:</label>
+            <select id="rep-month-select" onchange="renderReports()" class="border rounded-lg p-2 text-xs font-bold bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">📅 Chọn Năm:</label>
+            <input type="number" id="rep-month-year-input" value="2026" onchange="renderReports()" class="border rounded-lg p-2 text-xs font-bold bg-white w-24" />
+          </div>
+        </div>
+
+        <div id="filter-controls-year" class="hidden">
+          <label class="block text-xs font-bold mb-1">📅 Chọn Năm:</label>
+          <input type="number" id="rep-year-input" value="2026" onchange="renderReports()" class="border rounded-lg p-2 text-xs font-bold bg-white w-28" />
+        </div>
       </div>
 
-      <div class="bg-slate-50 border p-3 rounded-xl text-xs md:text-sm font-bold flex flex-wrap gap-4">
-        <span class="text-green-700">💵 Thu vào: <b id="rep-income">0 đ</b></span>
-        <span class="text-red-700">💸 Chi ra: <b id="rep-expense">0 đ</b></span>
-        <span class="text-blue-700">💳 Dư kỳ này: <b id="rep-balance">0 đ</b></span>
+      <div class="bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-xs md:text-sm font-black flex flex-wrap gap-4">
+        <span class="text-[#166534]">💵 Thu vào: <b id="rep-income" class="text-base">0 đ</b></span>
+        <span class="text-[#991b1b]">💸 Chi ra: <b id="rep-expense" class="text-base">0 đ</b></span>
+        <span class="text-[#1e40af]">💳 Dư kỳ này: <b id="rep-balance" class="text-base">0 đ</b></span>
       </div>
 
+      <h4 class="font-black text-sm pt-2 text-slate-800">📋 Lịch Sử Giao Dịch Thu / Chi</h4>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs md:text-sm font-medium">
-          <thead class="bg-slate-50 border-b font-bold">
-            <tr><th class="p-2">Ngày</th><th class="p-2">Loại</th><th class="p-2">Danh mục</th><th class="p-2">Số tiền</th><th class="p-2">Bằng chữ</th><th class="p-2">Ghi chú</th></tr>
+          <thead class="bg-slate-100 border-b font-black text-slate-700">
+            <tr><th class="p-2">ID</th><th class="p-2">Ngày</th><th class="p-2">Loại</th><th class="p-2">Danh Mục</th><th class="p-2">Số Tiền</th><th class="p-2">Số Tiền Bằng Chữ</th><th class="p-2">Ghi Chú</th></tr>
           </thead>
-          <tbody id="table-reports-body"></tbody>
+          <tbody id="table-reports-trans-body"></tbody>
         </table>
       </div>
+
+      <h4 class="font-black text-sm pt-4 text-slate-800">💳 Danh Sách Khoản Nợ</h4>
+      <div id="reports-debt-accordion-list" class="space-y-3"></div>
     </div>
 
   </div>
 
-  <!-- MODAL TRA BOT NO -->
-  <div id="partial-debt-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-50">
-    <div class="bg-white rounded-xl p-4 max-w-xs w-full space-y-3 font-bold">
-      <h4 class="text-sm border-b pb-2">💵 Trả Bớt Khoản Nợ</h4>
-      <input type="number" id="partial-amount-input" placeholder="Nhập số tiền trả bớt..." class="w-full border rounded-lg p-2 text-sm" />
-      <div class="flex justify-end gap-2 text-xs">
-        <button onclick="closePartialModal()" class="px-3 py-1.5 rounded bg-slate-200">Hủy</button>
-        <button onclick="confirmPartialPay()" class="px-3 py-1.5 rounded bg-blue-600 text-white">Xác nhận</button>
+  <!-- MODAL TRẢ BỚT NỢ -->
+  <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full space-y-4 font-bold shadow-xl border">
+      <h4 class="text-sm font-black border-b pb-2 text-slate-800">💵 Trả Bớt Khoản Nợ</h4>
+      <div>
+        <label class="block text-xs text-slate-600 mb-1">Số tiền trả bớt (VNĐ):</label>
+        <input type="number" id="partial-amount-input" placeholder="Gõ số tiền..." class="w-full border-2 border-blue-400 rounded-lg p-2.5 text-sm font-black" />
+      </div>
+      <div class="flex justify-end gap-2 text-xs font-black">
+        <button onclick="closePartialModal()" class="px-3.5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">Hủy</button>
+        <button onclick="confirmPartialPay()" class="px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">XÁC NHẬN</button>
       </div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // 1. HAM DOC SO TIEN SANG CHU TIENG VIET CHUAN (doc_so_vn)
+    // 1. HÀM ĐỌC SỐ TIỀN CHUẨN TIẾNG VIỆT (doc_so_vn)
     // ==========================================
     function docSoVN(so) {
       if (!so || so <= 0) return "";
@@ -353,11 +394,21 @@
     }
 
     function previewMoneyWords(val, targetId) {
-      document.getElementById(targetId).innerText = docSoVN(Number(val));
+      const box = document.getElementById('add-money-box');
+      if (box) {
+        if (!val || Number(val) <= 0) box.classList.add('hidden');
+        else {
+          box.classList.remove('hidden');
+          document.getElementById('add-money-num').innerText = Number(val).toLocaleString('vi-VN');
+          document.getElementById('add-money-preview').innerText = docSoVN(Number(val));
+        }
+      }
+      const el = document.getElementById(targetId);
+      if (el && targetId !== 'add-money-preview') el.innerText = docSoVN(Number(val));
     }
 
     // ==========================================
-    // 2. KHO DU LIEU LOCALSTORAGE & AUTHENTICATION
+    // 2. KHO DỮ LIỆU LOCALSTORAGE & AUTHENTICATION
     // ==========================================
     let users = JSON.parse(localStorage.getItem('app_users')) || [];
     let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
@@ -374,10 +425,10 @@
     function setAuthTab(tab) {
       ['login', 'register', 'forgot'].forEach(t => {
         document.getElementById(`form-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}-btn`).className = "w-1/3 py-2 font-bold text-slate-400";
+        document.getElementById(`tab-${t}-btn`).className = "w-1/3 py-2 font-black text-sm text-slate-400";
       });
       document.getElementById(`form-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}-btn`).className = "w-1/3 py-2 font-bold border-b-2 border-blue-600 text-blue-600";
+      document.getElementById(`tab-${tab}-btn`).className = "w-1/3 py-2 font-black text-sm border-b-2 border-blue-600 text-blue-600";
     }
 
     function handleRegister(e) {
@@ -419,11 +470,11 @@
 
       const user = users.find(u => u.phone === phone);
       if (!user) return alert('⚠️ Số điện thoại này chưa đăng ký tài khoản!');
-      if (pass !== passConf) return alert('⚠️ Mật khẩu mới không trùng khớp!');
+      if (pass !== passConf) return alert('⚠️ Mật khẩu mới chưa khớp!');
 
       user.password = pass;
       saveStorage();
-      alert('✅ Đổi mật khẩu thành công!');
+      alert('✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.');
       setAuthTab('login');
     }
 
@@ -434,7 +485,7 @@
     }
 
     // ==========================================
-    // 3. khoi tao giao dien & sticky summary
+    // 3. KHỞI TẠO VÀ CẬP NHẬT GIAO DIỆN CHÍNH
     // ==========================================
     function initApp() {
       if (!currentUser) {
@@ -452,6 +503,16 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('trans-date').value = today;
       document.getElementById('bill-date').value = today;
+      document.getElementById('rep-date-input').value = today;
+      document.getElementById('rep-week-input').value = today;
+
+      // Populate months select 1-12
+      const mSel = document.getElementById('rep-month-select');
+      mSel.innerHTML = '';
+      for (let i = 1; i <= 12; i++) {
+        mSel.innerHTML += `<option value="${i}">${i}</option>`;
+      }
+      mSel.value = new Date().getMonth() + 1;
 
       updateSummaryAndData();
       switchTab('tab-overview');
@@ -507,21 +568,24 @@
       const { myTrans } = getUserData();
       let income = myTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let expense = myTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
-      let diff = val - (income - expense);
+      let currentBal = income - expense;
+      let diff = val - currentBal;
 
       const today = new Date().toISOString().split('T')[0];
       if (diff > 0) {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Cài đặt số dư', amount: diff, note: 'Điều chỉnh trực tiếp', date: today });
+        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Cài đặt số dư ban đầu', amount: diff, note: 'Điều chỉnh số dư trực tiếp', date: today });
       } else if (diff < 0) {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cài đặt số dư', amount: Math.abs(diff), note: 'Điều chỉnh trực tiếp', date: today });
+        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cài đặt số dư ban đầu', amount: Math.abs(diff), note: 'Điều chỉnh số dư trực tiếp', date: today });
       }
+
       saveStorage();
       updateSummaryAndData();
       toggleSecretPanel(false);
+      alert(`✅ Đã điều chỉnh Tổng số dư còn lại về đúng: ${val.toLocaleString('vi-VN')} đ!`);
     }
 
     function clearAllTransactions() {
-      if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử chi tiêu?')) {
+      if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ lịch sử Giao dịch?')) {
         transactions = transactions.filter(t => t.userId !== currentUser.id);
         saveStorage();
         updateSummaryAndData();
@@ -529,7 +593,7 @@
     }
 
     function clearAllDebts() {
-      if (confirm('Bạn có chắc muốn xóa toàn bộ khoản nợ?')) {
+      if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ danh sách Nợ?')) {
         debts = debts.filter(d => d.userId !== currentUser.id);
         saveStorage();
         updateSummaryAndData();
@@ -537,7 +601,7 @@
     }
 
     function resetAppZero() {
-      if (confirm('🔥 Cảnh báo: Thao tác này sẽ đưa tất cả Thu, Chi, Nợ về 0 đ!')) {
+      if (confirm('🔥 Cảnh báo: Phần mềm sẽ được reset hoàn toàn về 0 đ!')) {
         transactions = transactions.filter(t => t.userId !== currentUser.id);
         debts = debts.filter(d => d.userId !== currentUser.id);
         saveStorage();
@@ -547,39 +611,44 @@
     }
 
     // ==========================================
-    // 4. DIEU HUONG TAB CHUC NANG
+    // 4. ĐIỀU HƯỚNG TAB
     // ==========================================
     function switchTab(tabId) {
       ['tab-overview', 'tab-add', 'tab-debts', 'tab-bill', 'tab-reports'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
-        document.getElementById(`btn-${id}`).className = "px-3 py-2 rounded-lg text-slate-600";
+        document.getElementById(`btn-${id}`).className = "px-3 py-2 rounded-lg text-slate-700 hover:text-blue-600";
       });
       document.getElementById(tabId).classList.remove('hidden');
-      document.getElementById(`btn-${tabId}`).className = "px-3 py-2 rounded-lg bg-white shadow-sm text-blue-600 font-bold";
+      document.getElementById(`btn-${tabId}`).className = "px-3 py-2 rounded-lg bg-white shadow-sm text-blue-600 font-black";
     }
 
-    // TAB 1: TONG QUAN RECENT
+    // TAB 1: TỔNG QUAN RECENT
     function renderRecentTransactions() {
       const { myTrans } = getUserData();
       const recent = [...myTrans].reverse().slice(0, 10);
       const tbody = document.getElementById('table-recent-body');
       tbody.innerHTML = '';
 
+      if (recent.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-slate-500 italic text-center">Chưa có giao dịch nào. Chọn "➕ Thêm Giao Dịch" để nhập nhé!</td></tr>';
+        return;
+      }
+
       recent.forEach(t => {
         const tr = document.createElement('tr');
-        tr.className = 'border-b hover:bg-slate-50';
+        tr.className = 'border-b hover:bg-slate-50 font-bold';
         tr.innerHTML = `
           <td class="p-2">${t.date}</td>
-          <td class="p-2 font-bold">${t.type}</td>
+          <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${t.type}</span></td>
           <td class="p-2">${t.category || ''}</td>
-          <td class="p-2 font-bold ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-600' : 'text-red-600'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
-          <td class="p-2 text-slate-500">${t.note || ''}</td>
+          <td class="p-2 ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-600' : 'text-red-600'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
+          <td class="p-2 text-slate-500 font-medium">${t.note || ''}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // TAB 2: THEM GIAO DICH LOGIC
+    // TAB 2: THÊM GIAO DỊCH
     function toggleTransFields() {
       const type = document.getElementById('trans-type').value;
       const isDebt = type.includes('Cho vay') || type.includes('Đi vay');
@@ -589,7 +658,7 @@
 
     function populatePersonSelector() {
       const { myDebts } = getUserData();
-      const persons = [...new Set(myDebts.map(d => d.personName))];
+      const persons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
       const sel = document.getElementById('select-person');
       sel.innerHTML = '<option value="">-- Chọn người từ danh bạ --</option><option value="NEW">➕ Nhập tên người mới...</option>';
       persons.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
@@ -607,20 +676,22 @@
       const note = document.getElementById('trans-note').value.trim();
       const isDebt = type.includes('Cho vay') || type.includes('Đi vay');
 
-      if (!amount || amount <= 0) return alert('⚠️ Vui lòng nhập số tiền hợp lệ!');
+      if (!amount || amount <= 0) return alert('⚠️ Vui lòng nhập số tiền hợp lệ (lớn hơn 0)!');
 
       let person = '';
       if (isDebt) {
         const selP = document.getElementById('select-person').value;
         person = selP === 'NEW' ? document.getElementById('input-person-new').value.trim() : selP;
-        if (!person) return alert('⚠️ Vui lòng nhập hoặc chọn tên đối phương!');
+        if (!person) return alert('⚠️ Vui lòng chọn hoặc nhập tên đối phương!');
       }
 
       if (type === 'Cho vay (Người khác nợ mình)') {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cho vay', amount, note: `Cho ${person} vay: ${note}`, date });
+        const noteFinal = `Cho ${person} vay` + (note ? `: ${note}` : '');
+        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cho vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Cho vay (Người khác nợ mình)', amount, status: 'Đang nợ', date });
       } else if (type === 'Đi vay (Mình nợ người khác)') {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Đi vay', amount, note: `Mượn tiền từ ${person}: ${note}`, date });
+        const noteFinal = `Mượn tiền từ ${person}` + (note ? `: ${note}` : '');
+        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Đi vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Đi vay (Mình nợ người khác)', amount, status: 'Đang nợ', date });
       } else {
         const category = document.getElementById('trans-category').value.trim() || 'Khác';
@@ -632,10 +703,11 @@
       alert('✅ Đã lưu giao dịch thành công!');
       document.getElementById('trans-amount').value = '';
       document.getElementById('trans-note').value = '';
-      document.getElementById('add-money-preview').innerText = '';
+      document.getElementById('trans-category').value = '';
+      document.getElementById('add-money-box').classList.add('hidden');
     }
 
-    // TAB 3: QUAN LY NO (ACCORDION & PAYMENTS)
+    // TAB 3: QUẢN LÝ NỢ (ACCORDION & PAYMENTS)
     function renderDebtsList() {
       const { myDebts } = getUserData();
       const activeDebts = myDebts.filter(d => d.status === 'Đang nợ');
@@ -658,28 +730,28 @@
         if (sumBorrowed > 0) info.push(`Bạn nợ: ${sumBorrowed.toLocaleString('vi-VN')} đ`);
 
         const div = document.createElement('div');
-        div.className = 'border rounded-xl p-3 bg-slate-50 space-y-2';
+        div.className = 'border-2 border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2';
         div.innerHTML = `
           <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('debt-sub-${idx}').classList.toggle('hidden')">
-            <span class="font-bold text-sm">👤 ${person}</span>
-            <span class="text-xs font-bold text-blue-600">(${info.join(' | ')}) ▼</span>
+            <span class="font-black text-sm text-slate-800">👤 ${person}</span>
+            <span class="text-xs font-black text-blue-600">(${info.join(' | ')}) ▼</span>
           </div>
-          <div id="debt-sub-${idx}" class="space-y-2 pt-2 border-t"></div>
+          <div id="debt-sub-${idx}" class="space-y-2 pt-2 border-t border-slate-200"></div>
         `;
         container.appendChild(div);
 
         const subContainer = document.getElementById(`debt-sub-${idx}`);
         pDebts.forEach(d => {
           const row = document.createElement('div');
-          row.className = 'flex flex-wrap justify-between items-center bg-white p-2 rounded border text-xs font-bold gap-2';
+          row.className = 'flex flex-wrap justify-between items-center bg-white p-2.5 rounded-lg border text-xs font-bold gap-2';
           row.innerHTML = `
             <div>
-              <span>🗓️ ${d.date} | ${d.debtType}: <b class="text-blue-700">${Number(d.amount).toLocaleString('vi-VN')} đ</b></span>
-              <p class="text-[10px] text-slate-500 italic font-normal">${docSoVN(d.amount)}</p>
+              <span>🗓️ <b>${d.date}</b> | ${d.debtType}: <b class="text-blue-700">${Number(d.amount).toLocaleString('vi-VN')} đ</b></span>
+              <p class="text-[10px] text-slate-500 italic font-medium">${docSoVN(d.amount)}</p>
             </div>
-            <div class="flex gap-1">
-              <button onclick="openPartialModal(${d.id})" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">💵 Trả bớt</button>
-              <button onclick="payFullDebt(${d.id})" class="bg-green-600 text-white px-2 py-1 rounded">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
+            <div class="flex gap-1.5 font-black">
+              <button onclick="openPartialModal(${d.id})" class="bg-yellow-100 text-yellow-800 px-2.5 py-1.5 rounded-lg hover:bg-yellow-200">💵 Trả bớt</button>
+              <button onclick="payFullDebt(${d.id})" class="bg-green-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-green-700">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
             </div>
           `;
           subContainer.appendChild(row);
@@ -713,6 +785,7 @@
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: debt.amount, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Thanh toán xong)`, date: today
         });
+        alert(`🎉 Đã thu/trả xong toàn bộ khoản ${debt.amount.toLocaleString('vi-VN')}đ!`);
       } else {
         debt.amount -= pAmt;
         transactions.push({
@@ -720,6 +793,7 @@
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: pAmt, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Trả bớt ${pAmt.toLocaleString('vi-VN')}đ)`, date: today
         });
+        alert(`✅ Đã thu/trả bớt ${pAmt.toLocaleString('vi-VN')}đ của ${debt.personName}! Số tiền còn lại: ${debt.amount.toLocaleString('vi-VN')}đ.`);
       }
 
       saveStorage();
@@ -738,11 +812,12 @@
       transactions.push({
         id: Date.now(), userId: currentUser.id,
         type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
-        amount: debt.amount, note: `Thanh toán xong nợ với ${debt.personName}`, date: today
+        amount: debt.amount, note: `${isChoVay ? 'Thu xong toàn bộ nợ từ' : 'Thanh toán xong toàn bộ nợ cho'} ${debt.personName}`, date: today
       });
 
       saveStorage();
       updateSummaryAndData();
+      alert(`🎉 Đã thu/trả xong khoản ${debt.amount.toLocaleString('vi-VN')}đ của ${debt.personName}!`);
     }
 
     // TAB 4: CHIA BILL DYNAMIC
@@ -752,19 +827,19 @@
 
     function renderBillMembers() {
       const { myDebts } = getUserData();
-      const existingPersons = [...new Set(myDebts.map(d => d.personName))];
+      const existingPersons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
       const container = document.getElementById('bill-members-container');
       container.innerHTML = '';
 
       billMembers.forEach((m, idx) => {
-        let opts = `<option value="">-- Chọn người thứ ${idx + 1} --</option><option value="NEW">➕ Gõ tên mới...</option>`;
+        let opts = `<option value="">-- Chọn người thứ ${idx + 1} --</option><option value="NEW">➕ Nhập tên người mới...</option>`;
         existingPersons.forEach(p => opts += `<option value="${p}">${p}</option>`);
 
         const div = document.createElement('div');
         div.className = 'flex gap-2';
         div.innerHTML = `
-          <select id="bill-sel-${idx}" onchange="handleBillMemberSel(${idx})" class="w-1/2 border rounded-lg p-2 text-xs font-bold">${opts}</select>
-          <input type="text" id="bill-input-${idx}" placeholder="Tên người thứ ${idx + 1}" class="w-1/2 border rounded-lg p-2 text-xs font-bold ${m ? '' : 'hidden'}" value="${m}" oninput="billMembers[${idx}]=this.value" />
+          <select id="bill-sel-${idx}" onchange="handleBillMemberSel(${idx})" class="w-1/2 border rounded-lg p-2 text-xs font-bold bg-slate-50">${opts}</select>
+          <input type="text" id="bill-input-${idx}" placeholder="Nhập tên người thứ ${idx + 1}..." class="w-1/2 border rounded-lg p-2 text-xs font-bold bg-slate-50 ${m ? '' : 'hidden'}" value="${m}" oninput="billMembers[${idx}]=this.value" />
         `;
         container.appendChild(div);
       });
@@ -812,58 +887,157 @@
 
       if (autoDebt) {
         const validMembers = billMembers.filter(m => m.trim() !== '');
-        if (validMembers.length === 0) return alert('⚠️ Vui lòng nhập tên người nợ!');
+        if (validMembers.length === 0) return alert('⚠️ Vui lòng chọn hoặc nhập tên ít nhất 1 người nợ hợp lệ!');
 
         transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: title, amount: perPerson, note: `Phần tiền của bạn trong bill ${total.toLocaleString('vi-VN')}đ`, date });
 
         validMembers.forEach((m, i) => {
           debts.push({ id: Date.now() + i + 1, userId: currentUser.id, personName: m.trim(), debtType: 'Cho vay (Người khác nợ mình)', amount: perPerson, status: 'Đang nợ', date });
         });
+        alert(`✅ Đã chia bill thành công! Đã lưu ${perPerson.toLocaleString('vi-VN')}đ vào Chi tiêu và ghi nợ cho ${validMembers.length} người.`);
+      } else {
+        alert(`✅ Đã tính xong: Mỗi người trả ${perPerson.toLocaleString('vi-VN')} đ!`);
       }
 
       saveStorage();
       updateSummaryAndData();
-      alert('✅ Đã chia bill và lưu thành công!');
       document.getElementById('bill-amount').value = '';
       document.getElementById('bill-summary-box').classList.add('hidden');
     }
 
-    // TAB 5: BAO CAO CHI TIET & LOC
+    // TAB 5: BÁO CÁO CHI TIẾT THEO 5 MỐC THỜI GIAN
+    function handleReportFilterChange() {
+      const type = document.getElementById('report-filter-type').value;
+      document.getElementById('filter-controls-day').classList.toggle('hidden', type !== 'DAY');
+      document.getElementById('filter-controls-week').classList.toggle('hidden', type !== 'WEEK');
+      document.getElementById('filter-controls-month').classList.toggle('hidden', type !== 'MONTH');
+      document.getElementById('filter-controls-year').classList.toggle('hidden', type !== 'YEAR');
+      renderReports();
+    }
+
     function renderReports() {
-      const { myTrans } = getUserData();
-      const filterType = document.getElementById('report-filter-type').value;
-      const dateVal = document.getElementById('report-filter-date').value;
-      const monthVal = document.getElementById('report-filter-month').value;
+      const { myTrans, myDebts } = getUserData();
+      const type = document.getElementById('report-filter-type').value;
 
-      document.getElementById('report-filter-date').classList.toggle('hidden', filterType !== 'DAY');
-      document.getElementById('report-filter-month').classList.toggle('hidden', filterType !== 'MONTH');
+      let fTrans = [...myTrans];
+      let fDebts = [...myDebts];
 
-      let filtered = [...myTrans];
-      if (filterType === 'DAY' && dateVal) filtered = filtered.filter(t => t.date === dateVal);
-      if (filterType === 'MONTH' && monthVal) filtered = filtered.filter(t => t.date.startsWith(monthVal));
+      if (type === 'DAY') {
+        const d = document.getElementById('rep-date-input').value;
+        if (d) {
+          fTrans = fTrans.filter(t => t.date === d);
+          fDebts = fDebts.filter(d_item => d_item.date === d);
+        }
+      } else if (type === 'WEEK') {
+        const wDateStr = document.getElementById('rep-week-input').value;
+        if (wDateStr) {
+          const selDate = new Date(wDateStr);
+          const day = selDate.getDay();
+          const diffToMon = selDate.getDate() - day + (day === 0 ? -6 : 1);
+          const monday = new Date(selDate.setDate(diffToMon));
+          const sunday = new Date(monday);
+          sunday.setDate(monday.getDate() + 6);
 
-      let income = filtered.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
-      let expense = filtered.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+          const startStr = monday.toISOString().split('T')[0];
+          const endStr = sunday.toISOString().split('T')[0];
+
+          document.getElementById('rep-week-text').innerText = `📆 Tuần đang xem: từ ${monday.toLocaleDateString('vi-VN')} đến ${sunday.toLocaleDateString('vi-VN')}`;
+
+          fTrans = fTrans.filter(t => t.date >= startStr && t.date <= endStr);
+          fDebts = fDebts.filter(d_item => d_item.date >= startStr && d_item.date <= endStr);
+        }
+      } else if (type === 'MONTH') {
+        const m = String(document.getElementById('rep-month-select').value).padStart(2, '0');
+        const y = document.getElementById('rep-month-year-input').value;
+        const prefix = `${y}-${m}`;
+        fTrans = fTrans.filter(t => t.date.startsWith(prefix));
+        fDebts = fDebts.filter(d_item => d_item.date.startsWith(prefix));
+      } else if (type === 'YEAR') {
+        const y = document.getElementById('rep-year-input').value;
+        fTrans = fTrans.filter(t => t.date.startsWith(y));
+        fDebts = fDebts.filter(d_item => d_item.date.startsWith(y));
+      }
+
+      let income = fTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let expense = fTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
 
       document.getElementById('rep-income').innerText = income.toLocaleString('vi-VN') + ' đ';
       document.getElementById('rep-expense').innerText = expense.toLocaleString('vi-VN') + ' đ';
       document.getElementById('rep-balance').innerText = (income - expense).toLocaleString('vi-VN') + ' đ';
 
-      const tbody = document.getElementById('table-reports-body');
+      // Table transactions
+      const tbody = document.getElementById('table-reports-trans-body');
       tbody.innerHTML = '';
-      filtered.reverse().forEach(t => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b hover:bg-slate-50';
-        tr.innerHTML = `
-          <td class="p-2">${t.date}</td>
-          <td class="p-2 font-bold">${t.type}</td>
-          <td class="p-2">${t.category || ''}</td>
-          <td class="p-2 font-bold ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-600' : 'text-red-600'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
-          <td class="p-2 text-slate-500 italic text-xs">${docSoVN(t.amount)}</td>
-          <td class="p-2 text-slate-500">${t.note || ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (fTrans.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-slate-500 italic text-center">Không có giao dịch thu/chi nào trong khoảng thời gian này.</td></tr>';
+      } else {
+        [...fTrans].reverse().forEach(t => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b hover:bg-slate-50 font-bold';
+          tr.innerHTML = `
+            <td class="p-2 text-slate-400 font-normal">#${t.id}</td>
+            <td class="p-2">${t.date}</td>
+            <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${t.type}</span></td>
+            <td class="p-2">${t.category || ''}</td>
+            <td class="p-2 ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-600' : 'text-red-600'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
+            <td class="p-2 text-slate-500 italic font-normal text-xs">${docSoVN(t.amount)}</td>
+            <td class="p-2 text-slate-500 font-medium">${t.note || ''}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Accordion debts
+      const debtContainer = document.getElementById('reports-debt-accordion-list');
+      debtContainer.innerHTML = '';
+      if (fDebts.length === 0) {
+        debtContainer.innerHTML = '<p class="text-xs text-slate-500 italic">Không có khoản nợ nào trong khoảng thời gian này.</p>';
+      } else {
+        const persons = [...new Set(fDebts.map(d => d.personName))];
+        persons.forEach((person, idx) => {
+          const pDebts = fDebts.filter(d => d.personName === person);
+          const choVayUnpaid = pDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
+          const diVayUnpaid = pDebts.filter(d => d.debtType.includes('Đi vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
+
+          let parts = [];
+          if (choVayUnpaid > 0) parts.push(`Nợ bạn: ${choVayUnpaid.toLocaleString('vi-VN')} đ`);
+          if (diVayUnpaid > 0) parts.push(`Bạn nợ: ${diVayUnpaid.toLocaleString('vi-VN')} đ`);
+          if (parts.length === 0) parts.push('Đã thanh toán hết ✅');
+
+          const div = document.createElement('div');
+          div.className = 'border-2 border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2';
+          div.innerHTML = `
+            <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('rep-debt-sub-${idx}').classList.toggle('hidden')">
+              <span class="font-black text-sm text-slate-800">👤 ${person}</span>
+              <span class="text-xs font-black text-blue-600">(${parts.join(' | ')}) ▼</span>
+            </div>
+            <div id="rep-debt-sub-${idx}" class="space-y-2 pt-2 border-t border-slate-200">
+              <table class="w-full text-left text-xs font-medium bg-white border rounded-lg">
+                <thead class="bg-slate-100 border-b font-black">
+                  <tr><th class="p-2">ID</th><th class="p-2">Ngày Vay/Mượn</th><th class="p-2">Loại Nợ</th><th class="p-2">Số Tiền</th><th class="p-2">Số Tiền Bằng Chữ</th><th class="p-2">Trạng Thái</th></tr>
+                </thead>
+                <tbody id="rep-debt-tbody-${idx}"></tbody>
+              </table>
+            </div>
+          `;
+          debtContainer.appendChild(div);
+
+          const tbody = document.getElementById(`rep-debt-tbody-${idx}`);
+          pDebts.forEach(d => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b font-bold';
+            tr.innerHTML = `
+              <td class="p-2 text-slate-400 font-normal">#${d.id}</td>
+              <td class="p-2">${d.date}</td>
+              <td class="p-2">${d.debtType}</td>
+              <td class="p-2 text-blue-700">${Number(d.amount).toLocaleString('vi-VN')} đ</td>
+              <td class="p-2 text-slate-500 italic font-normal text-xs">${docSoVN(d.amount)}</td>
+              <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${d.status === 'Đã trả' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${d.status}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+      }
     }
 
     // RUN APP AT START
