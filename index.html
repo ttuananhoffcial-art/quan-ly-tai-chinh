@@ -12,13 +12,10 @@
     <script>
       stlite.mount(
         {
-          // Đã thêm "sqlite3" vào danh sách thư viện
-          requirements: ["pandas", "altair", "sqlite3"],
+          requirements: ["pandas", "altair"],
           entrypoint: "app.py",
           files: {
-            "app.py": { url: "./app.py" },
-            // Khai báo file database nếu ứng dụng dùng file finance.db
-            "finance.db": { url: "./finance.db" }
+            "app.py": { url: "./app.py" }
           }
         },
         document.getElementById("root")
