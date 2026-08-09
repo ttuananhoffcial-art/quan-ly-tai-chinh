@@ -1,27 +1,325 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Quản Lý Thu Chi</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.73.0/build/stlite.css" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.73.0/build/stlite.js"></script>
-    <script>
-      stlite.mount(
-        {
-          // Nạp đầy đủ thư viện sqlite3 để không bị lỗi ModuleNotFoundError
-          requirements: ["pandas", "altair", "sqlite3"],
-          entrypoint: "app.py",
-          files: {
-            // Chỉ nạp file app.py để ứng dụng tự tạo database mới
-            "app.py": { url: "./app.py" }
-          }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản Lý Tài Chính & Thu Chi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans p-3 md:p-6">
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Tiêu đề ứng dụng -->
+    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <div>
+        <h1 class="text-2xl font-bold text-blue-600">Quản Lý Tài Chính</h1>
+        <p class="text-xs text-slate-500">Hệ thống theo dõi Thu Chi & Sổ Nợ Tự Động</p>
+      </div>
+      <button onclick="clearAllData()" class="text-xs text-red-500 hover:text-red-700 font-medium border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
+        <i class="fa-solid fa-trash-can mr-1"></i> Xóa dữ liệu
+      </button>
+    </div>
+
+    <!-- Thống kê tổng quan -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 font-medium">Tổng Thu</p>
+        <p id="total-income" class="text-lg font-bold text-green-600">0 đ</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 font-medium">Tổng Chi</p>
+        <p id="total-expense" class="text-lg font-bold text-red-600">0 đ</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 font-medium">Số Dư Hiện Tại</p>
+        <p id="total-balance" class="text-lg font-bold text-blue-600">0 đ</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 font-medium">Tổng Khoản Nợ</p>
+        <p id="total-debt" class="text-lg font-bold text-orange-600">0 đ</p>
+      </div>
+    </div>
+
+    <!-- Thanh chuyển Tab Chức năng -->
+    <div class="flex space-x-2 border-b border-slate-200 pb-2">
+      <button onclick="switchTab('tab-transactions')" id="btn-tab-transactions" class="px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition">
+        <i class="fa-solid fa-receipt mr-1"></i> Thu Chi
+      </button>
+      <button onclick="switchTab('tab-debts')" id="btn-tab-debts" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition">
+        <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Quản Lý Nợ
+      </button>
+      <button onclick="switchTab('tab-reports')" id="btn-tab-reports" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition">
+        <i class="fa-solid fa-chart-pie mr-1"></i> Báo Cáo
+      </button>
+    </div>
+
+    <!-- TAB 1: GIAO DỊCH THU CHI -->
+    <div id="tab-transactions" class="space-y-6">
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Form Thu Chi -->
+        <form id="finance-form" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4 md:col-span-1">
+          <h2 class="text-base font-semibold border-b pb-2">Thêm Giao Dịch</h2>
+          <div>
+            <label class="block text-xs font-medium mb-1">Loại</label>
+            <select id="type" class="w-full border rounded-lg p-2 text-sm bg-slate-50">
+              <option value="Thu">Thu nhập (+)</option>
+              <option value="Chi">Chi tiêu (-)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1">Số tiền (VNĐ)</label>
+            <input type="number" id="amount" oninput="showTextMoney(this.value, 'money-text')" class="w-full border rounded-lg p-2 text-sm bg-slate-50" placeholder="0" required />
+            <p id="money-text" class="text-xs text-blue-600 italic mt-1 font-medium"></p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1">Ghi chú</label>
+            <input type="text" id="note" class="w-full border rounded-lg p-2 text-sm bg-slate-50" placeholder="VD: Lương tháng 8, Tiền ăn..." required />
+          </div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+            Lưu Giao Dịch
+          </button>
+        </form>
+
+        <!-- Bảng Danh Sách Thu Chi -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 md:col-span-2 space-y-3">
+          <h2 class="text-base font-semibold">Lịch Sử Giao Dịch</h2>
+          <div class="overflow-x-auto max-h-80">
+            <table class="w-full text-left text-sm">
+              <thead class="sticky top-0 bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="p-2">Ghi chú</th>
+                  <th class="p-2">Loại</th>
+                  <th class="p-2">Số tiền</th>
+                  <th class="p-2 text-center">Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="transaction-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: QUẢN LÝ NỢ -->
+    <div id="tab-debts" class="space-y-6 hidden">
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Form Nợ -->
+        <form id="debt-form" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4 md:col-span-1">
+          <h2 class="text-base font-semibold border-b pb-2">Thêm Khoản Nợ</h2>
+          <div>
+            <label class="block text-xs font-medium mb-1">Loại Nợ</label>
+            <select id="debt-type" class="w-full border rounded-lg p-2 text-sm bg-slate-50">
+              <option value="Đi vay">Đi vay (Phải trả)</option>
+              <option value="Cho vay">Cho vay (Cần thu)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1">Đối tác (Người vay/Cho vay)</label>
+            <input type="text" id="debt-person" class="w-full border rounded-lg p-2 text-sm bg-slate-50" placeholder="VD: Anh Nam, Ngân hàng..." required />
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1">Số tiền (VNĐ)</label>
+            <input type="number" id="debt-amount" class="w-full border rounded-lg p-2 text-sm bg-slate-50" placeholder="0" required />
+          </div>
+          <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+            Ghi Sổ Nợ
+          </button>
+        </form>
+
+        <!-- Bảng Danh Sách Nợ -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 md:col-span-2 space-y-3">
+          <h2 class="text-base font-semibold">Danh Sách Khoản Nợ</h2>
+          <div class="overflow-x-auto max-h-80">
+            <table class="w-full text-left text-sm">
+              <thead class="sticky top-0 bg-slate-50 text-slate-500 border-b">
+                <tr>
+                  <th class="p-2">Đối tác</th>
+                  <th class="p-2">Phân loại</th>
+                  <th class="p-2">Số tiền</th>
+                  <th class="p-2 text-center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="debt-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: BÁO CÁO THỐNG KÊ -->
+    <div id="tab-reports" class="space-y-6 hidden">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 max-w-md mx-auto">
+        <h2 class="text-base font-semibold mb-4 text-center">Biểu Đồ Phân Tích Thu / Chi</h2>
+        <div class="w-full h-64">
+          <canvas id="finance-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script>
+    // 1. Kho dữ liệu LocalStorage
+    let transactions = JSON.parse(localStorage.getItem('my_finance_transactions')) || [];
+    let debts = JSON.parse(localStorage.getItem('my_finance_debts')) || [];
+    let chartInstance = null;
+
+    // 2. Chuyển số tiền thành dạng viết tắt dễ đọc
+    function docSoThanhChu(so) {
+      if (!so || isNaN(so) || so <= 0) return '';
+      let num = Number(so);
+      if (num >= 1e9) return `(~ ${(num / 1e9).toFixed(2)} tỷ đồng)`;
+      if (num >= 1e6) return `(~ ${(num / 1e6).toFixed(1)} triệu đồng)`;
+      if (num >= 1e3) return `(~ ${(num / 1e3).toFixed(0)} nghìn đồng)`;
+      return `(${num.toLocaleString('vi-VN')} đồng)`;
+    }
+
+    function showTextMoney(val, targetId) {
+      const el = document.getElementById(targetId);
+      if (el) el.innerText = docSoThanhChu(val);
+    }
+
+    // 3. Điều hướng chuyển đổi Tab Chức năng
+    function switchTab(tabId) {
+      ['tab-transactions', 'tab-debts', 'tab-reports'].forEach(id => {
+        const tab = document.getElementById(id);
+        if (tab) tab.classList.add('hidden');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+
+      ['btn-tab-transactions', 'btn-tab-debts', 'btn-tab-reports'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.className = "px-4 py-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition";
+      });
+      
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) activeBtn.className = "px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition";
+
+      if (tabId === 'tab-reports') renderChart();
+    }
+
+    // 4. Cập nhật và hiển thị dữ liệu
+    function updateApp() {
+      let income = 0, expense = 0, totalDebt = 0;
+
+      // Hiển thị Thu Chi
+      const tRows = document.getElementById('transaction-rows');
+      tRows.innerHTML = '';
+      transactions.forEach((item, index) => {
+        const amt = Number(item.amount);
+        if (item.type === 'Thu') income += amt;
+        else expense += amt;
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="p-2 font-medium">${item.note}</td>
+          <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${item.type === 'Thu' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${item.type}</span></td>
+          <td class="p-2 font-bold ${item.type === 'Thu' ? 'text-green-600' : 'text-red-600'}">${amt.toLocaleString('vi-VN')} đ</td>
+          <td class="p-2 text-center">
+            <button onclick="deleteTransaction(${index})" class="text-red-500 hover:text-red-700 text-xs font-bold">Xóa</button>
+          </td>
+        `;
+        tRows.appendChild(tr);
+      });
+
+      // Hiển thị Sổ Nợ
+      const dRows = document.getElementById('debt-rows');
+      dRows.innerHTML = '';
+      debts.forEach((item, index) => {
+        const amt = Number(item.amount);
+        totalDebt += amt;
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="p-2 font-medium">${item.person}</td>
+          <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${item.type === 'Cho vay' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">${item.type}</span></td>
+          <td class="p-2 font-bold text-slate-700">${amt.toLocaleString('vi-VN')} đ</td>
+          <td class="p-2 text-center">
+            <button onclick="deleteDebt(${index})" class="text-red-500 hover:text-red-700 text-xs font-bold">Xóa</button>
+          </td>
+        `;
+        dRows.appendChild(tr);
+      });
+
+      // Thống kê tổng
+      document.getElementById('total-income').innerText = income.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('total-expense').innerText = expense.toLocaleString('vi-VN') + ' đ';
+      document.getElementById('total-balance').innerText = (income - expense).toLocaleString('vi-VN') + ' đ';
+      document.getElementById('total-debt').innerText = totalDebt.toLocaleString('vi-VN') + ' đ';
+
+      // Lưu bộ nhớ thiết bị
+      localStorage.setItem('my_finance_transactions', JSON.stringify(transactions));
+      localStorage.setItem('my_finance_debts', JSON.stringify(debts));
+    }
+
+    // 5. Vẽ Biểu Đồ Thống Kê (Chart.js)
+    function renderChart() {
+      let income = transactions.filter(t => t.type === 'Thu').reduce((a, b) => a + Number(b.amount), 0);
+      let expense = transactions.filter(t => t.type === 'Chi').reduce((a, b) => a + Number(b.amount), 0);
+
+      const ctx = document.getElementById('finance-chart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Tổng Thu', 'Tổng Chi'],
+          datasets: [{
+            data: [income, expense],
+            backgroundColor: ['#16a34a', '#dc2626']
+          }]
         },
-        document.getElementById("root")
-      );
-    </script>
-  </body>
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    // 6. Xử lý Thêm / Xóa dữ liệu
+    document.getElementById('finance-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = document.getElementById('amount').value;
+      const note = document.getElementById('note').value;
+
+      transactions.unshift({ type, amount, note });
+      updateApp();
+      e.target.reset();
+      document.getElementById('money-text').innerText = '';
+    });
+
+    document.getElementById('debt-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('debt-type').value;
+      const person = document.getElementById('debt-person').value;
+      const amount = document.getElementById('debt-amount').value;
+
+      debts.unshift({ type, person, amount });
+      updateApp();
+      e.target.reset();
+    });
+
+    function deleteTransaction(index) {
+      transactions.splice(index, 1);
+      updateApp();
+    }
+
+    function deleteDebt(index) {
+      debts.splice(index, 1);
+      updateApp();
+    }
+
+    function clearAllData() {
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu?')) {
+        transactions = [];
+        debts = [];
+        updateApp();
+      }
+    }
+
+    // Khởi tạo app
+    updateApp();
+  </script>
+</body>
 </html>
