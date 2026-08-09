@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    .sticky-header { position: sticky; top: 0px; z-index: 999; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
+    .sticky-header { position: sticky; top: 0px; z-index: 20; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
     .main-app-title { font-size: clamp(18px, 4vw, 28px); font-weight: 900; color: #0f172a; text-align: center; margin-bottom: 6px; }
     .summary-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
     .card-box { border-radius: 10px; padding: 8px 4px; text-align: center; box-shadow: 0px 2px 5px rgba(0,0,0,0.04); cursor: pointer; user-select: none; min-width: 0; }
@@ -144,7 +144,7 @@
       </div>
     </div>
 
-    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH CHỈ TÍNH RIÊNG CÁ NHÂN (ẨN HOÀN TOÀN DÀNH CHO TÀI KHOẢN PHỤ) -->
+    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH CHỈ TÍNH RIÊNG CÁ NHÂN -->
     <div id="sticky-summary" class="sticky-header">
       <div class="main-app-title">💰 Quản Lý Tài Chính Cá Nhân</div>
       <div class="summary-container">
@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- MENU THẺ NGANG (TÀI KHOẢN PHỤ SẼ TỰ ẨN NÚT THÊM GIAO DỊCH, NỢ, CHIA BILL) -->
+    <!-- MENU THẺ NGANG -->
     <div class="st-radio-container">
       <button type="button" onclick="switchTab('tab-overview')" id="btn-tab-overview" class="st-radio-btn active">🏠 Tổng Quan</button>
       <button type="button" onclick="switchTab('tab-work')" id="btn-tab-work" class="st-radio-btn">💼 Thu Chi Công Việc</button>
@@ -483,15 +483,14 @@
     </div>
   </div>
 
-  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) -->
-  <div id="settings-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-2xl w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
         <h4 class="text-base text-slate-900 flex items-center gap-2">⚙️ Bảng Cài Đặt & Phân Quyền Hệ Thống</h4>
         <button type="button" onclick="closeSettingsModal()" class="text-red-600 font-black text-sm">❌ Đóng</button>
       </div>
 
-      <!-- DÀNH RIÊNG CHO ADMIN -->
       <div id="admin-settings-content" class="space-y-4 hidden">
         <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl space-y-3">
           <h5 class="font-black text-amber-950 text-sm border-b border-amber-200 pb-1">👑 Tạo Tài Khoản Phụ (Phân Quyền Công Việc Đóng Góp Cho Admin)</h5>
@@ -529,7 +528,6 @@
         </div>
       </div>
 
-      <!-- DÀNH CHO USER BÌNH THƯỜNG -->
       <div id="user-settings-content" class="space-y-3 hidden">
         <p class="text-xs font-bold text-slate-700">Cài đặt tài khoản cá nhân của bạn:</p>
         <div class="bg-slate-50 p-3 rounded-lg border text-xs font-black space-y-1">
@@ -545,8 +543,8 @@
     </div>
   </div>
 
-  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
-  <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
       
@@ -578,8 +576,8 @@
     </div>
   </div>
 
-  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
-  <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2 no-print">
         <h4 class="text-base text-slate-900">🖨️ Xem Trước & In Phiếu / Bill</h4>
@@ -629,8 +627,8 @@
     </div>
   </div>
 
-  <!-- MODAL TRẢ BỚT NỢ -->
-  <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+  <!-- MODAL TRẢ BỚT NỢ - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-xs w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">💵 Trả Bớt Khoản Nợ</h4>
       <div>
@@ -975,7 +973,6 @@
       }
     }
 
-    // TẢI DỮ LIỆU ĐÁM MÂY TỰ ĐỘNG ĐỂ ĐỒNG BỘ TỨC THỜI GIỮA CÁC MÁY
     async function fetchCloudData() {
       if (!currentUser) return;
       try {
@@ -997,7 +994,6 @@
       }
     }
 
-    // ĐỒNG BỘ TỰ ĐỘNG MỖI 4 GIÂY VA KHI CHUYỂN CỬA SỔ
     setInterval(fetchCloudData, 4000);
     window.addEventListener('focus', fetchCloudData);
 
@@ -1122,19 +1118,16 @@
         roleBadge.innerText = '👤 THÀNH VIÊN';
       }
 
-      // 1. TÀI KHOẢN PHỤ ẨN BẢNG THỐNG KÊ CÁ NHÂN
       const stickySummary = document.getElementById('sticky-summary');
       if (stickySummary) {
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
-      // 2. TÀI KHOẢN PHỤ KHÔNG ĐƯỢC TẠO MÃ CÔNG VIỆC MỚI (ẨN NÚT TẠO MÃ)
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
         createWorkBtnWrapper.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
-      // 3. TÀI KHOẢN PHỤ BỊ ẨN CÁC THẺ: Thêm Giao Dịch, Quản Lý Nợ, Chia Bill
       const btnTabAdd = document.getElementById('btn-tab-add');
       const btnTabDebts = document.getElementById('btn-tab-debts');
       const btnTabBill = document.getElementById('btn-tab-bill');
@@ -2313,7 +2306,6 @@
       renderReports();
     }
 
-    // RENDER BÁO CÁO GIỚI HẠN DÀNH RIÊNG CHO TÀI KHOẢN PHỤ
     function renderReports() {
       const { myTrans, myDebts } = getUserData();
       const type = document.getElementById('report-filter-type').value;
@@ -2321,7 +2313,6 @@
       
       const isSub = !!currentUser.isSubAccount;
 
-      // Nếu là tài khoản phụ, khóa cứng nguồn tiền ở 'Công việc'
       if (isSub && scopeFilterEl) {
         scopeFilterEl.value = 'Công việc';
         document.getElementById('report-scope-filter-wrapper').classList.add('hidden');
