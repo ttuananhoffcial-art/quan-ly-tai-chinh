@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quản Lý Tài Chính Cá Nhân</title>
+  <title>Quản Lý Tài Chính Cá Nhân & Công Việc</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
@@ -19,39 +19,49 @@
     .card-title { font-size: clamp(9px, 2.2vw, 13px); font-weight: 900; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-amount { font-size: clamp(11px, 3.2vw, 22px); font-weight: 900; margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Streamlit-style Radio Tab Menu */
     .st-radio-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; justify-content: center; background-color: #f8fafc; padding: 8px; border-radius: 12px; border: 1px solid #e2e8f0; }
     .st-radio-btn { background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; margin: 0; box-shadow: 0px 2px 4px rgba(0,0,0,0.03); cursor: pointer; font-size: 15px; font-weight: 800; color: #0f172a; transition: all 0.15s; }
     .st-radio-btn:hover { border-color: #2563eb; background-color: #eff6ff; }
     .st-radio-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
 
-    /* Streamlit-style Dataframe */
     .st-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
     .st-table th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 8px; font-weight: 900; color: #0f172a; }
     .st-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 700; color: #000000; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-bill-container, #printable-bill-container * { visibility: visible; }
+      #printable-bill-container { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-white text-black p-2 md:p-4 min-h-screen pb-12">
 
-  <!-- ==================== MAN HINH DANG NHAP / DANG KY ==================== -->
+  <!-- MAN HINH DANG NHAP / DANG KY -->
   <div id="auth-screen" class="max-w-md mx-auto my-10 p-6 bg-white rounded-xl border-2 border-slate-300 shadow-lg space-y-6">
-    <h1 class="text-2xl font-black text-center text-slate-900">💰 Quản Lý Tài Chính Cá Nhân</h1>
+    <h1 class="text-2xl font-black text-center text-slate-900">💰 Quản Lý Tài Chính Cá Nhân & Công Việc</h1>
     
     <div class="flex border-b-2 border-slate-200">
-      <button onclick="setAuthTab('login')" id="tab-login-btn" class="w-1/3 py-2 font-black text-sm border-b-4 border-blue-600 text-blue-600">🔐 Đăng Nhập</button>
-      <button onclick="setAuthTab('register')" id="tab-reg-btn" class="w-1/3 py-2 font-black text-sm text-slate-500">📝 Đăng Ký</button>
-      <button onclick="setAuthTab('forgot')" id="tab-forgot-btn" class="w-1/3 py-2 font-black text-sm text-slate-500">🔑 Quên MK</button>
+      <button type="button" onclick="setAuthTab('login')" id="tab-login-btn" class="w-1/3 py-2 font-black text-sm border-b-4 border-blue-600 text-blue-600">🔐 Đăng Nhập</button>
+      <button type="button" onclick="setAuthTab('register')" id="tab-reg-btn" class="w-1/3 py-2 font-black text-sm text-slate-500">📝 Đăng Ký</button>
+      <button type="button" onclick="setAuthTab('forgot')" id="tab-forgot-btn" class="w-1/3 py-2 font-black text-sm text-slate-500">🔑 Quên MK</button>
     </div>
 
     <!-- Form Đăng Nhập -->
     <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
       <div>
         <label class="block text-xs font-black mb-1">Tên tài khoản hoặc SĐT</label>
-        <input type="text" id="login-acc" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <input type="text" id="login-acc" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base bg-white" required />
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Mật khẩu</label>
-        <input type="password" id="login-pwd" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <div class="relative">
+          <input type="password" id="login-pwd" class="w-full border-2 border-slate-300 rounded-lg p-2.5 pr-10 font-bold text-base bg-white" required />
+          <button type="button" onclick="togglePassword('login-pwd', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">ĐĂNG NHẬP NGAY</button>
     </form>
@@ -60,19 +70,29 @@
     <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
       <div>
         <label class="block text-xs font-black mb-1">Số điện thoại</label>
-        <input type="text" id="reg-phone" placeholder="vd: 0912345678" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <input type="text" id="reg-phone" placeholder="vd: 0912345678" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base bg-white" required />
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Tên tài khoản</label>
-        <input type="text" id="reg-user" placeholder="vd: chuong123" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <input type="text" id="reg-user" placeholder="vd: chuong123" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base bg-white" required />
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Mật khẩu</label>
-        <input type="password" id="reg-pass" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <div class="relative">
+          <input type="password" id="reg-pass" class="w-full border-2 border-slate-300 rounded-lg p-2.5 pr-10 font-bold text-base bg-white" required />
+          <button type="button" onclick="togglePassword('reg-pass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Nhập lại mật khẩu</label>
-        <input type="password" id="reg-pass-confirm" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <div class="relative">
+          <input type="password" id="reg-pass-confirm" class="w-full border-2 border-slate-300 rounded-lg p-2.5 pr-10 font-bold text-base bg-white" required />
+          <button type="button" onclick="togglePassword('reg-pass-confirm', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">TẠO TÀI KHOẢN MỚI</button>
     </form>
@@ -81,45 +101,59 @@
     <form id="form-forgot" onsubmit="handleForgot(event)" class="space-y-4 hidden">
       <div>
         <label class="block text-xs font-black mb-1">Nhập Số Điện Thoại</label>
-        <input type="text" id="forgot-phone" placeholder="vd: 0912345678" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <input type="text" id="forgot-phone" placeholder="vd: 0912345678" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base bg-white" required />
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Mật khẩu mới</label>
-        <input type="password" id="forgot-pass" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <div class="relative">
+          <input type="password" id="forgot-pass" class="w-full border-2 border-slate-300 rounded-lg p-2.5 pr-10 font-bold text-base bg-white" required />
+          <button type="button" onclick="togglePassword('forgot-pass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <div>
         <label class="block text-xs font-black mb-1">Nhập lại mật khẩu mới</label>
-        <input type="password" id="forgot-pass-confirm" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-base" required />
+        <div class="relative">
+          <input type="password" id="forgot-pass-confirm" class="w-full border-2 border-slate-300 rounded-lg p-2.5 pr-10 font-bold text-base bg-white" required />
+          <button type="button" onclick="togglePassword('forgot-pass-confirm', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">✅ ĐỔI MẬT KHẨU</button>
     </form>
   </div>
 
-
-  <!-- ==================== MAN HINH APPLICATON CHINH ==================== -->
+  <!-- MAN HINH APPLICATION CHINH -->
   <div id="main-screen" class="hidden max-w-5xl mx-auto space-y-4">
-
     <!-- USER BAR -->
     <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-300 text-sm font-black">
       <div>
-        👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-700"></span> | 
+        👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-700"></span> 
+        <span id="user-role-badge" class="ml-1 text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded border border-amber-300 font-bold"></span> | 
         📞 <b>SĐT:</b> <span id="user-display-phone" class="text-slate-700"></span>
       </div>
-      <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-black">
-        🚪 Đăng Xuất
-      </button>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="openSettingsModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 rounded-lg text-xs font-black transition">
+          ⚙️ Cài Đặt
+        </button>
+        <button type="button" onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-black transition">
+          🚪 Đăng Xuất
+        </button>
+      </div>
     </div>
 
-    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH STICKY HEADER (NHẤP 3 LẦN ĐỂ MỞ BẢNG BÍ MẬT) -->
+    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH CHỈ TÍNH RIÊNG CÁ NHÂN (ẨN HOÀN TOÀN DÀNH CHO TÀI KHOẢN PHỤ) -->
     <div id="sticky-summary" class="sticky-header">
       <div class="main-app-title">💰 Quản Lý Tài Chính Cá Nhân</div>
       <div class="summary-container">
         <div class="card-box card-income" onclick="handleCardClick()">
-          <p class="card-title" style="color: #15803d;">💵 THU NHẬP</p>
+          <p class="card-title" style="color: #15803d;">💵 THU NHẬP (CÁ NHÂN)</p>
           <p id="card-income" class="card-amount" style="color: #166534;">0 đ</p>
         </div>
         <div class="card-box card-expense" onclick="handleCardClick()">
-          <p class="card-title" style="color: #b91c1c;">💸 CHI TIÊU</p>
+          <p class="card-title" style="color: #b91c1c;">💸 CHI TIÊU (CÁ NHÂN)</p>
           <p id="card-expense" class="card-amount" style="color: #991b1b;">0 đ</p>
         </div>
         <div class="card-box card-debt" onclick="handleCardClick()">
@@ -127,42 +161,43 @@
           <p id="card-debt" class="card-amount" style="color: #9a3412;">0 đ</p>
         </div>
         <div class="card-box card-balance" onclick="handleCardClick()">
-          <p class="card-title" style="color: #1d4ed8;">💳 TỔNG SỐ DƯ</p>
+          <p class="card-title" style="color: #1d4ed8;">💳 SỐ DƯ CÁ NHÂN</p>
           <p id="card-balance" class="card-amount" style="color: #1e40af;">0 đ</p>
         </div>
       </div>
     </div>
 
-    <!-- BẢNG ĐIỀU CHỈNH BÍ MẬT (TRIPLE CLICK PANEL) -->
+    <!-- BẢNG ĐIỀU CHỈNH BÍ MẬT -->
     <div id="secret-panel" class="hidden bg-yellow-50 border-2 border-yellow-400 p-4 rounded-xl shadow-md space-y-4">
       <div class="flex justify-between items-center border-b-2 border-yellow-300 pb-2">
         <h3 class="font-black text-yellow-900 text-base">⚙️ Bảng Điều Chỉnh Số Tiền Chính Xác & Reset Dữ Liệu</h3>
-        <button onclick="toggleSecretPanel(false)" class="text-red-600 font-black text-sm">❌ Đóng Bảng</button>
+        <button type="button" onclick="toggleSecretPanel(false)" class="text-red-600 font-black text-sm">❌ Đóng Bảng</button>
       </div>
 
       <div class="space-y-3">
-        <p class="text-xs font-black text-slate-800">💡 Cài đặt Tổng Số Dư Còn Lại chính xác theo thực tế (VNĐ):</p>
+        <p class="text-xs font-black text-slate-800">💡 Cài đặt Số Dư Cá Nhân Còn Lại chính xác theo thực tế (VNĐ):</p>
         <div class="flex gap-2">
-          <input type="number" id="adj-balance-input" oninput="previewMoneyWords(this.value, 'adj-money-words')" placeholder="Gõ số tiền... (vd: 50000000)" class="border-2 border-blue-500 rounded-lg p-2 text-base font-black flex-1 bg-white" />
-          <button onclick="saveAdjustBalance()" class="bg-blue-600 text-white font-black px-4 py-2 rounded-lg text-sm hover:bg-blue-700">LƯU ĐIỀU CHỈNH SỐ DƯ</button>
+          <input type="number" id="adj-balance-input" oninput="previewMoneyWords(this.value, 'adj-money-words')" placeholder="Gõ số tiền..." class="border-2 border-blue-500 rounded-lg p-2 text-base font-black flex-1 bg-white" />
+          <button type="button" onclick="saveAdjustBalance()" class="bg-blue-600 text-white font-black px-4 py-2 rounded-lg text-sm hover:bg-blue-700">LƯU ĐIỀU CHỈNH SỐ DƯ</button>
         </div>
         <p id="adj-money-words" class="text-xs text-blue-800 font-black italic"></p>
 
         <div class="flex flex-wrap gap-2 pt-2 border-t border-yellow-200">
-          <button onclick="clearAllTransactions()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🗑️ XÓA TOÀN BỘ LỊCH SỬ CHI TIÊU</button>
-          <button onclick="clearAllDebts()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🗑️ XÓA TOÀN BỘ KHOẢN NỢ</button>
-          <button onclick="resetAppZero()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🔥 RESET TOÀN BỘ PHẦN MỀM VỀ 0</button>
+          <button type="button" onclick="clearAllTransactions()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🗑️ XÓA TOÀN BỘ LỊCH SỬ CHI TIÊU</button>
+          <button type="button" onclick="clearAllDebts()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🗑️ XÓA TOÀN BỘ KHOẢN NỢ</button>
+          <button type="button" onclick="resetAppZero()" class="bg-blue-600 text-white font-black p-2.5 rounded-lg text-xs flex-1 hover:bg-blue-700">🔥 RESET TOÀN BỘ PHẦN MỀM VỀ 0</button>
         </div>
       </div>
     </div>
 
-    <!-- MENU THẺ NGANG SỐ 8 -->
+    <!-- MENU THẺ NGANG (TÀI KHOẢN PHỤ SẼ TỰ ẨN NÚT THÊM GIAO DỊCH, NỢ, CHIA BILL) -->
     <div class="st-radio-container">
-      <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="st-radio-btn active">🏠 Tổng Quan</button>
-      <button onclick="switchTab('tab-add')" id="btn-tab-add" class="st-radio-btn">➕ Thêm Giao Dịch</button>
-      <button onclick="switchTab('tab-debts')" id="btn-tab-debts" class="st-radio-btn">🤝 Quản Lý Nợ</button>
-      <button onclick="switchTab('tab-bill')" id="btn-tab-bill" class="st-radio-btn">🍕 Chia Bill</button>
-      <button onclick="switchTab('tab-reports')" id="btn-tab-reports" class="st-radio-btn">📊 Báo Cáo Chi Tiết</button>
+      <button type="button" onclick="switchTab('tab-overview')" id="btn-tab-overview" class="st-radio-btn active">🏠 Tổng Quan</button>
+      <button type="button" onclick="switchTab('tab-work')" id="btn-tab-work" class="st-radio-btn">💼 Thu Chi Công Việc</button>
+      <button type="button" onclick="switchTab('tab-add')" id="btn-tab-add" class="st-radio-btn">➕ Thêm Giao Dịch</button>
+      <button type="button" onclick="switchTab('tab-debts')" id="btn-tab-debts" class="st-radio-btn">🤝 Quản Lý Nợ</button>
+      <button type="button" onclick="switchTab('tab-bill')" id="btn-tab-bill" class="st-radio-btn">🍕 Chia Bill</button>
+      <button type="button" onclick="switchTab('tab-reports')" id="btn-tab-reports" class="st-radio-btn">📊 Báo Cáo Chi Tiết</button>
     </div>
 
     <hr class="border-slate-300 my-2" />
@@ -173,22 +208,122 @@
       <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
         <table class="st-table">
           <thead>
-            <tr><th>Ngày</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Ghi Chú</th></tr>
+            <tr><th>Ngày</th><th>Phân Loại</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Ghi Chú</th><th>Thao Tác</th></tr>
           </thead>
           <tbody id="table-recent-body"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 2: THÊM GIAO DỊCH -->
+    <!-- TAB: THU CHI CÔNG VIỆC -->
+    <div id="tab-work" class="hidden space-y-4">
+      <div id="create-work-btn-wrapper" class="flex justify-between items-center">
+        <button type="button" onclick="toggleWorkForm()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-sm shadow flex items-center gap-2 transition">
+          <span id="work-form-icon">➕</span> <span id="work-form-text">Tạo Mã Công Việc Mới</span>
+        </button>
+      </div>
+
+      <!-- KHUNG TẠO / SỬA MÃ CÔNG VIỆC -->
+      <div id="work-create-form-box" class="hidden bg-slate-50 border-2 border-slate-300 p-4 rounded-xl space-y-4 shadow-sm transition-all">
+        <h3 id="work-form-heading" class="font-black text-base text-slate-900 border-b pb-2">💼 Tạo / Chỉnh Sửa Mã Thu Chi Công Việc</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-black mb-1">📌 Tên Công Việc / Dự Án</label>
+            <input type="text" id="work-title-input" placeholder="vd: Sửa chữa nhà A, Hợp đồng B..." class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-sm bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-black mb-1">🗓️ Ngày Tạo Mã</label>
+            <input type="date" id="work-created-date" class="w-full border-2 border-slate-300 rounded-lg p-2.5 font-bold text-sm bg-white" />
+          </div>
+        </div>
+
+        <div class="space-y-2 bg-purple-50 border-2 border-purple-300 p-3 rounded-xl">
+          <p class="text-xs font-black text-purple-900">🏷️ CÀI ĐẶT CÁC NỘI DUNG / HẠNG MỤC CÀI SẴN KÈM ĐƠN GIÁ (Tùy chọn):</p>
+          <div class="flex flex-wrap gap-2">
+            <input type="text" id="preset-name-input" placeholder="Tên nội dung (vd: HLV Cao Cấp)..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black flex-1 bg-white" />
+            <input type="text" id="preset-price-input" oninput="formatMoneyInput(this, 'preset', 'price')" placeholder="Đơn giá (vd: 3.500.000)..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black w-44 bg-white" />
+            <button type="button" onclick="addPresetItem()" class="bg-purple-600 hover:bg-purple-700 text-white font-black px-3 py-2 rounded-lg text-xs shadow">➕ Thêm hạng mục</button>
+          </div>
+          <div id="preset-items-list" class="space-y-1.5 pt-1"></div>
+        </div>
+
+        <div class="border-2 border-blue-200 bg-blue-50/50 p-3 rounded-lg space-y-3">
+          <p class="text-xs font-black text-blue-900">⚙️ TÍCH CHỌN CÁC Ô NHẬP LIỆU BỔ SUNG SẼ HIỆN KHI TẠO GIAO DỊCH:</p>
+          
+          <div class="space-y-1 bg-white p-2.5 rounded-lg border">
+            <p class="text-xs font-black text-green-700">💵 Phần THU NHẬP chọn trường:</p>
+            <div class="flex flex-wrap gap-3 text-xs font-bold">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-thu-nguoi" checked class="accent-blue-600" /> Người nộp tiền</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-thu-madv" checked class="accent-blue-600" /> Mã đơn vị</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-thu-sotien" checked class="accent-blue-600" /> Số tiền nộp</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-thu-soluong" checked class="accent-blue-600" /> Số lượng</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-thu-ngay" checked class="accent-blue-600" /> Ngày tạo</label>
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+              <input type="text" id="custom-thu-input" placeholder="Tên trường tùy chỉnh..." class="border rounded p-1 text-xs font-bold flex-1" />
+              <button type="button" onclick="addCustomField('thu')" class="bg-green-600 text-white px-2.5 py-1 rounded text-xs font-black hover:bg-green-700">➕ Thêm trường Thu</button>
+            </div>
+            <div id="custom-thu-list" class="flex flex-wrap gap-1 pt-1"></div>
+          </div>
+
+          <div class="space-y-1 bg-white p-2.5 rounded-lg border">
+            <p class="text-xs font-black text-red-700">💸 Phần CHI TIÊU chọn trường:</p>
+            <div class="flex flex-wrap gap-3 text-xs font-bold">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-chi-nguoi" checked class="accent-blue-600" /> Người chi</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-chi-noidung" checked class="accent-blue-600" /> Nội dung chi</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-chi-sotien" checked class="accent-blue-600" /> Số tiền</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-chi-ngay" checked class="accent-blue-600" /> Ngày chi</label>
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+              <input type="text" id="custom-chi-input" placeholder="Tên trường tùy chỉnh..." class="border rounded p-1 text-xs font-bold flex-1" />
+              <button type="button" onclick="addCustomField('chi')" class="bg-red-600 text-white px-2.5 py-1 rounded text-xs font-black hover:bg-red-700">➕ Thêm trường Chi</button>
+            </div>
+            <div id="custom-chi-list" class="flex flex-wrap gap-1 pt-1"></div>
+          </div>
+
+          <div class="space-y-1 bg-white p-2.5 rounded-lg border">
+            <p class="text-xs font-black text-orange-700">🤝 Phần GHI NỢ chọn trường:</p>
+            <div class="flex flex-wrap gap-3 text-xs font-bold">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-no-nguoi" checked class="accent-blue-600" /> Người nợ</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-no-noidung" checked class="accent-blue-600" /> Nội dung nợ</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-no-sotien" checked class="accent-blue-600" /> Số tiền nợ</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chk-no-ngay" checked class="accent-blue-600" /> Ngày nợ</label>
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+              <input type="text" id="custom-no-input" placeholder="Tên trường tùy chỉnh..." class="border rounded p-1 text-xs font-bold flex-1" />
+              <button type="button" onclick="addCustomField('no')" class="bg-orange-600 text-white px-2.5 py-1 rounded text-xs font-black hover:bg-orange-700">➕ Thêm trường Nợ</button>
+            </div>
+            <div id="custom-no-list" class="flex flex-wrap gap-1 pt-1"></div>
+          </div>
+        </div>
+
+        <button type="button" id="btn-save-work-proj" onclick="createWorkProject()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-5 py-3 rounded-lg text-sm shadow transition w-full md:w-auto">
+          ➕ TẠO MÃ CÔNG VIỆC VỚI CÁC Ô ĐÃ CHỌN
+        </button>
+      </div>
+
+      <!-- DANH SÁCH CÁC CÔNG VIỆC ĐÃ TẠO -->
+      <div class="space-y-3">
+        <h4 class="font-black text-base text-slate-900">📂 Danh Sách Mã Công Việc Đã Tạo</h4>
+        <div id="work-projects-list" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: THÊM GIAO DỊCH CHUNG -->
     <div id="tab-add" class="hidden space-y-4 max-w-lg mx-auto">
       <h3 class="font-black text-lg text-slate-900">➕ Nhập Giao Dịch / Khoản Nợ Mới</h3>
-      
+      <div>
+        <label class="block text-sm font-black mb-1">🎯 Nguồn tiền thu / chi</label>
+        <select id="trans-scope" class="w-full border-2 border-blue-500 rounded-lg p-2 font-black text-base bg-blue-50 text-blue-900">
+          <option value="Cá nhân">👤 Cá nhân</option>
+          <option value="Công việc">💼 Công việc / Dự án</option>
+        </select>
+      </div>
       <div>
         <label class="block text-sm font-black mb-1">🗓️ Ngày thực hiện</label>
         <input type="date" id="trans-date" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
       </div>
-
       <div>
         <label class="block text-sm font-black mb-1">Loại giao dịch</label>
         <select id="trans-type" onchange="toggleTransFields()" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white">
@@ -198,18 +333,15 @@
           <option value="Đi vay (Mình nợ người khác)">Đi vay (Mình nợ người khác)</option>
         </select>
       </div>
-
       <div id="field-person" class="hidden space-y-1">
         <label class="block text-sm font-black mb-1">👤 Tên đối phương</label>
         <select id="select-person" onchange="handlePersonSelect()" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white"></select>
         <input type="text" id="input-person-new" placeholder="Nhập tên người mới..." class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white hidden" />
       </div>
-
       <div id="field-category">
-        <label class="block text-sm font-black mb-1">Danh mục (vd: Cafe, Ăn uống, Lương...)</label>
+        <label class="block text-sm font-black mb-1">Danh mục (vd: Vật tư, Cafe, Lương...)</label>
         <input type="text" id="trans-category" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
       </div>
-
       <div>
         <label class="block text-sm font-black mb-1">Số tiền (VNĐ)</label>
         <input type="number" id="trans-amount" oninput="previewMoneyWords(this.value, 'add-money-preview')" placeholder="Gõ số tiền..." class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
@@ -218,13 +350,11 @@
           🔤 <b>Bằng chữ:</b> <i id="add-money-preview"></i>
         </div>
       </div>
-
       <div>
         <label class="block text-sm font-black mb-1">Ghi chú</label>
         <textarea id="trans-note" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" rows="2"></textarea>
       </div>
-
-      <button onclick="saveTransaction()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU GIAO DỊCH</button>
+      <button type="button" onclick="saveTransaction()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU GIAO DỊCH</button>
     </div>
 
     <!-- TAB 3: QUẢN LÝ NỢ -->
@@ -236,17 +366,14 @@
     <!-- TAB 4: CHIA BILL -->
     <div id="tab-bill" class="hidden space-y-4 max-w-lg mx-auto">
       <h3 class="font-black text-lg text-slate-900">🍕 Chia Tiền Hóa Đơn Mới</h3>
-      
       <div>
         <label class="block text-sm font-black mb-1">🗓️ Ngày ăn uống / chia bill</label>
         <input type="date" id="bill-date" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
       </div>
-
       <div>
         <label class="block text-sm font-black mb-1">Tên bữa ăn / Hóa đơn (vd: Lẩu Kichi, Thuê sân bóng...)</label>
         <input type="text" id="bill-title" class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
       </div>
-
       <div>
         <label class="block text-sm font-black mb-1">Tổng số tiền hóa đơn (VNĐ)</label>
         <input type="number" id="bill-amount" oninput="calculateBill()" placeholder="Gõ số tiền..." class="w-full border-2 border-slate-300 rounded-lg p-2 font-black text-base bg-white" />
@@ -256,8 +383,8 @@
         <div class="flex justify-between items-center">
           <label class="block text-sm font-black text-slate-900">👥 Danh Sách Những Người Nợ Bạn</label>
           <div class="space-x-1">
-            <button onclick="addBillMember()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-black hover:bg-blue-700">➕ Thêm người nợ</button>
-            <button onclick="removeBillMember()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-black hover:bg-blue-700">➖ Xóa bớt</button>
+            <button type="button" onclick="addBillMember()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-black hover:bg-blue-700">➕ Thêm người nợ</button>
+            <button type="button" onclick="removeBillMember()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-black hover:bg-blue-700">➖ Xóa bớt</button>
           </div>
         </div>
         <p class="text-xs text-slate-600 font-bold">Mặc định hóa đơn đã bao gồm <b>Bạn</b>. Bấm nút dưới để thêm từng người nợ:</p>
@@ -275,24 +402,34 @@
         <label for="bill-auto-debt" class="text-xs font-black text-slate-900">🤝 Tự động lưu phần của bạn vào 'Chi tiêu' và ghi nợ cho những người trên</label>
       </div>
 
-      <button onclick="saveBill()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU & TỰ ĐỘNG PHÂN CHIA</button>
+      <button type="button" onclick="saveBill()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU & TỰ ĐỘNG PHÂN CHIA</button>
     </div>
 
-    <!-- TAB 5: BÁO CÁO CHI TIẾT -->
+    <!-- TAB 5: BÁO CÁO CHI TIẾT TÁCH BIỆT CÁ NHÂN VÀ CÔNG VIỆC -->
     <div id="tab-reports" class="hidden space-y-4">
-      <h3 class="font-black text-lg text-slate-900">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền & Nợ</h3>
+      <h3 class="font-black text-lg text-slate-900">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền</h3>
       
-      <!-- BỘ LỌC THỜI GIAN THEO 5 MỐC -->
       <div class="bg-slate-50 p-3 rounded-lg border-2 border-slate-300 space-y-3">
-        <div class="flex flex-wrap gap-2 items-center text-sm font-black">
-          <span>🔍 Chọn khoảng thời gian muốn lọc:</span>
-          <select id="report-filter-type" onchange="handleReportFilterChange()" class="border-2 border-slate-300 rounded-lg p-2 font-black bg-white">
-            <option value="ALL">🌐 Tất cả thời gian</option>
-            <option value="DAY">📆 Theo Ngày</option>
-            <option value="WEEK">🗓️ Theo Tuần (Từ T2 -> CN)</option>
-            <option value="MONTH">📅 Theo Tháng</option>
-            <option value="YEAR">📅 Theo Năm</option>
-          </select>
+        <div class="flex flex-wrap gap-3 items-center text-sm font-black">
+          <div id="report-scope-filter-wrapper">
+            <label class="block text-xs font-black text-blue-900 mb-1">🎯 Nguồn tiền (Phân loại):</label>
+            <select id="report-scope-filter" onchange="renderReports()" class="border-2 border-blue-500 rounded-lg p-2 font-black bg-blue-50 text-blue-900">
+              <option value="ALL">🌐 Tất cả (Cá nhân & Công việc)</option>
+              <option value="Cá nhân">👤 Chỉ CÁ NHÂN</option>
+              <option value="Công việc">💼 Chỉ CÔNG VIỆC</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-slate-700 mb-1">🗓️ Khoảng thời gian:</label>
+            <select id="report-filter-type" onchange="handleReportFilterChange()" class="border-2 border-slate-300 rounded-lg p-2 font-black bg-white">
+              <option value="ALL">🌐 Tất cả thời gian</option>
+              <option value="DAY">📆 Theo Ngày</option>
+              <option value="WEEK">🗓️ Theo Tuần (Từ T2 -> CN)</option>
+              <option value="MONTH">📅 Theo Tháng</option>
+              <option value="YEAR">📅 Theo Năm</option>
+            </select>
+          </div>
         </div>
 
         <div id="filter-controls-day" class="hidden">
@@ -333,16 +470,163 @@
       <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
         <table class="st-table">
           <thead>
-            <tr><th>ID</th><th>Ngày</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Ghi Chú</th></tr>
+            <tr><th>ID</th><th>Ngày</th><th>Phân Loại</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Ghi Chú / Chi Tiết</th><th>Thao Tác</th></tr>
           </thead>
           <tbody id="table-reports-trans-body"></tbody>
         </table>
       </div>
 
-      <h4 class="font-black text-base pt-4 text-slate-900">💳 Danh Sách Khoản Nợ</h4>
-      <div id="reports-debt-accordion-list" class="space-y-3"></div>
+      <div id="report-debt-section-wrapper">
+        <h4 class="font-black text-base pt-4 text-slate-900">💳 Danh Sách Khoản Nợ</h4>
+        <div id="reports-debt-accordion-list" class="space-y-3"></div>
+      </div>
     </div>
+  </div>
 
+  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl p-5 max-w-2xl w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h4 class="text-base text-slate-900 flex items-center gap-2">⚙️ Bảng Cài Đặt & Phân Quyền Hệ Thống</h4>
+        <button type="button" onclick="closeSettingsModal()" class="text-red-600 font-black text-sm">❌ Đóng</button>
+      </div>
+
+      <!-- DÀNH RIÊNG CHO ADMIN -->
+      <div id="admin-settings-content" class="space-y-4 hidden">
+        <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl space-y-3">
+          <h5 class="font-black text-amber-950 text-sm border-b border-amber-200 pb-1">👑 Tạo Tài Khoản Phụ (Phân Quyền Công Việc Đóng Góp Cho Admin)</h5>
+          <p class="text-xs text-slate-600 font-bold">Tài khoản phụ sẽ được tích chọn các Mã công việc cụ thể. Tiền thu chi sẽ được cộng dồn chung với Admin, nhưng KHÔNG thấy dữ liệu cá nhân của Admin!</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input type="text" id="sub-phone-input" placeholder="Số điện thoại..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+            <input type="text" id="sub-user-input" placeholder="Tên tài khoản phụ..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+            <input type="password" id="sub-pass-input" placeholder="Mật khẩu..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-black text-amber-950">⚡ Tích chọn Quyền thao tác cho Tài khoản phụ:</label>
+            <div class="flex flex-wrap gap-3 text-xs font-bold bg-white p-2.5 rounded-lg border border-slate-300">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-thu" checked class="accent-amber-600" /> 💵 Tạo Thu</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-chi" checked class="accent-amber-600" /> 💸 Tạo Chi</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-no" checked class="accent-amber-600" /> 🤝 Tạo Nợ</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-in" checked class="accent-amber-600" /> 🖨️ In Bill</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-sua" checked class="accent-amber-600" /> ✏️ Sửa</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-xoa" checked class="accent-amber-600" /> 🗑️ Xóa</label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-amber-900 mb-1">📌 Tích chọn Mã công việc được phép hoạt động:</label>
+            <div id="sub-allowed-projects-boxes" class="flex flex-wrap gap-2 text-xs font-bold bg-white p-2.5 rounded-lg border border-slate-300"></div>
+          </div>
+
+          <button type="button" onclick="createSubAccount()" class="bg-amber-600 hover:bg-amber-700 text-white font-black px-4 py-2 rounded-lg text-xs shadow">➕ TẠO TÀI KHOẢN PHỤ</button>
+        </div>
+
+        <div class="space-y-2">
+          <h5 class="font-black text-slate-900 text-sm">👥 Danh Sách Tất Cả Tài Khoản Trong Hệ Thống</h5>
+          <div id="all-users-admin-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- DÀNH CHO USER BÌNH THƯỜNG -->
+      <div id="user-settings-content" class="space-y-3 hidden">
+        <p class="text-xs font-bold text-slate-700">Cài đặt tài khoản cá nhân của bạn:</p>
+        <div class="bg-slate-50 p-3 rounded-lg border text-xs font-black space-y-1">
+          <p>👤 <b>Tên tài khoản:</b> <span id="settings-my-user"></span></p>
+          <p>📞 <b>Số điện thoại:</b> <span id="settings-my-phone"></span></p>
+          <p>🛡️ <b>Loại tài khoản:</b> <span id="settings-my-role" class="text-blue-700"></span></p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t">
+        <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black text-xs">Đóng Bảng Cài Đặt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
+  <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
+      <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
+      
+      <div>
+        <label class="block text-xs text-slate-700 mb-1">Số tiền (VNĐ):</label>
+        <input type="text" id="edit-trans-amount" oninput="formatMoneyInput(this, 'edit', 'money')" class="w-full border-2 border-blue-500 rounded-lg p-2 text-sm font-black bg-white" />
+        <p id="edit-trans-words" class="text-xs text-blue-800 font-bold italic mt-1"></p>
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-700 mb-1">Ngày thực hiện:</label>
+        <input type="date" id="edit-trans-date" class="w-full border-2 border-slate-300 rounded-lg p-2 text-sm font-black bg-white" />
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-700 mb-1">Danh mục / Công việc:</label>
+        <input type="text" id="edit-trans-category" class="w-full border-2 border-slate-300 rounded-lg p-2 text-sm font-black bg-white" />
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-700 mb-1">Ghi chú nội dung:</label>
+        <textarea id="edit-trans-note" rows="3" class="w-full border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 text-xs">
+        <button type="button" onclick="closeEditTransModal()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black">Hủy</button>
+        <button type="button" onclick="saveEditedTransaction()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-black">LƯU THAY ĐỔI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
+  <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2 no-print">
+        <h4 class="text-base text-slate-900">🖨️ Xem Trước & In Phiếu / Bill</h4>
+        <button type="button" onclick="closePrintModal()" class="text-red-600 font-black text-sm">❌ Đóng</button>
+      </div>
+
+      <div id="printable-bill-container" class="border-2 border-slate-800 p-6 bg-white rounded-lg text-slate-900 space-y-4">
+        <div class="text-center border-b-2 border-slate-800 pb-3">
+          <h2 id="bill-print-title" class="text-xl font-black uppercase tracking-wide">PHIẾU THU TIỀN</h2>
+          <p class="text-xs font-bold text-slate-600 mt-1">Hệ Thống Quản Lý Tài Chính & Công Việc</p>
+          <p class="text-[11px] font-bold text-slate-500">Mã phiếu: <span id="bill-print-id" class="text-slate-900">#12345</span> | Ngày: <span id="bill-print-date">2026-08-09</span></p>
+        </div>
+
+        <div class="space-y-2 text-xs font-bold">
+          <p>📍 <b>Đơn vị / Dự án:</b> <span id="bill-print-category" class="text-blue-900 font-black"></span></p>
+          <p>👤 <b>Phân loại nguồn tiền:</b> <span id="bill-print-scope"></span></p>
+          <p class="pt-1">📝 <b>Nội dung & Chi tiết:</b></p>
+          <div id="bill-print-details" class="bg-slate-50 border-2 border-slate-200 p-3 rounded-lg text-slate-900 font-medium leading-relaxed"></div>
+        </div>
+
+        <div class="bg-green-50 border-2 border-green-600 p-3 rounded-lg text-center">
+          <p class="text-xs font-black text-green-800">💰 TỔNG SỐ TIỀN THU / CHI:</p>
+          <p id="bill-print-amount" class="text-xl font-black text-green-900">0 đ</p>
+          <p id="bill-print-words" class="text-xs font-black text-blue-900 italic mt-1"></p>
+        </div>
+
+        <div class="grid grid-cols-2 text-center pt-6 text-xs font-bold">
+          <div>
+            <p class="font-black">NGƯỜI NỘP / NHẬN TIỀN</p>
+            <p class="text-[10px] text-slate-500 italic mt-0.5">(Ký & ghi rõ họ tên)</p>
+            <div class="h-16"></div>
+            <p id="bill-print-payer" class="font-black text-slate-900 text-sm"></p>
+          </div>
+          <div>
+            <p class="font-black">NGƯỜI LẬP PHIẾU</p>
+            <p class="text-[10px] text-slate-500 italic mt-0.5">(Ký & ghi rõ họ tên)</p>
+            <div class="h-16"></div>
+            <p id="bill-print-user" class="font-black text-blue-900 text-sm"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 no-print">
+        <button type="button" onclick="closePrintModal()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black text-xs">Hủy</button>
+        <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-black text-xs shadow flex items-center gap-1">🖨️ BẤM IN PHIẾU NGAY</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL TRẢ BỚT NỢ -->
@@ -354,16 +638,38 @@
         <input type="number" id="partial-amount-input" placeholder="Gõ số tiền..." class="w-full border-2 border-blue-500 rounded-lg p-2.5 text-base font-black bg-white" />
       </div>
       <div class="flex justify-end gap-2 text-xs">
-        <button onclick="closePartialModal()" class="px-3.5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black">Hủy</button>
-        <button onclick="confirmPartialPay()" class="px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-black">XÁC NHẬN</button>
+        <button type="button" onclick="closePartialModal()" class="px-3.5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black">Hủy</button>
+        <button type="button" onclick="confirmPartialPay()" class="px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-black">XÁC NHẬN</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // 1. HÀM ĐỌC SỐ TIỀN CHUẨN TIẾNG VIỆT (doc_so_vn)
-    // ==========================================
+    function togglePassword(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      const icon = btnEl.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+      } else {
+        input.type = 'password';
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+      }
+    }
+
+    function setAuthTab(tab) {
+      ['login', 'register', 'forgot'].forEach(t => {
+        const formEl = document.getElementById(`form-${t}`);
+        const btnEl = document.getElementById(`tab-${t}-btn`);
+        if (formEl) formEl.classList.add('hidden');
+        if (btnEl) btnEl.className = "w-1/3 py-2 font-black text-sm text-slate-500";
+      });
+      const targetForm = document.getElementById(`form-${tab}`);
+      const targetBtn = document.getElementById(`tab-${tab}-btn`);
+      if (targetForm) targetForm.classList.remove('hidden');
+      if (targetBtn) targetBtn.className = "w-1/3 py-2 font-black text-sm border-b-4 border-blue-600 text-blue-600";
+    }
+
     function docSoVN(so) {
       if (!so || so <= 0) return "";
       so = Math.floor(so);
@@ -428,28 +734,307 @@
       if (el && targetId !== 'add-money-preview') el.innerText = docSoVN(Number(val));
     }
 
-    // ==========================================
-    // 2. KHO DỮ LIỆU LOCALSTORAGE & AUTHENTICATION
-    // ==========================================
+    function formatMoneyInput(inputEl, projId, fieldIdSafe) {
+      let rawVal = inputEl.value.replace(/\D/g, '');
+      if (!rawVal) {
+        inputEl.value = '';
+        previewWorkMoneyWords('', `work-money-words-${projId}-${fieldIdSafe}`);
+        return;
+      }
+      let formatted = rawVal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      inputEl.value = formatted;
+      previewWorkMoneyWords(rawVal, `work-money-words-${projId}-${fieldIdSafe}`);
+    }
+
+    function previewWorkMoneyWords(rawVal, targetId) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      const num = Number(rawVal);
+      if (!rawVal || isNaN(num) || num <= 0) {
+        el.classList.add('hidden');
+        el.innerText = '';
+      } else {
+        el.classList.remove('hidden');
+        el.innerText = '🔤 Bằng chữ: ' + docSoVN(num);
+      }
+    }
+
+    function formatNoteForPrint(noteStr) {
+      if (!noteStr) return '<i>Không có ghi chú thêm</i>';
+
+      let parts = noteStr.split(/ \| |\n/);
+      let htmlLines = [];
+
+      parts.forEach(part => {
+        part = part.trim();
+        if (!part) return;
+
+        if (part.startsWith('Chi tiết:')) {
+          htmlLines.push('<div class="font-black text-slate-900 border-b pb-1 mb-1">📌 Danh sách hạng mục:</div>');
+          let itemsStr = part.replace(/^Chi tiết:\s*/, '');
+          let items = itemsStr.split(/,\s*(?=\d+x\s+)/);
+          if (items.length === 1) items = itemsStr.split(', ');
+          items.forEach(item => {
+            item = item.trim();
+            if (item) htmlLines.push(`<div class="ml-2 font-bold text-slate-800 py-0.5">• ${item}</div>`);
+          });
+          htmlLines.push('<div class="my-1.5 border-b border-dashed border-slate-300"></div>');
+        } else {
+          let colonIdx = part.indexOf(':');
+          if (colonIdx > -1) {
+            let label = part.substring(0, colonIdx).trim();
+            let val = part.substring(colonIdx + 1).trim();
+            htmlLines.push(`<div class="py-0.5"><span class="font-black text-slate-900">• ${label}:</span> <span class="font-bold text-slate-800">${val}</span></div>`);
+          } else {
+            htmlLines.push(`<div class="py-0.5 font-bold text-slate-800">• ${part}</div>`);
+          }
+        }
+      });
+
+      return htmlLines.join('');
+    }
+
+    function formatNoteForTable(noteStr, transId) {
+      if (!noteStr) return '';
+      let parts = noteStr.split(/ \| |\n/);
+      let lines = [];
+      parts.forEach(part => {
+        part = part.trim();
+        if (!part) return;
+        if (part.startsWith('Chi tiết:')) {
+          let itemsStr = part.replace(/^Chi tiết:\s*/, '');
+          let items = itemsStr.split(/,\s*(?=\d+x\s+)/);
+          if (items.length === 1) items = itemsStr.split(', ');
+          lines.push('<b class="text-purple-900">Chi tiết:</b>');
+          items.forEach(it => lines.push(`• ${it.trim()}`));
+        } else {
+          lines.push(part);
+        }
+      });
+
+      if (lines.length > 2 && transId) {
+        return `
+          <div>
+            <button type="button" onclick="document.getElementById('note-detail-${transId}').classList.toggle('hidden')" class="bg-purple-100 hover:bg-purple-200 text-purple-900 px-2 py-1 rounded text-xs font-black shadow-sm transition flex items-center gap-1">
+              👁️ Xem chi tiết (${lines.length} mục) ▼
+            </button>
+            <div id="note-detail-${transId}" class="hidden mt-2 p-2 bg-slate-50 border-2 border-slate-200 rounded-lg text-xs leading-relaxed space-y-0.5">
+              ${lines.join('<br/>')}
+            </div>
+          </div>
+        `;
+      }
+
+      return lines.join('<br/>');
+    }
+
+    // KHO DỮ LIỆU LOCALSTORAGE
     let users = JSON.parse(localStorage.getItem('app_users')) || [];
     let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
     let transactions = JSON.parse(localStorage.getItem('app_transactions')) || [];
     let debts = JSON.parse(localStorage.getItem('app_debts')) || [];
+    let workProjects = JSON.parse(localStorage.getItem('app_work_projects')) || [];
 
-    function saveStorage() {
+    function ensureAdminUser() {
+      let admin = users.find(u => u.phone === '0398567890');
+      if (!admin) {
+        admin = {
+          id: 'admin_0398567890',
+          phone: '0398567890',
+          username: 'Phạm Trần Tuấn Anh',
+          password: 'Jun250619',
+          isAdmin: true,
+          hasWorkAccess: true
+        };
+        users.push(admin);
+        saveStorage();
+      } else {
+        admin.isAdmin = true;
+        admin.hasWorkAccess = true;
+        admin.username = 'Phạm Trần Tuấn Anh';
+      }
+    }
+    ensureAdminUser();
+
+    let tempCustomFields = { thu: [], chi: [], no: [] };
+    let tempPresetItems = [];
+    let editingProjectId = null;
+    let activeEditingTransId = null;
+
+    function hasPerm(act) {
+      if (!currentUser) return false;
+      if (currentUser.phone === '0398567890' || currentUser.isAdmin) return true;
+      if (!currentUser.isSubAccount) return true; 
+
+      const p = currentUser.permissions || {};
+      if (act === 'thu') return p.thu !== false;
+      if (act === 'chi') return p.chi !== false;
+      if (act === 'no') return p.no !== false;
+      if (act === 'in') return p.in !== false;
+      if (act === 'sua') return p.sua !== false;
+      if (act === 'xoa') return p.xoa !== false;
+      return true;
+    }
+
+    function addPresetItem() {
+      const nameInp = document.getElementById('preset-name-input');
+      const priceInp = document.getElementById('preset-price-input');
+      const name = nameInp.value.trim();
+      const rawPrice = priceInp.value.replace(/\./g, '').replace(/,/g, '').trim();
+      const price = Number(rawPrice);
+
+      if (!name || isNaN(price) || price <= 0) {
+        return alert('⚠️ Vui lòng nhập Tên nội dung và Đơn giá hợp lệ!');
+      }
+
+      tempPresetItems.push({ name, price });
+      renderTempPresetList();
+
+      nameInp.value = '';
+      priceInp.value = '';
+    }
+
+    function removePresetItem(idx) {
+      tempPresetItems.splice(idx, 1);
+      renderTempPresetList();
+    }
+
+    function updatePresetPrice(idx, valStr) {
+      let rawPrice = Number(valStr.replace(/\./g, '').replace(/,/g, '')) || 0;
+      tempPresetItems[idx].price = rawPrice;
+    }
+
+    function renderTempPresetList() {
+      const list = document.getElementById('preset-items-list');
+      if (!list) return;
+      list.innerHTML = '';
+      tempPresetItems.forEach((item, idx) => {
+        list.innerHTML += `
+          <div class="flex flex-wrap justify-between items-center bg-white p-2 rounded-lg border-2 border-purple-200 text-xs font-black gap-2">
+            <span>🏷️ <b>${item.name}</b></span>
+            <div class="flex items-center gap-2">
+              <span>Đơn giá:</span>
+              <input type="text" value="${item.price.toLocaleString('vi-VN')}" oninput="updatePresetPrice(${idx}, this.value); formatMoneyInput(this, 'temp', '${idx}')" class="w-32 border-2 border-purple-300 rounded p-1 text-xs font-black text-purple-700 bg-purple-50 text-right" />
+              <span>đ</span>
+              <button type="button" onclick="removePresetItem(${idx})" class="text-red-600 hover:text-red-800 ml-1">❌ Xóa</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addCustomField(section) {
+      const input = document.getElementById(`custom-${section}-input`);
+      const val = input.value.trim();
+      if (!val) return;
+
+      if (!tempCustomFields[section].includes(val)) {
+        tempCustomFields[section].push(val);
+        renderTempCustomList(section);
+      }
+      input.value = '';
+    }
+
+    function removeCustomField(section, idx) {
+      tempCustomFields[section].splice(idx, 1);
+      renderTempCustomList(section);
+    }
+
+    function renderTempCustomList(section) {
+      const list = document.getElementById(`custom-${section}-list`);
+      if (!list) return;
+      list.innerHTML = '';
+      tempCustomFields[section].forEach((f, idx) => {
+        list.innerHTML += `<span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-xs font-black flex items-center gap-1">${f} <b onclick="removeCustomField('${section}', ${idx})" class="text-red-600 cursor-pointer">×</b></span>`;
+      });
+    }
+
+    async function saveStorage() {
       localStorage.setItem('app_users', JSON.stringify(users));
       localStorage.setItem('app_current_user', JSON.stringify(currentUser));
       localStorage.setItem('app_transactions', JSON.stringify(transactions));
       localStorage.setItem('app_debts', JSON.stringify(debts));
+      localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+
+      if (currentUser) {
+        try {
+          await fetch(`/api?action=sync-data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              userId: currentUser.id, 
+              users, 
+              workProjects, 
+              transactions, 
+              debts 
+            })
+          });
+        } catch (e) {
+          console.log('Lỗi kết nối D1:', e);
+        }
+      }
     }
 
-    function setAuthTab(tab) {
-      ['login', 'register', 'forgot'].forEach(t => {
-        document.getElementById(`form-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}-btn`).className = "w-1/3 py-2 font-black text-sm text-slate-500";
-      });
-      document.getElementById(`form-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}-btn`).className = "w-1/3 py-2 font-black text-sm border-b-4 border-blue-600 text-blue-600";
+    // TẢI DỮ LIỆU ĐÁM MÂY TỰ ĐỘNG ĐỂ ĐỒNG BỘ TỨC THỜI GIỮA CÁC MÁY
+    async function fetchCloudData() {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}`);
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData.transactions) {
+            transactions = cloudData.transactions;
+            localStorage.setItem('app_transactions', JSON.stringify(transactions));
+          }
+          if (cloudData.debts) {
+            debts = cloudData.debts;
+            localStorage.setItem('app_debts', JSON.stringify(debts));
+          }
+          updateSummaryAndData();
+        }
+      } catch (e) {
+        console.log('Sync offline');
+      }
+    }
+
+    // ĐỒNG BỘ TỰ ĐỘNG MỖI 4 GIÂY VA KHI CHUYỂN CỬA SỔ
+    setInterval(fetchCloudData, 4000);
+    window.addEventListener('focus', fetchCloudData);
+
+    function getUserData() {
+      if (!currentUser) return { myTrans: [], myDebts: [], myProjects: [] };
+
+      const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
+      const isSub = currentUser.isSubAccount;
+
+      let myProjects = [];
+      if (isUserAdmin) {
+        myProjects = workProjects.filter(p => p.isSharedAdmin || p.userId === currentUser.id || !p.userId);
+      } else if (isSub) {
+        const allowed = currentUser.allowedProjects || [];
+        myProjects = workProjects.filter(p => allowed.includes(p.id));
+      } else {
+        myProjects = workProjects.filter(p => p.userId === currentUser.id && !p.isSharedAdmin);
+      }
+
+      let myTrans = [];
+      let myDebts = debts.filter(d => d.userId === currentUser.id);
+
+      if (isUserAdmin) {
+        myTrans = transactions.filter(t => t.userId === currentUser.id || t.isSharedAdmin);
+      } else if (isSub) {
+        const allowedProjIds = currentUser.allowedProjects || [];
+        myTrans = transactions.filter(t => {
+          if (t.scope === 'Công việc') {
+            return allowedProjIds.includes(t.projectId);
+          }
+          return t.userId === currentUser.id;
+        });
+      } else {
+        myTrans = transactions.filter(t => t.userId === currentUser.id);
+      }
+
+      return { myTrans, myDebts, myProjects };
     }
 
     function handleRegister(e) {
@@ -464,7 +1049,15 @@
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
 
-      const newUser = { id: Date.now(), phone, username: user, password: pass };
+      const newUser = { 
+        id: 'usr_' + Date.now(), 
+        phone, 
+        username: user, 
+        password: pass,
+        isAdmin: false,
+        isSubAccount: false,
+        hasWorkAccess: false 
+      };
       users.push(newUser);
       currentUser = newUser;
       saveStorage();
@@ -476,8 +1069,9 @@
       const acc = document.getElementById('login-acc').value.trim();
       const pwd = document.getElementById('login-pwd').value;
 
-      const found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
+      let found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
       if (!found) return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
+
       currentUser = found;
       saveStorage();
       initApp();
@@ -505,66 +1099,836 @@
       initApp();
     }
 
-    // ==========================================
-    // 3. KHỞI TẠO VÀ CẬP NHẬT GIAO DIỆN CHÍNH
-    // ==========================================
-    function initApp() {
+    async function initApp() {
       if (!currentUser) {
         document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('main-screen').classList.add('hidden');
         return;
       }
 
+      await fetchCloudData();
+
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('main-screen').classList.remove('hidden');
       document.getElementById('user-display-name').innerText = currentUser.username;
       document.getElementById('user-display-phone').innerText = currentUser.phone;
 
-      // Default dates
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('trans-date').value = today;
-      document.getElementById('bill-date').value = today;
-      document.getElementById('rep-date-input').value = today;
-      document.getElementById('rep-week-input').value = today;
-
-      // Populate months select 1-12
-      const mSel = document.getElementById('rep-month-select');
-      mSel.innerHTML = '';
-      for (let i = 1; i <= 12; i++) {
-        mSel.innerHTML += `<option value="${i}">${i}</option>`;
+      const roleBadge = document.getElementById('user-role-badge');
+      if (currentUser.phone === '0398567890' || currentUser.isAdmin) {
+        roleBadge.innerText = '👑 ADMIN CHÍNH';
+      } else if (currentUser.isSubAccount) {
+        roleBadge.innerText = '👤 TÀI KHOẢN PHỤ';
+      } else {
+        roleBadge.innerText = '👤 THÀNH VIÊN';
       }
-      mSel.value = new Date().getMonth() + 1;
 
+      // 1. TÀI KHOẢN PHỤ ẨN BẢNG THỐNG KÊ CÁ NHÂN
+      const stickySummary = document.getElementById('sticky-summary');
+      if (stickySummary) {
+        stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
+      }
+
+      // 2. TÀI KHOẢN PHỤ KHÔNG ĐƯỢC TẠO MÃ CÔNG VIỆC MỚI (ẨN NÚT TẠO MÃ)
+      const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
+      if (createWorkBtnWrapper) {
+        createWorkBtnWrapper.classList.toggle('hidden', !!currentUser.isSubAccount);
+      }
+
+      // 3. TÀI KHOẢN PHỤ BỊ ẨN CÁC THẺ: Thêm Giao Dịch, Quản Lý Nợ, Chia Bill
+      const btnTabAdd = document.getElementById('btn-tab-add');
+      const btnTabDebts = document.getElementById('btn-tab-debts');
+      const btnTabBill = document.getElementById('btn-tab-bill');
+
+      if (btnTabAdd) btnTabAdd.classList.toggle('hidden', !!currentUser.isSubAccount);
+      if (btnTabDebts) btnTabDebts.classList.toggle('hidden', !!currentUser.isSubAccount);
+      if (btnTabBill) btnTabBill.classList.toggle('hidden', !!currentUser.isSubAccount);
+
+      const today = new Date().toISOString().split('T')[0];
+      if (document.getElementById('trans-date')) document.getElementById('trans-date').value = today;
+      if (document.getElementById('work-created-date')) document.getElementById('work-created-date').value = today;
+      if (document.getElementById('bill-date')) document.getElementById('bill-date').value = today;
+      if (document.getElementById('rep-date-input')) document.getElementById('rep-date-input').value = today;
+      if (document.getElementById('rep-week-input')) document.getElementById('rep-week-input').value = today;
+
+      const mSel = document.getElementById('rep-month-select');
+      if (mSel) {
+        mSel.innerHTML = '';
+        for (let i = 1; i <= 12; i++) {
+          mSel.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+        mSel.value = new Date().getMonth() + 1;
+      }
+
+      const canAccessWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || currentUser.isSubAccount || currentUser.hasWorkAccess);
+      const btnWorkTab = document.getElementById('btn-tab-work');
+      if (btnWorkTab) {
+        btnWorkTab.classList.toggle('hidden', !canAccessWork);
+      }
+
+      renderBillMembers();
       updateSummaryAndData();
-      switchTab('tab-overview');
-    }
 
-    function getUserData() {
-      const myTrans = transactions.filter(t => t.userId === currentUser.id);
-      const myDebts = debts.filter(d => d.userId === currentUser.id);
-      return { myTrans, myDebts };
+      if (currentUser.isSubAccount) {
+        switchTab('tab-work');
+      } else {
+        switchTab('tab-overview');
+      }
     }
 
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      let income = myTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
-      let expense = myTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let personalTrans = myTrans.filter(t => t.scope !== 'Công việc');
+
+      let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let lentUnpaid = myDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
       let balance = income - expense;
 
-      document.getElementById('card-income').innerText = income.toLocaleString('vi-VN') + ' đ';
-      document.getElementById('card-expense').innerText = expense.toLocaleString('vi-VN') + ' đ';
-      document.getElementById('card-debt').innerText = lentUnpaid.toLocaleString('vi-VN') + ' đ';
-      document.getElementById('card-balance').innerText = balance.toLocaleString('vi-VN') + ' đ';
+      const cardInc = document.getElementById('card-income');
+      const cardExp = document.getElementById('card-expense');
+      const cardDebt = document.getElementById('card-debt');
+      const cardBal = document.getElementById('card-balance');
+
+      if (cardInc) cardInc.innerText = income.toLocaleString('vi-VN') + ' đ';
+      if (cardExp) cardExp.innerText = expense.toLocaleString('vi-VN') + ' đ';
+      if (cardDebt) cardDebt.innerText = lentUnpaid.toLocaleString('vi-VN') + ' đ';
+      if (cardBal) cardBal.innerText = balance.toLocaleString('vi-VN') + ' đ';
 
       renderRecentTransactions();
+      renderWorkProjectsList();
       renderDebtsList();
       renderReports();
       populatePersonSelector();
     }
 
-    // TRIPLE CLICK EVENT ON SUMMARY HEADER
+    function openSettingsModal() {
+      const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
+      const adminBox = document.getElementById('admin-settings-content');
+      const userBox = document.getElementById('user-settings-content');
+
+      if (isUserAdmin) {
+        adminBox.classList.remove('hidden');
+        userBox.classList.add('hidden');
+        renderAdminSubAccountBoxes();
+        renderAdminAllUsersList();
+      } else {
+        adminBox.classList.add('hidden');
+        userBox.classList.remove('hidden');
+        document.getElementById('settings-my-user').innerText = currentUser.username;
+        document.getElementById('settings-my-phone').innerText = currentUser.phone;
+        document.getElementById('settings-my-role').innerText = currentUser.isSubAccount ? 'Tài khoản Phụ (Được gán công việc)' : 'Tài khoản Tự Đăng Ký';
+      }
+
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function renderAdminSubAccountBoxes() {
+      const { myProjects } = getUserData();
+      const container = document.getElementById('sub-allowed-projects-boxes');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (myProjects.length === 0) {
+        container.innerHTML = '<span class="text-slate-500 italic">Chưa có Mã công việc nào. Tạo mã ở Tab Thu Chi Công Việc trước.</span>';
+        return;
+      }
+
+      myProjects.forEach(p => {
+        container.innerHTML += `
+          <label class="flex items-center gap-1 cursor-pointer bg-slate-100 p-1.5 rounded border border-slate-300">
+            <input type="checkbox" value="${p.id}" class="sub-proj-chk accent-blue-600" />
+            <span>💼 ${p.name}</span>
+          </label>
+        `;
+      });
+    }
+
+    function createSubAccount() {
+      const phone = document.getElementById('sub-phone-input').value.trim();
+      const username = document.getElementById('sub-user-input').value.trim();
+      const password = document.getElementById('sub-pass-input').value;
+
+      if (!phone || !username || !password) return alert('⚠️ Vui lòng gõ đầy đủ SĐT, Tên và Mật khẩu!');
+
+      if (users.find(u => u.phone === phone)) {
+        return alert('⚠️ Số điện thoại này đã tồn tại!');
+      }
+
+      const chks = document.querySelectorAll('.sub-proj-chk:checked');
+      let allowed = [];
+      chks.forEach(c => allowed.push(c.value));
+
+      const perms = {
+        thu: document.getElementById('sub-perm-thu').checked,
+        chi: document.getElementById('sub-perm-chi').checked,
+        no: document.getElementById('sub-perm-no').checked,
+        in: document.getElementById('sub-perm-in').checked,
+        sua: document.getElementById('sub-perm-sua').checked,
+        xoa: document.getElementById('sub-perm-xoa').checked
+      };
+
+      const newSub = {
+        id: 'sub_' + Date.now(),
+        phone,
+        username,
+        password,
+        isAdmin: false,
+        isSubAccount: true,
+        createdByAdmin: true,
+        allowedProjects: allowed,
+        permissions: perms,
+        hasWorkAccess: true
+      };
+
+      users.push(newSub);
+      saveStorage();
+
+      document.getElementById('sub-phone-input').value = '';
+      document.getElementById('sub-user-input').value = '';
+      document.getElementById('sub-pass-input').value = '';
+
+      renderAdminAllUsersList();
+      alert(`🎉 Đã tạo tài khoản phụ "${username}" thành công với bộ quyền đã chọn!`);
+    }
+
+    function toggleUserWorkAccess(targetUserId) {
+      const targetUser = users.find(u => u.id === targetUserId);
+      if (!targetUser) return;
+
+      targetUser.hasWorkAccess = !targetUser.hasWorkAccess;
+      saveStorage();
+      renderAdminAllUsersList();
+
+      alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
+    }
+
+    function deleteUserByAdmin(targetUserId) {
+      const targetUser = users.find(u => u.id === targetUserId);
+      if (!targetUser) return;
+      if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
+
+      if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
+        users = users.filter(u => u.id !== targetUserId);
+        saveStorage();
+        renderAdminAllUsersList();
+      }
+    }
+
+    function renderAdminAllUsersList() {
+      const container = document.getElementById('all-users-admin-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      users.forEach(u => {
+        if (u.phone === '0398567890') return;
+
+        let roleText = u.isSubAccount ? 'Tài khoản phụ Admin tạo' : 'Thành viên tự đăng ký';
+        let allowWorkChk = u.hasWorkAccess ? 'checked' : '';
+
+        let permBadge = '';
+        if (u.isSubAccount && u.permissions) {
+          let pList = [];
+          if (u.permissions.thu) pList.push('Thu');
+          if (u.permissions.chi) pList.push('Chi');
+          if (u.permissions.no) pList.push('Nợ');
+          if (u.permissions.in) pList.push('In');
+          if (u.permissions.sua) pList.push('Sửa');
+          if (u.permissions.xoa) pList.push('Xóa');
+          permBadge = `<div class="text-[11px] text-purple-900 font-bold mt-0.5">⚡ Quyền: ${pList.join(', ')}</div>`;
+        }
+
+        container.innerHTML += `
+          <div class="flex flex-wrap justify-between items-center bg-slate-100 p-2.5 rounded-lg border border-slate-300 text-xs font-black gap-2">
+            <div>
+              <span class="text-slate-900 font-extrabold">👤 ${u.username}</span> (${u.phone})
+              <span class="text-[10px] text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded ml-1">${roleText}</span>
+              <div class="text-[11px] text-red-600 font-black mt-0.5">🔑 <b>Mật khẩu:</b> ${u.password || 'Chưa có'}</div>
+              ${permBadge}
+            </div>
+            <div class="flex items-center gap-3">
+              ${!u.isSubAccount ? `
+                <label class="flex items-center gap-1 cursor-pointer text-purple-900">
+                  <input type="checkbox" ${allowWorkChk} onchange="toggleUserWorkAccess('${u.id}')" class="accent-purple-600" />
+                  <span>Cấp quyền Công việc riêng</span>
+                </label>
+              ` : `<span class="text-amber-900 font-bold">Mã CV: ${(u.allowedProjects || []).length} mục</span>`}
+              <button type="button" onclick="deleteUserByAdmin('${u.id}')" class="text-red-600 hover:text-red-800">🗑️ Xóa</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function openEditTransModal(transId) {
+      if (!hasPerm('sua')) return alert('⚠️ Tài khoản của bạn không được cấp quyền SỬA!');
+
+      const t = transactions.find(item => item.id === transId || String(item.id) === String(transId));
+      if (!t) return alert('⚠️ Không tìm thấy thông tin giao dịch!');
+
+      activeEditingTransId = t.id;
+      document.getElementById('edit-trans-amount').value = Number(t.amount).toLocaleString('vi-VN');
+      document.getElementById('edit-trans-date').value = t.date;
+      document.getElementById('edit-trans-category').value = t.category || '';
+      document.getElementById('edit-trans-note').value = t.note || '';
+
+      previewWorkMoneyWords(t.amount, 'edit-trans-words');
+      document.getElementById('edit-trans-modal').classList.remove('hidden');
+    }
+
+    function closeEditTransModal() {
+      document.getElementById('edit-trans-modal').classList.add('hidden');
+      activeEditingTransId = null;
+    }
+
+    function saveEditedTransaction() {
+      const t = transactions.find(item => item.id === activeEditingTransId || String(item.id) === String(activeEditingTransId));
+      if (!t) return;
+
+      const rawAmountStr = document.getElementById('edit-trans-amount').value.replace(/\./g, '').replace(/,/g, '');
+      const newAmount = Number(rawAmountStr);
+      const newDate = document.getElementById('edit-trans-date').value;
+      const newCategory = document.getElementById('edit-trans-category').value.trim();
+      const newNote = document.getElementById('edit-trans-note').value.trim();
+
+      if (!newAmount || newAmount <= 0) return alert('⚠️ Số tiền không hợp lệ!');
+
+      t.amount = newAmount;
+      t.date = newDate;
+      t.category = newCategory;
+      t.note = newNote;
+
+      saveStorage();
+      updateSummaryAndData();
+      closeEditTransModal();
+      alert('✅ Đã cập nhật xong giao dịch! Số tiền và báo cáo đã tự động nhảy theo.');
+    }
+
+    function deleteTransaction(transId) {
+      if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
+
+      if (confirm('🗑️ Bạn có chắc muốn xóa giao dịch này không?')) {
+        transactions = transactions.filter(t => t.id !== transId && String(t.id) !== String(transId));
+        saveStorage();
+        updateSummaryAndData();
+      }
+    }
+
+    function printBill(transId) {
+      if (!hasPerm('in')) return alert('⚠️ Tài khoản của bạn không được cấp quyền IN BILL!');
+
+      const t = transactions.find(item => item.id === transId || String(item.id) === String(transId));
+      if (!t) return alert('⚠️ Không tìm thấy giao dịch để in bill!');
+
+      let payerName = '';
+      if (t.note) {
+        const matchPayer = t.note.match(/(?:Người nộp tiền|Người chi|Người nợ|Người chuyển|người nộp|người chi):\s*([^|\n]+)/i);
+        if (matchPayer && matchPayer[1]) {
+          payerName = matchPayer[1].trim();
+        }
+      }
+
+      document.getElementById('bill-print-title').innerText = `PHIẾU ${t.type ? t.type.toUpperCase() : 'GIAO DỊCH'}`;
+      document.getElementById('bill-print-id').innerText = '#' + t.id;
+      document.getElementById('bill-print-date').innerText = t.date;
+      document.getElementById('bill-print-category').innerText = t.category || 'Tài chính cá nhân';
+      document.getElementById('bill-print-scope').innerText = t.scope === 'Công việc' ? '💼 Công việc / Dự án' : '👤 Cá nhân';
+      document.getElementById('bill-print-details').innerHTML = formatNoteForPrint(t.note);
+      document.getElementById('bill-print-amount').innerText = Number(t.amount).toLocaleString('vi-VN') + ' VNĐ';
+      document.getElementById('bill-print-words').innerText = '🔤 Bằng chữ: ' + docSoVN(t.amount);
+      document.getElementById('bill-print-user').innerText = currentUser ? currentUser.username : '';
+      document.getElementById('bill-print-payer').innerText = payerName;
+
+      document.getElementById('print-bill-modal').classList.remove('hidden');
+    }
+
+    function closePrintModal() {
+      document.getElementById('print-bill-modal').classList.add('hidden');
+    }
+
+    function toggleWorkForm(forceState) {
+      if (currentUser && currentUser.isSubAccount) {
+        return alert('⚠️ Tài khoản phụ không có quyền tạo mã công việc mới!');
+      }
+
+      const box = document.getElementById('work-create-form-box');
+      const icon = document.getElementById('work-form-icon');
+      const text = document.getElementById('work-form-text');
+
+      if (forceState !== undefined) {
+        if (forceState) box.classList.remove('hidden');
+        else box.classList.add('hidden');
+      } else {
+        box.classList.toggle('hidden');
+      }
+
+      const isHidden = box.classList.contains('hidden');
+      if (icon) icon.innerText = isHidden ? '➕' : '❌';
+      if (text) text.innerText = isHidden ? 'Tạo Mã Công Việc Mới' : 'Đóng Khung Tạo Mã';
+
+      if (isHidden && editingProjectId) {
+        editingProjectId = null;
+        const btn = document.getElementById('btn-save-work-proj');
+        if (btn) btn.innerText = '➕ TẠO MÃ CÔNG VIỆC VỚI CÁC Ô ĐÃ CHỌN';
+      }
+    }
+
+    function createWorkProject() {
+      if (currentUser && currentUser.isSubAccount) {
+        return alert('⚠️ Tài khoản phụ không được phép tạo mã công việc!');
+      }
+
+      const title = document.getElementById('work-title-input').value.trim();
+      const date = document.getElementById('work-created-date').value;
+
+      if (!title) return alert('⚠️ Vui lòng nhập Tên công việc / dự án!');
+
+      let thuFields = [];
+      if (document.getElementById('chk-thu-nguoi').checked) thuFields.push('Người nộp tiền');
+      if (document.getElementById('chk-thu-madv').checked) thuFields.push('Mã đơn vị');
+      if (document.getElementById('chk-thu-sotien').checked) thuFields.push('Số tiền nộp');
+      if (document.getElementById('chk-thu-soluong').checked) thuFields.push('Số lượng');
+      if (document.getElementById('chk-thu-ngay').checked) thuFields.push('Ngày tạo');
+      thuFields = thuFields.concat(tempCustomFields.thu);
+
+      let chiFields = [];
+      if (document.getElementById('chk-chi-nguoi').checked) chiFields.push('Người chi');
+      if (document.getElementById('chk-chi-noidung').checked) chiFields.push('Nội dung chi');
+      if (document.getElementById('chk-chi-sotien').checked) chiFields.push('Số tiền');
+      if (document.getElementById('chk-chi-ngay').checked) chiFields.push('Ngày chi');
+      chiFields = chiFields.concat(tempCustomFields.chi);
+
+      let noFields = [];
+      if (document.getElementById('chk-no-nguoi').checked) noFields.push('Người nợ');
+      if (document.getElementById('chk-no-noidung').checked) noFields.push('Nội dung nợ');
+      if (document.getElementById('chk-no-sotien').checked) noFields.push('Số tiền nợ');
+      if (document.getElementById('chk-no-ngay').checked) noFields.push('Ngày nợ');
+      noFields = noFields.concat(tempCustomFields.no);
+
+      const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
+
+      if (editingProjectId) {
+        const proj = workProjects.find(p => p.id === editingProjectId);
+        if (proj) {
+          proj.name = title;
+          proj.createdDate = date;
+          proj.presetItems = [...tempPresetItems];
+          proj.fields = { thu: thuFields, chi: chiFields, no: noFields };
+        }
+        alert(`✅ Đã cập nhật thành công mã công việc: "${title}"!`);
+        editingProjectId = null;
+      } else {
+        const newProj = {
+          id: 'proj_' + Date.now(),
+          userId: currentUser.id,
+          name: title,
+          createdDate: date,
+          isSharedAdmin: isUserAdmin,
+          presetItems: [...tempPresetItems],
+          fields: { thu: thuFields, chi: chiFields, no: noFields }
+        };
+        workProjects.push(newProj);
+        alert(`✅ Đã tạo mã công việc: "${title}"!`);
+      }
+
+      saveStorage();
+      renderWorkProjectsList();
+
+      document.getElementById('work-title-input').value = '';
+      tempCustomFields = { thu: [], chi: [], no: [] };
+      tempPresetItems = [];
+      renderTempPresetList();
+      renderTempCustomList('thu');
+      renderTempCustomList('chi');
+      renderTempCustomList('no');
+
+      const btn = document.getElementById('btn-save-work-proj');
+      if (btn) btn.innerText = '➕ TẠO MÃ CÔNG VIỆC VỚI CÁC Ô ĐÃ CHỌN';
+
+      toggleWorkForm(false);
+    }
+
+    function editWorkProject(projId) {
+      if (!hasPerm('sua')) return alert('⚠️ Tài khoản của bạn không được cấp quyền SỬA!');
+
+      const { myProjects } = getUserData();
+      const proj = myProjects.find(p => p.id === projId);
+      if (!proj) return;
+
+      editingProjectId = projId;
+
+      toggleWorkForm(true);
+
+      document.getElementById('work-title-input').value = proj.name || '';
+      document.getElementById('work-created-date').value = proj.createdDate || '';
+
+      tempPresetItems = proj.presetItems ? [...proj.presetItems] : [];
+      renderTempPresetList();
+
+      const fields = proj.fields || { thu: [], chi: [], no: [] };
+
+      document.getElementById('chk-thu-nguoi').checked = fields.thu.includes('Người nộp tiền');
+      document.getElementById('chk-thu-madv').checked = fields.thu.includes('Mã đơn vị');
+      document.getElementById('chk-thu-sotien').checked = fields.thu.includes('Số tiền nộp');
+      document.getElementById('chk-thu-soluong').checked = fields.thu.includes('Số lượng');
+      document.getElementById('chk-thu-ngay').checked = fields.thu.includes('Ngày tạo');
+
+      document.getElementById('chk-chi-nguoi').checked = fields.chi.includes('Người chi');
+      document.getElementById('chk-chi-noidung').checked = fields.chi.includes('Nội dung chi');
+      document.getElementById('chk-chi-sotien').checked = fields.chi.includes('Số tiền');
+      document.getElementById('chk-chi-ngay').checked = fields.chi.includes('Ngày chi');
+
+      document.getElementById('chk-no-nguoi').checked = fields.no.includes('Người nợ');
+      document.getElementById('chk-no-noidung').checked = fields.no.includes('Nội dung nợ');
+      document.getElementById('chk-no-sotien').checked = fields.no.includes('Số tiền nợ');
+      document.getElementById('chk-no-ngay').checked = fields.no.includes('Ngày nợ');
+
+      const defaultThu = ['Người nộp tiền', 'Mã đơn vị', 'Số tiền nộp', 'Số lượng', 'Ngày tạo'];
+      const defaultChi = ['Người chi', 'Nội dung chi', 'Số tiền', 'Ngày chi'];
+      const defaultNo = ['Người nợ', 'Nội dung nợ', 'Số tiền nợ', 'Ngày nợ'];
+
+      tempCustomFields.thu = fields.thu.filter(f => !defaultThu.includes(f));
+      tempCustomFields.chi = fields.chi.filter(f => !defaultChi.includes(f));
+      tempCustomFields.no = fields.no.filter(f => !defaultNo.includes(f));
+
+      renderTempCustomList('thu');
+      renderTempCustomList('chi');
+      renderTempCustomList('no');
+
+      const btn = document.getElementById('btn-save-work-proj');
+      if (btn) btn.innerText = '💾 CẬP NHẬT MÃ CÔNG VIỆC';
+
+      document.getElementById('work-create-form-box').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function deleteWorkProject(projId) {
+      if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
+
+      if (confirm('🗑️ Bạn có chắc muốn xóa mã công việc này không?')) {
+        workProjects = workProjects.filter(p => p.id !== projId);
+        saveStorage();
+        renderWorkProjectsList();
+      }
+    }
+
+    function renderWorkProjectsList() {
+      const { myProjects, myTrans } = getUserData();
+      const container = document.getElementById('work-projects-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (myProjects.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-500 font-bold italic">Chưa có mã công việc nào được gán cho tài khoản này.</p>';
+        return;
+      }
+
+      myProjects.forEach((proj, idx) => {
+        const projTrans = myTrans.filter(t => t.projectId === proj.id);
+
+        let projIncome = projTrans.filter(t => t.type === 'Thu nhập').reduce((a,b) => a + Number(b.amount), 0);
+        let projExpense = projTrans.filter(t => t.type === 'Chi tiêu').reduce((a,b) => a + Number(b.amount), 0);
+        let projDebt = projTrans.filter(t => t.type === 'Ghi nợ').reduce((a,b) => a + Number(b.amount), 0);
+        let projUnion = projTrans.filter(t => t.type === 'CK Liên đoàn').reduce((a,b) => a + Number(b.amount), 0);
+
+        const canSua = hasPerm('sua');
+        const canXoa = hasPerm('xoa');
+
+        const card = document.createElement('div');
+        card.className = 'border-2 border-slate-300 rounded-xl bg-slate-50 overflow-hidden shadow-sm';
+        card.innerHTML = `
+          <div class="p-3 bg-white hover:bg-slate-100 cursor-pointer flex justify-between items-center border-b-2 border-slate-200 transition" onclick="document.getElementById('proj-details-${idx}').classList.toggle('hidden')">
+            <div>
+              <span class="font-black text-base text-slate-900">💼 ${proj.name}</span>
+              <span class="text-xs text-slate-500 font-bold ml-2">(🗓️ Tạo ngày: ${proj.createdDate})</span>
+            </div>
+            <div class="flex items-center gap-1 md:gap-2">
+              <span class="text-xs font-black text-blue-700">Mở ô nhập liệu ▼</span>
+              ${canSua ? `<button type="button" onclick="event.stopPropagation(); editWorkProject('${proj.id}')" class="text-amber-600 hover:text-amber-800 text-xs px-2 py-1 font-black">✏️ Sửa</button>` : ''}
+              ${canXoa ? `<button type="button" onclick="event.stopPropagation(); deleteWorkProject('${proj.id}')" class="text-red-600 hover:text-red-800 text-xs px-2 py-1 font-black">🗑️ Xóa</button>` : ''}
+            </div>
+          </div>
+
+          <div id="proj-details-${idx}" class="hidden p-4 space-y-4 bg-slate-50">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+              <div class="bg-green-100 border-2 border-green-500 rounded-lg p-2">
+                <p class="text-[11px] font-black text-green-800">💵 TỔNG TIỀN</p>
+                <p class="text-sm md:text-base font-black text-green-900">${projIncome.toLocaleString('vi-VN')} đ</p>
+              </div>
+              <div class="bg-red-100 border-2 border-red-500 rounded-lg p-2">
+                <p class="text-[11px] font-black text-red-800">💸 TỔNG CHI</p>
+                <p class="text-sm md:text-base font-black text-red-900">${projExpense.toLocaleString('vi-VN')} đ</p>
+              </div>
+              <div class="bg-orange-100 border-2 border-orange-500 rounded-lg p-2">
+                <p class="text-[11px] font-black text-orange-800">🤝 TỔNG NỢ</p>
+                <p class="text-sm md:text-base font-black text-orange-900">${projDebt.toLocaleString('vi-VN')} đ</p>
+              </div>
+              <div class="bg-purple-100 border-2 border-purple-500 rounded-lg p-2">
+                <p class="text-[11px] font-black text-purple-800">🏦 CK LIÊN ĐOÀN</p>
+                <p class="text-sm md:text-base font-black text-purple-900">${projUnion.toLocaleString('vi-VN')} đ</p>
+              </div>
+            </div>
+
+            <div class="bg-white border-2 border-slate-200 rounded-lg p-3 space-y-3">
+              <div class="flex items-center gap-2 border-b pb-2">
+                <span class="text-xs font-black text-slate-800">🎯 Chọn loại nhập:</span>
+                <select id="proj-type-sel-${proj.id}" onchange="renderDynamicForm('${proj.id}')" class="border-2 border-blue-500 rounded-lg p-1.5 text-xs font-black bg-blue-50 text-blue-900"></select>
+              </div>
+
+              <div id="dynamic-form-box-${proj.id}" class="space-y-3"></div>
+
+              <button type="button" onclick="submitDynamicTransaction('${proj.id}', '${proj.name}')" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-lg text-xs w-full shadow">LƯU GIAO DỊCH CÔNG VIỆC</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        renderDynamicForm(proj.id);
+      });
+    }
+
+    function renderDynamicForm(projId) {
+      const { myProjects } = getUserData();
+      const proj = myProjects.find(p => p.id === projId);
+      if (!proj) return;
+
+      const typeSel = document.getElementById(`proj-type-sel-${projId}`);
+      if (!typeSel) return;
+
+      const canThu = hasPerm('thu');
+      const canChi = hasPerm('chi');
+      const canNo = hasPerm('no');
+
+      let optionsHtml = '';
+      if (canThu) optionsHtml += '<option value="Thu nhập">💵 THU NHẬP</option>';
+      if (canChi) optionsHtml += '<option value="Chi tiêu">💸 CHI TIÊU</option>';
+      if (canNo) optionsHtml += '<option value="Ghi nợ">🤝 GHI NỢ</option>';
+      if (canChi) optionsHtml += '<option value="CK Liên đoàn">🏦 CK LIÊN ĐOÀN</option>';
+
+      if (!optionsHtml) {
+        optionsHtml = '<option value="">⚠️ Không có quyền nhập thu/chi</option>';
+      }
+
+      const prevType = typeSel.value;
+      typeSel.innerHTML = optionsHtml;
+      if (prevType && typeSel.querySelector(`option[value="${prevType}"]`)) {
+        typeSel.value = prevType;
+      }
+
+      const type = typeSel.value;
+      const box = document.getElementById(`dynamic-form-box-${projId}`);
+      box.innerHTML = '';
+
+      if (!type) {
+        box.innerHTML = '<p class="text-xs text-red-600 font-bold italic">Tài khoản này chưa được cấp quyền nhập Thu, Chi hoặc Nợ.</p>';
+        return;
+      }
+
+      if (proj.presetItems && proj.presetItems.length > 0) {
+        const presetDiv = document.createElement('div');
+        presetDiv.className = 'bg-purple-50 border-2 border-purple-200 p-3 rounded-lg space-y-2';
+        
+        let presetRows = '';
+        proj.presetItems.forEach((item, pIdx) => {
+          presetRows += `
+            <div class="flex flex-wrap justify-between items-center bg-white p-2 rounded-lg border gap-2">
+              <div class="text-xs font-black">
+                <span>🏷️ ${item.name}</span>
+                <span class="text-purple-700 ml-1">(${item.price.toLocaleString('vi-VN')} đ/đơn vị)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold">Số lượng:</span>
+                <input type="number" min="0" data-preset-name="${item.name}" data-price="${item.price}" data-key="${pIdx}" oninput="calcPresetTotal('${projId}')" placeholder="0" class="preset-qty-${projId} w-20 border-2 border-purple-400 rounded p-1 text-xs font-black text-center bg-white" />
+                <span class="text-xs font-black text-green-700 w-28 text-right" id="subtotal-${projId}-${pIdx}">0 đ</span>
+              </div>
+            </div>
+          `;
+        });
+
+        presetDiv.innerHTML = `
+          <p class="text-xs font-black text-purple-900 border-b border-purple-200 pb-1">🧮 NHẬP SỐ LƯỢNG HẠNG MỤC CÀI SẴN:</p>
+          <div class="space-y-1">${presetRows}</div>
+          <div class="flex justify-between items-center pt-1 border-t border-purple-200 font-black text-xs md:text-sm text-purple-950">
+            <span>📊 TỔNG TIỀN CÁC NỘI DUNG TRÊN:</span>
+            <span id="preset-total-display-${projId}" class="text-base font-black text-green-700">0 đ</span>
+          </div>
+          <p id="preset-total-words-${projId}" class="text-xs text-blue-900 font-black italic hidden"></p>
+        `;
+        box.appendChild(presetDiv);
+      }
+
+      const fields = proj.fields || {
+        thu: ['Người nộp tiền', 'Mã đơn vị', 'Số tiền nộp', 'Số lượng', 'Ngày tạo'],
+        chi: ['Người chi', 'Nội dung chi', 'Số tiền', 'Ngày chi'],
+        no: ['Người nợ', 'Nội dung nợ', 'Số tiền nợ', 'Ngày nợ']
+      };
+
+      let activeFields = [];
+      if (type === 'Thu nhập') activeFields = fields.thu;
+      else if (type === 'Chi tiêu') activeFields = fields.chi;
+      else if (type === 'Ghi nợ') activeFields = fields.no;
+      else activeFields = ['Người chuyển', 'Số tiền', 'Nội dung', 'Ngày chuyển'];
+
+      const otherFieldsGrid = document.createElement('div');
+      otherFieldsGrid.className = 'grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t';
+
+      activeFields.forEach(f => {
+        const div = document.createElement('div');
+        const fLower = f.toLowerCase();
+
+        const isDate = fLower.includes('ngày');
+        const isMoney = (fLower.includes('tiền') || fLower.includes('giá')) && !fLower.includes('người');
+
+        const today = new Date().toISOString().split('T')[0];
+        const defaultVal = isDate ? today : '';
+        const fieldIdSafe = f.replace(/[^a-zA-Z0-9]/g, '');
+
+        if (isMoney) {
+          div.innerHTML = `
+            <label class="block text-[11px] font-black text-slate-700 mb-0.5">${f} (Hoặc nhập đè):</label>
+            <input type="text" id="manual-money-${projId}" data-field="${f}" data-ismoney="true" value="${defaultVal}" oninput="formatMoneyInput(this, '${projId}', '${fieldIdSafe}')" placeholder="Nhập ${f}..." class="dyn-field-${projId} w-full border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+            <p id="work-money-words-${projId}-${fieldIdSafe}" class="text-[11px] text-blue-800 font-bold italic mt-1 hidden"></p>
+          `;
+        } else if (isDate) {
+          div.innerHTML = `
+            <label class="block text-[11px] font-black text-slate-700 mb-0.5">${f}:</label>
+            <input type="date" data-field="${f}" value="${defaultVal}" class="dyn-field-${projId} w-full border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+          `;
+        } else {
+          div.innerHTML = `
+            <label class="block text-[11px] font-black text-slate-700 mb-0.5">${f}:</label>
+            <input type="text" data-field="${f}" value="${defaultVal}" placeholder="Nhập ${f}..." class="dyn-field-${projId} w-full border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+          `;
+        }
+        otherFieldsGrid.appendChild(div);
+      });
+
+      box.appendChild(otherFieldsGrid);
+    }
+
+    function calcPresetTotal(projId) {
+      const inputs = document.querySelectorAll(`.preset-qty-${projId}`);
+      let total = 0;
+
+      inputs.forEach(inp => {
+        const price = Number(inp.getAttribute('data-price')) || 0;
+        const qty = Number(inp.value) || 0;
+        const subtotal = price * qty;
+        const key = inp.getAttribute('data-key');
+
+        const subEl = document.getElementById(`subtotal-${projId}-${key}`);
+        if (subEl) subEl.innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+
+        total += subtotal;
+      });
+
+      const totEl = document.getElementById(`preset-total-display-${projId}`);
+      if (totEl) totEl.innerText = total.toLocaleString('vi-VN') + ' đ';
+
+      const wordsEl = document.getElementById(`preset-total-words-${projId}`);
+      if (wordsEl) {
+        if (total > 0) {
+          wordsEl.classList.remove('hidden');
+          wordsEl.innerText = '🔤 Bằng chữ: ' + docSoVN(total);
+        } else {
+          wordsEl.classList.add('hidden');
+        }
+      }
+
+      const manualMoneyInp = document.getElementById(`manual-money-${projId}`);
+      if (manualMoneyInp && total > 0) {
+        manualMoneyInp.value = total.toLocaleString('vi-VN');
+      }
+    }
+
+    function submitDynamicTransaction(projId, projName) {
+      const typeSel = document.getElementById(`proj-type-sel-${projId}`);
+      const type = typeSel ? typeSel.value : '';
+
+      if (!type) return alert('⚠️ Bạn không có quyền thực hiện giao dịch này!');
+
+      const inputs = document.querySelectorAll(`.dyn-field-${projId}`);
+      const presetInputs = document.querySelectorAll(`.preset-qty-${projId}`);
+
+      let amount = 0;
+      let notes = [];
+      let transDate = new Date().toISOString().split('T')[0];
+
+      let presetNotes = [];
+      let presetSum = 0;
+      presetInputs.forEach(pInp => {
+        const pName = pInp.getAttribute('data-preset-name');
+        const pPrice = Number(pInp.getAttribute('data-price')) || 0;
+        const qty = Number(pInp.value) || 0;
+
+        if (qty > 0) {
+          const sub = pPrice * qty;
+          presetSum += sub;
+          presetNotes.push(`${qty}x ${pName} (${sub.toLocaleString('vi-VN')}đ)`);
+        }
+      });
+
+      inputs.forEach(inp => {
+        const fieldName = inp.getAttribute('data-field');
+        const isMoney = inp.getAttribute('data-ismoney') === 'true';
+        let val = inp.value.trim();
+
+        if (isMoney) {
+          let cleanNum = Number(val.replace(/\./g, '').replace(/,/g, '')) || 0;
+          amount = cleanNum;
+        } else {
+          if (fieldName.toLowerCase().includes('ngày') && val) {
+            transDate = val;
+          }
+          if (val) {
+            notes.push(`${fieldName}: ${val}`);
+          }
+        }
+      });
+
+      if (amount <= 0 && presetSum > 0) {
+        amount = presetSum;
+      }
+
+      if (!amount || amount <= 0) return alert('⚠️ Vui lòng nhập số tiền hoặc số lượng hợp lệ!');
+
+      if (presetNotes.length > 0) {
+        notes.unshift(`Chi tiết: ${presetNotes.join(', ')}`);
+      }
+
+      const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
+      const isSub = currentUser.isSubAccount;
+
+      const newTrans = {
+        id: Date.now(),
+        userId: currentUser.id,
+        projectId: projId,
+        scope: 'Công việc',
+        type: type,
+        category: projName,
+        amount: amount,
+        note: notes.join(' | '),
+        date: transDate,
+        isSharedAdmin: isUserAdmin || isSub
+      };
+
+      transactions.push(newTrans);
+
+      saveStorage();
+      updateSummaryAndData();
+
+      if (hasPerm('in')) {
+        if (confirm(`✅ Đã lưu thành công ${amount.toLocaleString('vi-VN')}đ vào công việc "${projName}"!\n\n🖨️ Bạn có muốn IN PHIẾU / IN BILL ngay bây giờ không?`)) {
+          printBill(newTrans.id);
+        }
+      } else {
+        alert(`✅ Đã lưu thành công ${amount.toLocaleString('vi-VN')}đ vào công việc "${projName}"!`);
+      }
+    }
+
     let clickCount = 0;
     let clickTimer = null;
     function handleCardClick() {
@@ -587,22 +1951,23 @@
       if (isNaN(val)) return alert('⚠️ Vui lòng gõ số tiền hợp lệ!');
 
       const { myTrans } = getUserData();
-      let income = myTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
-      let expense = myTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let personalTrans = myTrans.filter(t => t.scope !== 'Công việc');
+      let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let currentBal = income - expense;
       let diff = val - currentBal;
 
       const today = new Date().toISOString().split('T')[0];
       if (diff > 0) {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Cài đặt số dư ban đầu', amount: diff, note: 'Điều chỉnh số dư trực tiếp', date: today });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope: 'Cá nhân', type: 'Thu nhập', category: 'Cài đặt số dư ban đầu', amount: diff, note: 'Điều chỉnh số dư trực tiếp', date: today });
       } else if (diff < 0) {
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cài đặt số dư ban đầu', amount: Math.abs(diff), note: 'Điều chỉnh số dư trực tiếp', date: today });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope: 'Cá nhân', type: 'Chi tiêu', category: 'Cài đặt số dư ban đầu', amount: Math.abs(diff), note: 'Điều chỉnh số dư trực tiếp', date: today });
       }
 
       saveStorage();
       updateSummaryAndData();
       toggleSecretPanel(false);
-      alert(`✅ Đã điều chỉnh Tổng số dư còn lại về đúng: ${val.toLocaleString('vi-VN')} đ!`);
+      alert(`✅ Đã điều chỉnh Số dư cá nhân về đúng: ${val.toLocaleString('vi-VN')} đ!`);
     }
 
     function clearAllTransactions() {
@@ -625,50 +1990,62 @@
       if (confirm('🔥 Cảnh báo: Phần mềm sẽ được reset hoàn toàn về 0 đ!')) {
         transactions = transactions.filter(t => t.userId !== currentUser.id);
         debts = debts.filter(d => d.userId !== currentUser.id);
+        workProjects = workProjects.filter(p => p.userId !== currentUser.id);
         saveStorage();
         updateSummaryAndData();
         toggleSecretPanel(false);
       }
     }
 
-    // ==========================================
-    // 4. ĐIỀU HƯỚNG TAB
-    // ==========================================
     function switchTab(tabId) {
-      ['tab-overview', 'tab-add', 'tab-debts', 'tab-bill', 'tab-reports'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-        document.getElementById(`btn-${id}`).classList.remove('active');
+      ['tab-overview', 'tab-work', 'tab-add', 'tab-debts', 'tab-bill', 'tab-reports'].forEach(id => {
+        const tEl = document.getElementById(id);
+        const bEl = document.getElementById(`btn-${id}`);
+        if (tEl) tEl.classList.add('hidden');
+        if (bEl) bEl.classList.remove('active');
       });
-      document.getElementById(tabId).classList.remove('hidden');
-      document.getElementById(`btn-${tabId}`).classList.add('active');
+      const targetT = document.getElementById(tabId);
+      const targetB = document.getElementById(`btn-${tabId}`);
+      if (targetT) targetT.classList.remove('hidden');
+      if (targetB) targetB.classList.add('active');
     }
 
-    // TAB 1: TỔNG QUAN RECENT
     function renderRecentTransactions() {
       const { myTrans } = getUserData();
       const recent = [...myTrans].reverse().slice(0, 10);
       const tbody = document.getElementById('table-recent-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       if (recent.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-slate-500 italic text-center font-bold">Chưa có giao dịch nào. Chọn "➕ Thêm Giao Dịch" để nhập nhé!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-slate-500 italic text-center font-bold">Chưa có giao dịch nào. Chọn "➕ Thêm Giao Dịch" để nhập nhé!</td></tr>';
         return;
       }
 
+      const canSua = hasPerm('sua');
+      const canIn = hasPerm('in');
+      const canXoa = hasPerm('xoa');
+
       recent.forEach(t => {
+        const scopeLabel = t.scope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${t.date}</td>
+          <td><span class="px-2 py-0.5 rounded text-xs ${t.scope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
           <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
           <td>${t.category || ''}</td>
           <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
-          <td class="text-slate-600 font-medium">${t.note || ''}</td>
+          <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id)}</td>
+          <td>
+            ${canSua ? `<button type="button" onclick="openEditTransModal('${t.id}')" class="text-amber-600 hover:text-amber-800 text-xs px-1 font-black">✏️ Sửa</button>` : ''}
+            ${canIn ? `<button type="button" onclick="printBill('${t.id}')" class="text-blue-600 hover:text-blue-800 text-xs px-1 font-black">🖨️ In</button>` : ''}
+            ${canXoa ? `<button type="button" onclick="deleteTransaction('${t.id}')" class="text-red-600 hover:text-red-800 text-xs px-1 font-black">🗑️ Xóa</button>` : ''}
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // TAB 2: THÊM GIAO DỊCH
     function toggleTransFields() {
       const type = document.getElementById('trans-type').value;
       const isDebt = type.includes('Cho vay') || type.includes('Đi vay');
@@ -680,6 +2057,7 @@
       const { myDebts } = getUserData();
       const persons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
       const sel = document.getElementById('select-person');
+      if (!sel) return;
       sel.innerHTML = '<option value="">-- Chọn người từ danh bạ --</option><option value="NEW">➕ Nhập tên người mới...</option>';
       persons.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
     }
@@ -690,6 +2068,7 @@
     }
 
     function saveTransaction() {
+      const scope = document.getElementById('trans-scope').value;
       const date = document.getElementById('trans-date').value;
       const type = document.getElementById('trans-type').value;
       const amount = Number(document.getElementById('trans-amount').value);
@@ -707,31 +2086,31 @@
 
       if (type === 'Cho vay (Người khác nợ mình)') {
         const noteFinal = `Cho ${person} vay` + (note ? `: ${note}` : '');
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: 'Cho vay', amount, note: noteFinal, date });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope, type: 'Chi tiêu', category: 'Cho vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Cho vay (Người khác nợ mình)', amount, status: 'Đang nợ', date });
       } else if (type === 'Đi vay (Mình nợ người khác)') {
         const noteFinal = `Mượn tiền từ ${person}` + (note ? `: ${note}` : '');
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Thu nhập', category: 'Đi vay', amount, note: noteFinal, date });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope, type: 'Thu nhập', category: 'Đi vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Đi vay (Mình nợ người khác)', amount, status: 'Đang nợ', date });
       } else {
         const category = document.getElementById('trans-category').value.trim() || 'Khác';
-        transactions.push({ id: Date.now(), userId: currentUser.id, type, category, amount, note, date });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope, type, category, amount, note, date });
       }
 
       saveStorage();
       updateSummaryAndData();
-      alert('✅ Đã lưu giao dịch thành công!');
+      alert(`✅ Đã lưu giao dịch ${scope} thành công!`);
       document.getElementById('trans-amount').value = '';
       document.getElementById('trans-note').value = '';
       document.getElementById('trans-category').value = '';
       document.getElementById('add-money-box').classList.add('hidden');
     }
 
-    // TAB 3: QUẢN LÝ NỢ (ACCORDION & PAYMENTS)
     function renderDebtsList() {
       const { myDebts } = getUserData();
       const activeDebts = myDebts.filter(d => d.status === 'Đang nợ');
       const container = document.getElementById('debt-accordion-list');
+      if (!container) return;
       container.innerHTML = '';
 
       if (activeDebts.length === 0) {
@@ -770,8 +2149,8 @@
               <p class="text-xs text-slate-600 italic font-medium">${docSoVN(d.amount)}</p>
             </div>
             <div class="flex gap-2">
-              <button onclick="openPartialModal(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">💵 Trả bớt</button>
-              <button onclick="payFullDebt(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
+              <button type="button" onclick="openPartialModal(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">💵 Trả bớt</button>
+              <button type="button" onclick="payFullDebt(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
             </div>
           `;
           subContainer.appendChild(row);
@@ -801,7 +2180,7 @@
       if (pAmt >= debt.amount) {
         debt.status = 'Đã trả';
         transactions.push({
-          id: Date.now(), userId: currentUser.id,
+          id: Date.now(), userId: currentUser.id, scope: 'Cá nhân',
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: debt.amount, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Thanh toán xong)`, date: today
         });
@@ -809,7 +2188,7 @@
       } else {
         debt.amount -= pAmt;
         transactions.push({
-          id: Date.now(), userId: currentUser.id,
+          id: Date.now(), userId: currentUser.id, scope: 'Cá nhân',
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: pAmt, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Trả bớt ${pAmt.toLocaleString('vi-VN')}đ)`, date: today
         });
@@ -830,7 +2209,7 @@
       debt.status = 'Đã trả';
 
       transactions.push({
-        id: Date.now(), userId: currentUser.id,
+        id: Date.now(), userId: currentUser.id, scope: 'Cá nhân',
         type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
         amount: debt.amount, note: `${isChoVay ? 'Thu xong toàn bộ nợ từ' : 'Thanh toán xong toàn bộ nợ cho'} ${debt.personName}`, date: today
       });
@@ -840,7 +2219,6 @@
       alert(`🎉 Đã thu/trả xong khoản ${debt.amount.toLocaleString('vi-VN')}đ của ${debt.personName}!`);
     }
 
-    // TAB 4: CHIA BILL DYNAMIC
     let billMembers = [''];
     function addBillMember() { billMembers.push(''); renderBillMembers(); calculateBill(); }
     function removeBillMember() { if (billMembers.length > 1) { billMembers.pop(); renderBillMembers(); calculateBill(); } }
@@ -849,6 +2227,7 @@
       const { myDebts } = getUserData();
       const existingPersons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
       const container = document.getElementById('bill-members-container');
+      if (!container) return;
       container.innerHTML = '';
 
       billMembers.forEach((m, idx) => {
@@ -909,7 +2288,7 @@
         const validMembers = billMembers.filter(m => m.trim() !== '');
         if (validMembers.length === 0) return alert('⚠️ Vui lòng chọn hoặc nhập tên ít nhất 1 người nợ hợp lệ!');
 
-        transactions.push({ id: Date.now(), userId: currentUser.id, type: 'Chi tiêu', category: title, amount: perPerson, note: `Phần tiền của bạn trong bill ${total.toLocaleString('vi-VN')}đ`, date });
+        transactions.push({ id: Date.now(), userId: currentUser.id, scope: 'Cá nhân', type: 'Chi tiêu', category: title, amount: perPerson, note: `Phần tiền của bạn trong bill ${total.toLocaleString('vi-VN')}đ`, date });
 
         validMembers.forEach((m, i) => {
           debts.push({ id: Date.now() + i + 1, userId: currentUser.id, personName: m.trim(), debtType: 'Cho vay (Người khác nợ mình)', amount: perPerson, status: 'Đang nợ', date });
@@ -925,7 +2304,6 @@
       document.getElementById('bill-summary-box').classList.add('hidden');
     }
 
-    // TAB 5: BÁO CÁO CHI TIẾT THEO 5 MỐC THỜI GIAN
     function handleReportFilterChange() {
       const type = document.getElementById('report-filter-type').value;
       document.getElementById('filter-controls-day').classList.toggle('hidden', type !== 'DAY');
@@ -935,12 +2313,40 @@
       renderReports();
     }
 
+    // RENDER BÁO CÁO GIỚI HẠN DÀNH RIÊNG CHO TÀI KHOẢN PHỤ
     function renderReports() {
       const { myTrans, myDebts } = getUserData();
       const type = document.getElementById('report-filter-type').value;
+      const scopeFilterEl = document.getElementById('report-scope-filter');
+      
+      const isSub = !!currentUser.isSubAccount;
+
+      // Nếu là tài khoản phụ, khóa cứng nguồn tiền ở 'Công việc'
+      if (isSub && scopeFilterEl) {
+        scopeFilterEl.value = 'Công việc';
+        document.getElementById('report-scope-filter-wrapper').classList.add('hidden');
+        document.getElementById('report-debt-section-wrapper').classList.add('hidden');
+      } else {
+        if (document.getElementById('report-scope-filter-wrapper')) {
+          document.getElementById('report-scope-filter-wrapper').classList.remove('hidden');
+        }
+        if (document.getElementById('report-debt-section-wrapper')) {
+          document.getElementById('report-debt-section-wrapper').classList.remove('hidden');
+        }
+      }
+
+      const scopeFilter = scopeFilterEl ? scopeFilterEl.value : 'ALL';
 
       let fTrans = [...myTrans];
       let fDebts = [...myDebts];
+
+      if (scopeFilter !== 'ALL') {
+        if (scopeFilter === 'Cá nhân') {
+          fTrans = fTrans.filter(t => t.scope !== 'Công việc');
+        } else {
+          fTrans = fTrans.filter(t => t.scope === 'Công việc');
+        }
+      }
 
       if (type === 'DAY') {
         const d = document.getElementById('rep-date-input').value;
@@ -979,87 +2385,101 @@
       }
 
       let income = fTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
-      let expense = fTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
+      let expense = fTrans.filter(t => ['Chi tiêu', 'Trả nợ', 'CK Liên đoàn'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
 
-      document.getElementById('rep-income').innerText = income.toLocaleString('vi-VN') + ' đ';
-      document.getElementById('rep-expense').innerText = expense.toLocaleString('vi-VN') + ' đ';
-      document.getElementById('rep-balance').innerText = (income - expense).toLocaleString('vi-VN') + ' đ';
+      const repInc = document.getElementById('rep-income');
+      const repExp = document.getElementById('rep-expense');
+      const repBal = document.getElementById('rep-balance');
+      if (repInc) repInc.innerText = income.toLocaleString('vi-VN') + ' đ';
+      if (repExp) repExp.innerText = expense.toLocaleString('vi-VN') + ' đ';
+      if (repBal) repBal.innerText = (income - expense).toLocaleString('vi-VN') + ' đ';
 
-      // Table transactions
       const tbody = document.getElementById('table-reports-trans-body');
-      tbody.innerHTML = '';
-      if (fTrans.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-slate-500 italic text-center font-bold">Không có giao dịch thu/chi nào trong khoảng thời gian này.</td></tr>';
-      } else {
-        [...fTrans].reverse().forEach(t => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="text-slate-500 font-normal">#${t.id}</td>
-            <td>${t.date}</td>
-            <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
-            <td>${t.category || ''}</td>
-            <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
-            <td class="text-slate-600 italic font-medium text-xs">${docSoVN(t.amount)}</td>
-            <td class="text-slate-600 font-medium">${t.note || ''}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
+      if (tbody) {
+        tbody.innerHTML = '';
+        if (fTrans.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-slate-500 italic text-center font-bold">Không có giao dịch thu/chi nào trong khoảng thời gian này.</td></tr>';
+        } else {
+          const canSua = hasPerm('sua');
+          const canIn = hasPerm('in');
+          const canXoa = hasPerm('xoa');
 
-      // Accordion debts
-      const debtContainer = document.getElementById('reports-debt-accordion-list');
-      debtContainer.innerHTML = '';
-      if (fDebts.length === 0) {
-        debtContainer.innerHTML = '<p class="text-sm text-slate-600 font-bold italic">Không có khoản nợ nào trong khoảng thời gian này.</p>';
-      } else {
-        const persons = [...new Set(fDebts.map(d => d.personName))];
-        persons.forEach((person, idx) => {
-          const pDebts = fDebts.filter(d => d.personName === person);
-          const choVayUnpaid = pDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
-          const diVayUnpaid = pDebts.filter(d => d.debtType.includes('Đi vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
-
-          let parts = [];
-          if (choVayUnpaid > 0) parts.push(`Nợ bạn: ${choVayUnpaid.toLocaleString('vi-VN')} đ`);
-          if (diVayUnpaid > 0) parts.push(`Bạn nợ: ${diVayUnpaid.toLocaleString('vi-VN')} đ`);
-          if (parts.length === 0) parts.push('Đã thanh toán hết ✅');
-
-          const div = document.createElement('div');
-          div.className = 'border-2 border-slate-300 rounded-lg p-3 bg-slate-50 space-y-2';
-          div.innerHTML = `
-            <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('rep-debt-sub-${idx}').classList.toggle('hidden')">
-              <span class="font-black text-base text-slate-900">👤 ${person}</span>
-              <span class="text-sm font-black text-blue-700">(${parts.join(' | ')}) ▼</span>
-            </div>
-            <div id="rep-debt-sub-${idx}" class="space-y-2 pt-2 border-t-2 border-slate-200">
-              <table class="st-table bg-white border border-slate-200 rounded-lg">
-                <thead>
-                  <tr><th>ID</th><th>Ngày Vay/Mượn</th><th>Loại Nợ</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Trạng Thái</th></tr>
-                </thead>
-                <tbody id="rep-debt-tbody-${idx}"></tbody>
-              </table>
-            </div>
-          `;
-          debtContainer.appendChild(div);
-
-          const tbody = document.getElementById(`rep-debt-tbody-${idx}`);
-          pDebts.forEach(d => {
+          [...fTrans].reverse().forEach(t => {
+            const scopeLabel = t.scope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="text-slate-500 font-normal">#${d.id}</td>
-              <td>${d.date}</td>
-              <td>${d.debtType}</td>
-              <td class="text-blue-700">${Number(d.amount).toLocaleString('vi-VN')} đ</td>
-              <td class="text-slate-600 italic font-medium text-xs">${docSoVN(d.amount)}</td>
-              <td><span class="px-2 py-0.5 rounded text-xs ${d.status === 'Đã trả' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">${d.status}</span></td>
+              <td class="text-slate-500 font-normal">#${t.id}</td>
+              <td>${t.date}</td>
+              <td><span class="px-2 py-0.5 rounded text-xs ${t.scope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
+              <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
+              <td>${t.category || ''}</td>
+              <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
+              <td class="text-slate-600 italic font-medium text-xs">${docSoVN(t.amount)}</td>
+              <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id)}</td>
+              <td>
+                ${canSua ? `<button type="button" onclick="openEditTransModal('${t.id}')" class="text-amber-600 hover:text-amber-800 text-xs px-1 font-black">✏️ Sửa</button>` : ''}
+                ${canIn ? `<button type="button" onclick="printBill('${t.id}')" class="text-blue-600 hover:text-blue-800 text-xs px-1 font-black">🖨️ In</button>` : ''}
+                ${canXoa ? `<button type="button" onclick="deleteTransaction('${t.id}')" class="text-red-600 hover:text-red-800 text-xs px-1 font-black">🗑️ Xóa</button>` : ''}
+              </td>
             `;
             tbody.appendChild(tr);
           });
-        });
+        }
+      }
+
+      const debtContainer = document.getElementById('reports-debt-accordion-list');
+      if (debtContainer && !isSub) {
+        debtContainer.innerHTML = '';
+        if (fDebts.length === 0) {
+          debtContainer.innerHTML = '<p class="text-sm text-slate-600 font-bold italic">Không có khoản nợ nào trong khoảng thời gian này.</p>';
+        } else {
+          const persons = [...new Set(fDebts.map(d => d.personName))];
+          persons.forEach((person, idx) => {
+            const pDebts = fDebts.filter(d => d.personName === person);
+            const choVayUnpaid = pDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
+            const diVayUnpaid = pDebts.filter(d => d.debtType.includes('Đi vay') && d.status === 'Đang nợ').reduce((a,b) => a + Number(b.amount), 0);
+
+            let parts = [];
+            if (choVayUnpaid > 0) parts.push(`Nợ bạn: ${choVayUnpaid.toLocaleString('vi-VN')} đ`);
+            if (diVayUnpaid > 0) parts.push(`Bạn nợ: ${diVayUnpaid.toLocaleString('vi-VN')} đ`);
+            if (parts.length === 0) parts.push('Đã thanh toán hết ✅');
+
+            const div = document.createElement('div');
+            div.className = 'border-2 border-slate-300 rounded-lg p-3 bg-slate-50 space-y-2';
+            div.innerHTML = `
+              <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('rep-debt-sub-${idx}').classList.toggle('hidden')">
+                <span class="font-black text-base text-slate-900">👤 ${person}</span>
+                <span class="text-sm font-black text-blue-700">(${parts.join(' | ')}) ▼</span>
+              </div>
+              <div id="rep-debt-sub-${idx}" class="space-y-2 pt-2 border-t-2 border-slate-200">
+                <table class="st-table bg-white border border-slate-200 rounded-lg">
+                  <thead>
+                    <tr><th>ID</th><th>Ngày Vay/Mượn</th><th>Loại Nợ</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Trạng Thái</th></tr>
+                  </thead>
+                  <tbody id="rep-debt-tbody-${idx}"></tbody>
+                </table>
+              </div>
+            `;
+            debtContainer.appendChild(div);
+
+            const tbody = document.getElementById(`rep-debt-tbody-${idx}`);
+            pDebts.forEach(d => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="text-slate-500 font-normal">#${d.id}</td>
+                <td>${d.date}</td>
+                <td>${d.debtType}</td>
+                <td class="text-blue-700">${Number(d.amount).toLocaleString('vi-VN')} đ</td>
+                <td class="text-slate-600 italic font-medium text-xs">${docSoVN(d.amount)}</td>
+                <td><span class="px-2 py-0.5 rounded text-xs ${d.status === 'Đã trả' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">${d.status}</span></td>
+              `;
+              tbody.appendChild(tr);
+            });
+          });
+        }
       }
     }
 
-    // RUN APP AT START
-    renderBillMembers();
     initApp();
   </script>
 </body>
