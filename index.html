@@ -12,9 +12,11 @@
     <script>
       stlite.mount(
         {
-          requirements: ["pandas", "altair"],
+          // Nạp đầy đủ thư viện sqlite3 để không bị lỗi ModuleNotFoundError
+          requirements: ["pandas", "altair", "sqlite3"],
           entrypoint: "app.py",
           files: {
+            // Chỉ nạp file app.py để ứng dụng tự tạo database mới
             "app.py": { url: "./app.py" }
           }
         },
