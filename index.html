@@ -845,7 +845,6 @@
       return lines.join('<br/>');
     }
 
-    // NHẬN DIỆN MÃ CÔNG VIỆC CHÍNH XÁC
     function getTransProjectId(t) {
       if (!t) return null;
       if (t.projectId) return t.projectId;
@@ -860,7 +859,6 @@
       return null;
     }
 
-    // NHẬN DIỆN CHUẨN 100% CÔNG VIỆC CÓ MÃ MÃ ĐỊNH DANH
     function getTransScope(t) {
       if (!t) return 'Cá nhân';
       if (t.scope === 'Công việc' || t.projectId) return 'Công việc';
@@ -946,7 +944,7 @@
       return false;
     }
 
-    // ĐỒNG BỘ ĐÁM MÂY TỰ ĐỘNG MỖI 2 GIÂY
+    // ĐỒNG BỘ MÁY CHỦ MỖI 2 GIÂY - GỘP DỮ LIỆU CHÍNH XÁC THEO ID
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1253,7 +1251,7 @@
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      // Chỉ lọc giao dịch CÁ NHÂN thực sự (Loại bỏ triệt để giao dịch Công việc)
+      // Chỉ lọc giao dịch CÁ NHÂN thực sự
       let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
@@ -1535,7 +1533,7 @@
       t.note = newNote;
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       closeEditTransModal();
       alert('✅ Đã cập nhật xong giao dịch! Số tiền và báo cáo đã tự động nhảy theo.');
     }
@@ -1544,9 +1542,9 @@
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
       if (confirm('🗑️ Bạn có chắc muốn xóa giao dịch này không?')) {
-        transactions = transactions.filter(t => t.id !== transId && String(t.id) !== String(transId));
+        transactions = transactions.filter(t => String(t.id) !== String(transId));
         saveStorage();
-        updateSummaryAndData();
+        fetchCloudData();
       }
     }
 
@@ -2275,7 +2273,6 @@
       document.getElementById('input-person-new').classList.toggle('hidden', val !== 'NEW');
     }
 
-    // LƯU GIAO DỊCH CÁ NHÂN VÀ TỰ ĐỘNG XÓA TRẮNG FORM
     function saveTransaction() {
       const scope = document.getElementById('trans-scope').value;
       const date = document.getElementById('trans-date').value;
@@ -2310,7 +2307,6 @@
       fetchCloudData();
       alert(`✅ Đã lưu giao dịch ${scope} thành công!`);
 
-      // RESET FORM SẠCH SẼ
       document.getElementById('trans-amount').value = '';
       document.getElementById('trans-note').value = '';
       document.getElementById('trans-category').value = '';

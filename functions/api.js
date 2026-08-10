@@ -5,64 +5,90 @@ export async function onRequest(context) {
 
   // 1. ĐỒNG BỘ DỮ LIỆU TỪ THIẾT BỊ LÊN CLOUDFLARE D1
   if (request.method === "POST" && action === "sync-data") {
-    const body = await request.json();
-    const { userId, users, workProjects, transactions, debts } = body;
+    try {
+      const body = await request.json();
+      const { userId, transactions, debts } = body;
 
-    // Lưu / Cập nhật Danh sách Tài khoản
-    if (users && users.length > 0) {
-      for (let u of users) {
-        await env.DB.prepare(
-          "INSERT INTO users (id, phone, username, password) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, password=excluded.password"
-        ).bind(String(u.id), String(u.phone), String(u.username), String(u.password)).run();
+      if (userId) {
+        // Xóa dữ liệu cũ của user để ghi đè bản mới nhất
+        await env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)).run();
+        await env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)).run();
+
+        // Ghi lại danh sách giao dịch
+        if (transactions && Array.isArray(transactions)) {
+          for (let t of transactions) {
+            await env.DB.prepare(
+              "INSERT INTO transactions (id, user_id, type, category, amount, note, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            ).bind(
+              String(t.id),
+              String(t.userId || userId),
+              String(t.type || ''),
+              String(t.category || ''),
+              Number(t.amount) || 0,
+              String(t.note || ''),
+              String(t.date || '')
+            ).run();
+          }
+        }
+
+        // Ghi lại danh sách khoản nợ
+        if (debts && Array.isArray(debts)) {
+          for (let d of debts) {
+            await env.DB.prepare(
+              "INSERT INTO debts (id, user_id, person_name, debt_type, amount, status, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            ).bind(
+              String(d.id),
+              String(d.userId || userId),
+              String(d.personName || ''),
+              String(d.debtType || ''),
+              Number(d.amount) || 0,
+              String(d.status || ''),
+              String(d.date || '')
+            ).run();
+          }
+        }
       }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
     }
-
-    // Làm sạch và ghi đè giao dịch + khoản nợ
-    if (userId) {
-      await env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)).run();
-      await env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)).run();
-
-      for (let t of transactions) {
-        await env.DB.prepare("INSERT INTO transactions VALUES (?, ?, ?, ?, ?, ?, ?)").bind(
-          String(t.id), String(t.userId || userId), t.type || '', t.category || '', Number(t.amount) || 0, t.note || '', t.date || ''
-        ).run();
-      }
-      for (let d of debts) {
-        await env.DB.prepare("INSERT INTO debts VALUES (?, ?, ?, ?, ?, ?, ?)").bind(
-          String(d.id), String(d.userId || userId), d.personName || '', d.debtType || '', Number(d.amount) || 0, d.status || '', d.date || ''
-        ).run();
-      }
-    }
-
-    return new Response(JSON.stringify({ success: true }));
   }
 
-  // 2. TẢI DỮ LIỆU TOÀN BỘ HỆ THỐNG VỀ ĐỂ ĐỒNG BỘ TỨC THỜI
+  // 2. LẤY TOÀN BỘ DỮ LIỆU ĐÁM MÂY VỀ THIẾT BỊ
   if (request.method === "GET" && action === "get-data") {
-    const trans = await env.DB.prepare("SELECT * FROM transactions").all();
-    const debts = await env.DB.prepare("SELECT * FROM debts").all();
+    try {
+      const trans = await env.DB.prepare("SELECT * FROM transactions").all();
+      const debts = await env.DB.prepare("SELECT * FROM debts").all();
 
-    const formattedTrans = (trans.results || []).map(t => ({
-      id: t.id,
-      userId: t.user_id,
-      type: t.type,
-      category: t.category,
-      amount: t.amount,
-      note: t.note,
-      date: t.date
-    }));
+      const formattedTrans = (trans.results || []).map(t => ({
+        id: t.id,
+        userId: t.user_id,
+        type: t.type,
+        category: t.category,
+        amount: t.amount,
+        note: t.note,
+        date: t.date
+      }));
 
-    const formattedDebts = (debts.results || []).map(d => ({
-      id: d.id,
-      userId: d.user_id,
-      personName: d.person_name,
-      debtType: d.debt_type,
-      amount: d.amount,
-      status: d.status,
-      date: d.date
-    }));
+      const formattedDebts = (debts.results || []).map(d => ({
+        id: d.id,
+        userId: d.user_id,
+        personName: d.person_name,
+        debtType: d.debt_type,
+        amount: d.amount,
+        status: d.status,
+        date: d.date
+      }));
 
-    return new Response(JSON.stringify({ transactions: formattedTrans, debts: formattedDebts }));
+      return new Response(JSON.stringify({ transactions: formattedTrans, debts: formattedDebts }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    }
   }
 
   return new Response("Not found", { status: 404 });
