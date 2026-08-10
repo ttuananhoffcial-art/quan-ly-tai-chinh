@@ -582,7 +582,7 @@
         <p class="text-xs font-black text-purple-900 border-b border-purple-200 pb-1">📊 NHẬP SỐ LƯỢNG HẠNG MỤC CÀI SẴN:</p>
         <div id="edit-preset-items-list" class="space-y-1.5"></div>
         <div class="flex justify-between items-center pt-2 border-t border-purple-200 font-black text-xs md:text-sm">
-          <span>📊 TỔNG CỘNG:</span>
+          <span>📊 TỔNG CỘNG HẠNG MỤC:</span>
           <div class="flex gap-4">
             <span>Tổng số lượng: <span id="edit-total-qty" class="text-red-600 font-black">0</span></span>
             <span>Tổng tiền: <span id="edit-total-amount" class="text-green-700 font-black">0 đ</span></span>
@@ -2000,7 +2000,14 @@
       const container = document.getElementById('work-projects-list');
       if (!container) return;
 
-      // Lưu lại giá trị loại nhập đang được chọn ở từng card công việc để không bị reset
+      // CHẶN HOÀN TOÀN việc vẽ lại HTML nếu người dùng đang thao tác nhập liệu
+      const activeEl = document.activeElement;
+      const isUserFocusing = activeEl && activeEl.closest('#tab-work') && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+      if (isUserFocusing && container.children.length > 0) {
+        updateProjectTotalsOnly();
+        return;
+      }
+
       let selectedTypes = {};
       myProjects.forEach(proj => {
         const typeSel = document.getElementById(`proj-type-sel-${proj.id}`);
@@ -2024,7 +2031,6 @@
 
         const canSua = hasPerm('sua');
         const canXoa = hasPerm('xoa');
-
         const isOpen = openProjectIds.has(proj.id);
 
         const card = document.createElement('div');
@@ -2142,7 +2148,7 @@
           <p class="text-xs font-black text-purple-900 border-b border-purple-200 pb-1">🧮 NHẬP SỐ LƯỢNG HẠNG MỤC CÀI SẴN:</p>
           <div class="space-y-1">${presetRows}</div>
           <div class="flex justify-between items-center pt-2 border-t border-purple-200 font-black text-xs md:text-sm text-purple-950">
-            <span>📊 TỔNG CỘNG:</span>
+            <span>📊 TỔNG CỘNG HẠNG MỤC:</span>
             <div class="flex gap-4">
               <span>Tổng số lượng: <span id="preset-total-qty-${projId}" class="text-red-600 font-black">0</span></span>
               <span>Tổng tiền: <span id="preset-total-display-${projId}" class="text-base font-black text-green-700">0 đ</span></span>
