@@ -832,6 +832,21 @@
     let debts = JSON.parse(localStorage.getItem('app_debts')) || [];
     let workProjects = JSON.parse(localStorage.getItem('app_work_projects')) || [];
 
+    // BIẾN LƯU DANH SÁCH MÃ DỰ ÁN ĐANG MỞ
+    let openProjectIds = new Set();
+
+    function toggleProjectCard(projId, idx) {
+      const detailsEl = document.getElementById(`proj-details-${idx}`);
+      if (!detailsEl) return;
+      if (openProjectIds.has(projId)) {
+        openProjectIds.delete(projId);
+        detailsEl.classList.add('hidden');
+      } else {
+        openProjectIds.add(projId);
+        detailsEl.classList.remove('hidden');
+      }
+    }
+
     function ensureAdminUser() {
       let admin = users.find(u => u.phone === '0398567890');
       if (!admin) {
@@ -857,7 +872,7 @@
     let tempPresetItems = [];
     let editingProjectId = null;
     let activeEditingTransId = null;
-    let editingSubAccountId = null; // BIẾN CHỨA ID TÀI KHOẢN ĐANG SỬA
+    let editingSubAccountId = null;
 
     function hasPerm(act) {
       if (!currentUser) return false;
@@ -973,8 +988,13 @@
       }
     }
 
+    // ĐỒNG BỘ ĐÁM MÂY TỰ ĐỘNG - KHÔNG RE-RENDER KHI ĐANG GÕ CHỮ
     async function fetchCloudData() {
       if (!currentUser) return;
+
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
       try {
         const res = await fetch(`/api?action=get-data&userId=${currentUser.id}`);
         if (res.ok) {
@@ -987,7 +1007,10 @@
             debts = cloudData.debts;
             localStorage.setItem('app_debts', JSON.stringify(debts));
           }
-          updateSummaryAndData();
+          // Chỉ vẽ lại giao diện nếu người dùng không đặt con trỏ chuột gõ chữ
+          if (!isTyping) {
+            updateSummaryAndData();
+          }
         }
       } catch (e) {
         console.log('Sync offline');
@@ -1241,7 +1264,6 @@
       });
     }
 
-    // TẠO HOẶC CẬP NHẬT TÀI KHOẢN PHỤ
     function createSubAccount() {
       const phone = document.getElementById('sub-phone-input').value.trim();
       const username = document.getElementById('sub-user-input').value.trim();
@@ -1307,7 +1329,6 @@
       renderAdminAllUsersList();
     }
 
-    // HÀM CHỈNH SỬA TÀI KHOẢN (SỬA SĐT, TÊN, MK, CẤP QUYỀN, GÁN MÃ DỰ ÁN)
     function editSubAccount(userId) {
       const u = users.find(item => item.id === userId);
       if (!u) return;
@@ -1363,7 +1384,6 @@
       }
     }
 
-    // RENDER DANH SÁCH TÀI KHOẢN CÓ NÚT BÚT SỬA ✏️ DÀNH CHO ADMIN
     function renderAdminAllUsersList() {
       const container = document.getElementById('all-users-admin-list');
       if (!container) return;
@@ -1661,6 +1681,7 @@
       }
     }
 
+    // RENDER DANH SÁCH MÃ DỰ ÁN CÓ LƯU TRẠNG THÁI MỞ / ĐÓNG CHỐNG BỊ TỰ ĐỘNG KHÓA
     function renderWorkProjectsList() {
       const { myProjects, myTrans } = getUserData();
       const container = document.getElementById('work-projects-list');
@@ -1683,10 +1704,13 @@
         const canSua = hasPerm('sua');
         const canXoa = hasPerm('xoa');
 
+        // KIỂM TRA XEM MÃ DỰ ÁN NÀY ĐANG ĐƯỢC BẤM MỞ HAY ĐANG ĐÓNG
+        const isOpen = openProjectIds.has(proj.id);
+
         const card = document.createElement('div');
         card.className = 'border-2 border-slate-300 rounded-xl bg-slate-50 overflow-hidden shadow-sm';
         card.innerHTML = `
-          <div class="p-3 bg-white hover:bg-slate-100 cursor-pointer flex justify-between items-center border-b-2 border-slate-200 transition" onclick="document.getElementById('proj-details-${idx}').classList.toggle('hidden')">
+          <div class="p-3 bg-white hover:bg-slate-100 cursor-pointer flex justify-between items-center border-b-2 border-slate-200 transition" onclick="toggleProjectCard('${proj.id}', ${idx})">
             <div>
               <span class="font-black text-base text-slate-900">💼 ${proj.name}</span>
               <span class="text-xs text-slate-500 font-bold ml-2">(🗓️ Tạo ngày: ${proj.createdDate})</span>
@@ -1698,7 +1722,7 @@
             </div>
           </div>
 
-          <div id="proj-details-${idx}" class="hidden p-4 space-y-4 bg-slate-50">
+          <div id="proj-details-${idx}" class="${isOpen ? '' : 'hidden'} p-4 space-y-4 bg-slate-50">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
               <div class="bg-green-100 border-2 border-green-500 rounded-lg p-2">
                 <p class="text-[11px] font-black text-green-800">💵 TỔNG TIỀN</p>
