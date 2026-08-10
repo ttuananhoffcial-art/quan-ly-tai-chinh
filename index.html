@@ -584,7 +584,7 @@
 
   <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
   <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
-    <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
+    <div id="print-modal-inner" class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2 no-print">
         <h4 class="text-base text-slate-900">🖨️ Xem Trước & In Phiếu / Bill</h4>
         <button type="button" onclick="closePrintModal()" class="text-red-600 font-black text-sm">❌ Đóng</button>
@@ -763,7 +763,6 @@
       }
     }
 
-    // TRÍCH XUẤT MÃ ĐƠN VỊ TỪ GHI CHÚ
     function extractMaDonVi(noteStr) {
       if (!noteStr) return '';
       const match = noteStr.match(/(?:Mã đơn vị|Mã DV|Đơn vị|Ma don vi):\s*([^|\n]+)/i);
@@ -916,7 +915,6 @@
       return false;
     }
 
-    // ĐỒNG BỘ ĐÁM MÂY - TỰ ĐỘNG BỎ QUA RE-RENDER NẾU ĐANG CÓ CHỮ CHƯA LƯU
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -940,7 +938,6 @@
             localStorage.setItem('app_debts', JSON.stringify(debts));
           }
 
-          // Chỉ cập nhật lại giao diện khi KHÔNG có chữ nào đang gõ dở
           if ((transChanged || debtsChanged) && !isTypingInWork && !hasUnsaved) {
             updateSummaryAndData();
           }
@@ -1551,24 +1548,36 @@
       document.getElementById('print-bill-modal').classList.add('hidden');
     }
 
-    // TẢI FILE PDF PHIẾU THU / BILL KÈM MÃ ĐƠN VỊ VÀO TIÊU ĐỀ FILE
+    // TẢI FILE PDF PHIẾU THU KHÔNG BỊ CẮT XÉN
     function downloadBillPDF() {
+      const modalInner = document.getElementById('print-modal-inner');
       const element = document.getElementById('printable-bill-container');
       const maDV = currentBillMaDonVi || 'DonVi';
       const filename = `${maDV}_PhieuThu_${currentBillTransId || Date.now()}.pdf`;
 
+      // Tạm thời gỡ bỏ giới hạn chiều cao và thanh cuộn để chụp trọn vẹn 100% phiếu
+      const origMaxH = modalInner.style.maxHeight;
+      const origOverflow = modalInner.style.overflow;
+      modalInner.style.maxHeight = 'none';
+      modalInner.style.overflow = 'visible';
+
       const opt = {
-        margin: 8,
+        margin: [5, 5, 5, 5],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { scale: 2, scrollY: 0, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'avoid-all' }
       };
 
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(element).save().then(() => {
+        // Phục hồi lại giao diện cũ sau khi tải xong
+        modalInner.style.maxHeight = origMaxH;
+        modalInner.style.overflow = origOverflow;
+      });
     }
 
-    // TẢI FILE PDF BÁO CÁO CÓ MÃ ĐƠN VỊ KÈM TIÊU ĐỀ
+    // TẢI FILE PDF BÁO CÁO TOÀN BỘ KHÔNG BỊ XÉN
     function downloadReportPDF() {
       const element = document.getElementById('tab-reports');
       const scopeFilter = document.getElementById('report-scope-filter') ? document.getElementById('report-scope-filter').value : 'ALL';
@@ -1580,11 +1589,12 @@
       const filename = `${titlePrefix}_${new Date().toISOString().split('T')[0]}.pdf`;
 
       const opt = {
-        margin: 8,
+        margin: [8, 8, 8, 8],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, ignoreElements: (el) => el.classList.contains('no-print') || el.tagName === 'BUTTON' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { scale: 2, scrollY: 0, ignoreElements: (el) => el.classList.contains('no-print') || el.tagName === 'BUTTON' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       html2pdf().set(opt).from(element).save();
