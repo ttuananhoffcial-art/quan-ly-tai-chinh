@@ -480,11 +480,10 @@
       </div>
 
       <div id="admin-settings-content" class="space-y-4 hidden">
-        <!-- NÚT ÉP ĐỒNG BỘ DỮ LIỆU CẤP TỐC LÊN MÁY CHỦ -->
         <div class="bg-blue-50 border-2 border-blue-400 p-3 rounded-xl flex justify-between items-center">
           <div>
             <p class="text-xs font-black text-blue-950">🔄 Đẩy Dữ Liệu Laptop Lên Máy Chủ Cloud</p>
-            <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả giao dịch lên Cloud cho điện thoại hiển thị ngay lập tức.</p>
+            <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả Mã công việc & Tài khoản phụ lên Cloud.</p>
           </div>
           <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
         </div>
@@ -918,7 +917,19 @@
       return true;
     }
 
-    // ÉP ĐỒNG BỘ DỮ LIỆU ĐÁM MÂY KHÔNG CÓ TRỄ VÀ CHỐNG CACHE TRÊN IPHONE / SAFARI
+    function hasUnsavedWorkInputs() {
+      const inputs = document.querySelectorAll('#tab-work input, #tab-work textarea');
+      for (let inp of inputs) {
+        if (inp.id === 'work-title-input' || inp.id === 'preset-name-input' || inp.id === 'preset-price-input') {
+          if (inp.value.trim() !== '') return true;
+        }
+        if (inp.type === 'number' && Number(inp.value) > 0) return true;
+        if (inp.type === 'text' && inp.value.trim() !== '' && !inp.id.startsWith('proj-type-sel')) return true;
+      }
+      return false;
+    }
+
+    // TẢI DỮ LIỆU ĐÁM MÂY KÈM CÁC THƯỜNG DÙNG ĐỂ KHÔNG BỊ TRÌNH DUYỆT ĐIỆN THOẠI CACHE BẢN CŨ
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -930,6 +941,26 @@
 
         if (res.ok) {
           const cloudData = await res.json();
+
+          // Đồng bộ Tài Khoản
+          if (cloudData.users && Array.isArray(cloudData.users)) {
+            const uMap = new Map();
+            users.forEach(u => uMap.set(String(u.id), u));
+            cloudData.users.forEach(u => uMap.set(String(u.id), u));
+            users = Array.from(uMap.values());
+            localStorage.setItem('app_users', JSON.stringify(users));
+          }
+
+          // Đồng bộ Mã Công Việc
+          if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
+            const pMap = new Map();
+            workProjects.forEach(p => pMap.set(String(p.id), p));
+            cloudData.workProjects.forEach(p => pMap.set(String(p.id), p));
+            workProjects = Array.from(pMap.values());
+            localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+          }
+
+          // Đồng bộ Giao Dịch
           if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
             const transMap = new Map();
             transactions.forEach(t => transMap.set(String(t.id), t));
@@ -937,6 +968,8 @@
             transactions = Array.from(transMap.values());
             localStorage.setItem('app_transactions', JSON.stringify(transactions));
           }
+
+          // Đồng bộ Khoản Nợ
           if (cloudData.debts && Array.isArray(cloudData.debts)) {
             const debtMap = new Map();
             debts.forEach(d => debtMap.set(String(d.id), d));
@@ -955,7 +988,6 @@
     setInterval(fetchCloudData, 2000);
     window.addEventListener('focus', fetchCloudData);
 
-    // HÀM BẤM ÉP GỬI DỮ LIỆU LÊN CLOUD VÀ THÔNG BÁO KẾT QUẢ
     async function forceSyncToCloud() {
       if (!currentUser) return;
       alert('⏳ Đang tiến hành đẩy toàn bộ dữ liệu Laptop lên Cloudfare...');

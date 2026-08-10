@@ -16,13 +16,43 @@ export async function onRequest(context) {
   }
 
   try {
-    // 1. ĐỒNG BỘ DỮ LIỆU LÊN CLOUDFLARE D1 (CHIA GÓI 50 CÂU LỆNH CHỐNG LỖI BATCH LIMIT)
+    // TỰ ĐỘNG TẠO BẢNG CHỨA MÃ CÔNG VIỆC VÀ TÀI KHOẢN PHỤ TRÊN CLOUDFLARE D1
+    await env.DB.exec(`
+      CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
+      CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT, data TEXT);
+    `);
+
+    // 1. LƯU & ĐỒNG BỘ TOÀN BỘ TÀI KHOẢN, MÃ CÔNG VIỆC, GIAO DỊCH, NỢ LEÊN CLOUD
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
-      const { userId, transactions, debts } = body;
+      const { userId, users, workProjects, transactions, debts } = body;
 
+      const stmts = [];
+
+      // Lưu danh sách Tài khoản (bao gồm Tài khoản phụ & Quyền hạn)
+      if (users && Array.isArray(users)) {
+        for (let u of users) {
+          stmts.push(
+            env.DB.prepare(
+              "INSERT INTO sys_users (id, phone, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET phone=excluded.phone, data=excluded.data"
+            ).bind(String(u.id), String(u.phone), JSON.stringify(u))
+          );
+        }
+      }
+
+      // Lưu danh sách Mã Công Việc
+      if (workProjects && Array.isArray(workProjects)) {
+        for (let p of workProjects) {
+          stmts.push(
+            env.DB.prepare(
+              "INSERT INTO work_projects (id, user_id, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data"
+            ).bind(String(p.id), String(p.userId || userId), JSON.stringify(p))
+          );
+        }
+      }
+
+      // Lưu Giao dịch & Khoản nợ
       if (userId) {
-        const stmts = [];
         stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
         stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
 
@@ -61,21 +91,23 @@ export async function onRequest(context) {
             );
           }
         }
+      }
 
-        // CHIA NHỎ MỖI LẦN GỬI 50 CÂU LỆNH ĐỂ KHÔNG BỊ TRÌNH DUYỆT / D1 HỦY
-        for (let i = 0; i < stmts.length; i += 50) {
-          const chunk = stmts.slice(i, i + 50);
-          await env.DB.batch(chunk);
-        }
+      // Gửi dữ liệu theo từng gói 50 câu lệnh
+      for (let i = 0; i < stmts.length; i += 50) {
+        const chunk = stmts.slice(i, i + 50);
+        await env.DB.batch(chunk);
       }
 
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // 2. TẢI DỮ LIỆU ĐÁM MÂY VỀ THIẾT BỊ
+    // 2. TẢI TOÀN BỘ TÀI KHOẢN, MÃ CÔNG VIỆC, GIAO DỊCH, NỢ VỀ THIẾT BỊ
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();
+      const dbUsers = await env.DB.prepare("SELECT * FROM sys_users").all();
+      const dbProjects = await env.DB.prepare("SELECT * FROM work_projects").all();
 
       const formattedTrans = (trans.results || []).map(t => ({
         id: t.id,
@@ -97,7 +129,20 @@ export async function onRequest(context) {
         date: d.date
       }));
 
-      return new Response(JSON.stringify({ transactions: formattedTrans, debts: formattedDebts }), { headers: corsHeaders });
+      const formattedUsers = (dbUsers.results || []).map(u => {
+        try { return JSON.parse(u.data); } catch(e) { return null; }
+      }).filter(u => u !== null);
+
+      const formattedProjects = (dbProjects.results || []).map(p => {
+        try { return JSON.parse(p.data); } catch(e) { return null; }
+      }).filter(p => p !== null);
+
+      return new Response(JSON.stringify({
+        transactions: formattedTrans,
+        debts: formattedDebts,
+        users: formattedUsers,
+        workProjects: formattedProjects
+      }), { headers: corsHeaders });
     }
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
