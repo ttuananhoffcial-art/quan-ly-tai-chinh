@@ -504,13 +504,10 @@
       </div>
     </div>
 
-    <!-- TAB 6: LỊCH SỬ THAO TÁC & CHỈNH SỬA CHI TIẾT (MỚI) -->
+    <!-- TAB 6: LỊCH SỬ THAO TÁC & CHỈNH SỬA CHI TIẾT (ĐÃ BỎ NÚT XÓA) -->
     <div id="tab-audit-logs" class="hidden space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
         <h3 class="font-black text-lg text-slate-900">📜 Nhật Ký Tất Cả Thao Tác & Chỉnh Sửa Hệ Thống</h3>
-        <button type="button" onclick="clearAuditLogs()" class="bg-red-600 hover:bg-red-700 text-white font-black px-3 py-1.5 rounded-lg text-xs shadow no-print">
-          🗑️ Xóa Lịch Sử Thao Tác
-        </button>
       </div>
 
       <div class="overflow-x-auto border-2 border-amber-200 rounded-xl bg-amber-50/30 p-2">
@@ -948,7 +945,6 @@
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
-    // HÀM TỰ ĐỘNG GHI LỊCH SỬ THAO TÁC CÓ NGÀY & GIỜ
     function logAction(actionType, details) {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -997,14 +993,6 @@
         `;
         tbody.appendChild(tr);
       });
-    }
-
-    function clearAuditLogs() {
-      if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ Lịch Sử Thao Tác không?')) {
-        auditLogs = [];
-        localStorage.setItem('app_audit_logs', JSON.stringify(auditLogs));
-        renderAuditLogs();
-      }
     }
 
     function toggleProjectCard(projId, idx) {
@@ -1862,7 +1850,6 @@
       saveStorage();
       fetchCloudData();
 
-      // GHI NHẬT KÝ SỬA DỮ LIỆU CÓ NGÀY GIỜ VÀ CHI TIẾT
       logAction('Chỉnh sửa giao dịch', `Chỉnh sửa GD #${t.id} (${newCategory}): Số tiền từ ${oldAmtStr}đ ➔ ${newAmtStr}đ | Ngày: ${newDate}.`);
 
       closeEditTransModal();
