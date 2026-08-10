@@ -556,7 +556,7 @@
     </div>
   </div>
 
-  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT (ĐÃ BỔ SUNG Ô NHẬP HẠNG MỤC SỐ LƯỢNG) -->
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
   <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
@@ -958,8 +958,11 @@
     }
 
     function hasUnsavedWorkInputs() {
-      const inputs = document.querySelectorAll('#tab-work input, #tab-work textarea');
+      const inputs = document.querySelectorAll('#tab-work input, #tab-work textarea, #tab-work select');
       for (let inp of inputs) {
+        if (inp.tagName === 'SELECT' && inp.id.startsWith('proj-type-sel-')) {
+          if (inp.value && inp.value !== 'Thu nhập') return true;
+        }
         if (inp.id === 'work-title-input' || inp.id === 'preset-name-input' || inp.id === 'preset-price-input') {
           if (inp.value.trim() !== '') return true;
         }
@@ -1352,7 +1355,7 @@
       renderRecentTransactions();
 
       const activeEl = document.activeElement;
-      const isEditingWork = activeEl && activeEl.closest('#tab-work') && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const isEditingWork = activeEl && activeEl.closest('#tab-work') && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
       const hasUnsaved = hasUnsavedWorkInputs();
 
       if (!isEditingWork && !hasUnsaved) {
@@ -1590,7 +1593,6 @@
       document.getElementById('edit-trans-date').value = t.date;
       document.getElementById('edit-trans-category').value = t.category || '';
 
-      // Tách chuỗi Note để hiển thị nội dung gốc (không bao gồm chuỗi "Chi tiết:")
       let noteParts = (t.note || '').split(/ \| |\n/);
       let noteOnlyParts = [];
       let parsedQuantities = {};
@@ -1616,7 +1618,6 @@
 
       document.getElementById('edit-trans-note').value = noteOnlyParts.join(' | ');
 
-      // Lấy danh sách Hạng mục cài sẵn từ Mã công việc tương ứng
       const projId = getTransProjectId(t);
       const proj = workProjects.find(p => p.id === projId || p.name === t.category);
       const presetContainer = document.getElementById('edit-preset-container');
@@ -1698,7 +1699,6 @@
 
       if (!newAmount || newAmount <= 0) return alert('⚠️ Số tiền không hợp lệ!');
 
-      // Xây dựng lại chuỗi "Chi tiết:" nếu có nhập số lượng hạng mục
       const qtyInputs = document.querySelectorAll('.edit-qty-input');
       let presetNotes = [];
       qtyInputs.forEach(input => {
@@ -1999,6 +1999,14 @@
       const { myProjects, myTrans } = getUserData();
       const container = document.getElementById('work-projects-list');
       if (!container) return;
+
+      // Lưu lại giá trị loại nhập đang được chọn ở từng card công việc để không bị reset
+      let selectedTypes = {};
+      myProjects.forEach(proj => {
+        const typeSel = document.getElementById(`proj-type-sel-${proj.id}`);
+        if (typeSel) selectedTypes[proj.id] = typeSel.value;
+      });
+
       container.innerHTML = '';
 
       if (myProjects.length === 0) {
@@ -2068,11 +2076,11 @@
         `;
         container.appendChild(card);
 
-        renderDynamicForm(proj.id);
+        renderDynamicForm(proj.id, selectedTypes[proj.id]);
       });
     }
 
-    function renderDynamicForm(projId) {
+    function renderDynamicForm(projId, savedType) {
       const { myProjects } = getUserData();
       const proj = myProjects.find(p => p.id === projId);
       if (!proj) return;
@@ -2094,7 +2102,7 @@
         optionsHtml = '<option value="">⚠️ Không có quyền nhập thu/chi</option>';
       }
 
-      const prevType = typeSel.value;
+      const prevType = savedType || typeSel.value;
       typeSel.innerHTML = optionsHtml;
       if (prevType && typeSel.querySelector(`option[value="${prevType}"]`)) {
         typeSel.value = prevType;
@@ -2133,9 +2141,12 @@
         presetDiv.innerHTML = `
           <p class="text-xs font-black text-purple-900 border-b border-purple-200 pb-1">🧮 NHẬP SỐ LƯỢNG HẠNG MỤC CÀI SẴN:</p>
           <div class="space-y-1">${presetRows}</div>
-          <div class="flex justify-between items-center pt-1 border-t border-purple-200 font-black text-xs md:text-sm text-purple-950">
-            <span>📊 TỔNG TIỀN CÁC NỘI DUNG TRÊN:</span>
-            <span id="preset-total-display-${projId}" class="text-base font-black text-green-700">0 đ</span>
+          <div class="flex justify-between items-center pt-2 border-t border-purple-200 font-black text-xs md:text-sm text-purple-950">
+            <span>📊 TỔNG CỘNG:</span>
+            <div class="flex gap-4">
+              <span>Tổng số lượng: <span id="preset-total-qty-${projId}" class="text-red-600 font-black">0</span></span>
+              <span>Tổng tiền: <span id="preset-total-display-${projId}" class="text-base font-black text-green-700">0 đ</span></span>
+            </div>
           </div>
           <p id="preset-total-words-${projId}" class="text-xs text-blue-900 font-black italic hidden"></p>
         `;
@@ -2193,6 +2204,7 @@
 
     function calcPresetTotal(projId) {
       const inputs = document.querySelectorAll(`.preset-qty-${projId}`);
+      let totalQty = 0;
       let total = 0;
 
       inputs.forEach(inp => {
@@ -2204,8 +2216,12 @@
         const subEl = document.getElementById(`subtotal-${projId}-${key}`);
         if (subEl) subEl.innerText = subtotal.toLocaleString('vi-VN') + ' đ';
 
+        totalQty += qty;
         total += subtotal;
       });
+
+      const qtyEl = document.getElementById(`preset-total-qty-${projId}`);
+      if (qtyEl) qtyEl.innerText = totalQty;
 
       const totEl = document.getElementById(`preset-total-display-${projId}`);
       if (totEl) totEl.innerText = total.toLocaleString('vi-VN') + ' đ';
@@ -2307,6 +2323,8 @@
       document.querySelectorAll(`.preset-qty-${projId}`).forEach(i => i.value = '');
       const subTotDisplay = document.getElementById(`preset-total-display-${projId}`);
       if (subTotDisplay) subTotDisplay.innerText = '0 đ';
+      const qtyEl = document.getElementById(`preset-total-qty-${projId}`);
+      if (qtyEl) qtyEl.innerText = '0';
       const wordsEl = document.getElementById(`preset-total-words-${projId}`);
       if (wordsEl) wordsEl.classList.add('hidden');
 
