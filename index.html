@@ -39,7 +39,6 @@
 </head>
 <body class="bg-white text-black p-2 md:p-4 min-h-screen pb-12">
 
-  <!-- MAN HINH DANG NHAP / DANG KY -->
   <div id="auth-screen" class="max-w-md mx-auto my-10 p-6 bg-white rounded-xl border-2 border-slate-300 shadow-lg space-y-6">
     <h1 class="text-2xl font-black text-center text-slate-900">💰 Quản Lý Tài Chính Cá Nhân & Công Việc</h1>
     
@@ -49,7 +48,6 @@
       <button type="button" onclick="setAuthTab('forgot')" id="tab-forgot-btn" class="w-1/3 py-2 font-black text-sm text-slate-500">🔑 Quên MK</button>
     </div>
 
-    <!-- Form Đăng Nhập -->
     <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
       <div>
         <label class="block text-xs font-black mb-1">Tên tài khoản hoặc SĐT</label>
@@ -67,7 +65,6 @@
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">ĐĂNG NHẬP NGAY</button>
     </form>
 
-    <!-- Form Đăng Ký -->
     <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
       <div>
         <label class="block text-xs font-black mb-1">Số điện thoại</label>
@@ -98,7 +95,6 @@
       <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">TẠO TÀI KHOẢN MỚI</button>
     </form>
 
-    <!-- Form Quên Mật Khẩu -->
     <form id="form-forgot" onsubmit="handleForgot(event)" class="space-y-4 hidden">
       <div>
         <label class="block text-xs font-black mb-1">Nhập Số Điện Thoại</label>
@@ -126,9 +122,7 @@
     </form>
   </div>
 
-  <!-- MAN HINH APPLICATION CHINH -->
   <div id="main-screen" class="hidden max-w-5xl mx-auto space-y-4">
-    <!-- USER BAR -->
     <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-300 text-sm font-black">
       <div>
         👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-700"></span> 
@@ -145,7 +139,6 @@
       </div>
     </div>
 
-    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH CHỈ TÍNH RIÊNG CÁ NHÂN -->
     <div id="sticky-summary" class="sticky-header">
       <div class="main-app-title">💰 Quản Lý Tài Chính Cá Nhân</div>
       <div class="summary-container">
@@ -168,7 +161,6 @@
       </div>
     </div>
 
-    <!-- BẢNG ĐIỀU CHỈNH BÍ MẬT -->
     <div id="secret-panel" class="hidden bg-yellow-50 border-2 border-yellow-400 p-4 rounded-xl shadow-md space-y-4">
       <div class="flex justify-between items-center border-b-2 border-yellow-300 pb-2">
         <h3 class="font-black text-yellow-900 text-base">⚙️ Bảng Điều Chỉnh Số Tiền Chính Xác & Reset Dữ Liệu</h3>
@@ -191,7 +183,6 @@
       </div>
     </div>
 
-    <!-- MENU THẺ NGANG -->
     <div class="st-radio-container">
       <button type="button" onclick="switchTab('tab-overview')" id="btn-tab-overview" class="st-radio-btn active">🏠 Tổng Quan</button>
       <button type="button" onclick="switchTab('tab-work')" id="btn-tab-work" class="st-radio-btn">💼 Thu Chi Công Việc</button>
@@ -203,7 +194,6 @@
 
     <hr class="border-slate-300 my-2" />
 
-    <!-- TAB 1: TỔNG QUAN -->
     <div id="tab-overview" class="space-y-3">
       <h3 class="font-black text-lg text-slate-900">📋 Giao Dịch Gần Đây</h3>
       <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
@@ -216,7 +206,6 @@
       </div>
     </div>
 
-    <!-- TAB: THU CHI CÔNG VIỆC -->
     <div id="tab-work" class="hidden space-y-4">
       <div id="create-work-btn-wrapper" class="flex justify-between items-center">
         <button type="button" onclick="toggleWorkForm()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-sm shadow flex items-center gap-2 transition">
@@ -224,7 +213,6 @@
         </button>
       </div>
 
-      <!-- KHUNG TẠO / SỬA MÃ CÔNG VIỆC -->
       <div id="work-create-form-box" class="hidden bg-slate-50 border-2 border-slate-300 p-4 rounded-xl space-y-4 shadow-sm transition-all">
         <h3 id="work-form-heading" class="font-black text-base text-slate-900 border-b pb-2">💼 Tạo / Chỉnh Sửa Mã Thu Chi Công Việc</h3>
         
@@ -304,14 +292,12 @@
         </button>
       </div>
 
-      <!-- DANH SÁCH CÁC CÔNG VIỆC ĐÃ TẠO -->
       <div class="space-y-3">
         <h4 class="font-black text-base text-slate-900">📂 Danh Sách Mã Công Việc Đã Tạo</h4>
         <div id="work-projects-list" class="space-y-3"></div>
       </div>
     </div>
 
-    <!-- TAB 2: THÊM GIAO DỊCH CHUNG -->
     <div id="tab-add" class="hidden space-y-4 max-w-lg mx-auto">
       <h3 class="font-black text-lg text-slate-900">➕ Nhập Giao Dịch / Khoản Nợ Mới</h3>
       <div>
@@ -358,13 +344,11 @@
       <button type="button" onclick="saveTransaction()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU GIAO DỊCH</button>
     </div>
 
-    <!-- TAB 3: QUẢN LÝ NỢ -->
     <div id="tab-debts" class="hidden space-y-4">
       <h3 class="font-black text-lg text-slate-900">📋 Danh Sách Khoản Nợ & Cho Vay Chi Tiết</h3>
       <div id="debt-accordion-list" class="space-y-3"></div>
     </div>
 
-    <!-- TAB 4: CHIA BILL -->
     <div id="tab-bill" class="hidden space-y-4 max-w-lg mx-auto">
       <h3 class="font-black text-lg text-slate-900">🍕 Chia Tiền Hóa Đơn Mới</h3>
       <div>
@@ -406,7 +390,6 @@
       <button type="button" onclick="saveBill()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg text-base shadow">LƯU & TỰ ĐỘNG PHÂN CHIA</button>
     </div>
 
-    <!-- TAB 5: BÁO CÁO CHI TIẾT TÁCH BIỆT CÁ NHÂN VÀ CÔNG VIỆC KÈM NÚT TẢI PDF -->
     <div id="tab-reports" class="hidden space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2">
         <h3 class="font-black text-lg text-slate-900">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền</h3>
@@ -489,7 +472,6 @@
     </div>
   </div>
 
-  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) -->
   <div id="settings-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-2xl w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
@@ -498,6 +480,15 @@
       </div>
 
       <div id="admin-settings-content" class="space-y-4 hidden">
+        <!-- NÚT ÉP ĐỒNG BỘ DỮ LIỆU CẤP TỐC LÊN MÁY CHỦ -->
+        <div class="bg-blue-50 border-2 border-blue-400 p-3 rounded-xl flex justify-between items-center">
+          <div>
+            <p class="text-xs font-black text-blue-950">🔄 Đẩy Dữ Liệu Laptop Lên Máy Chủ Cloud</p>
+            <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả giao dịch lên Cloud cho điện thoại hiển thị ngay lập tức.</p>
+          </div>
+          <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
+        </div>
+
         <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl space-y-3">
           <h5 class="font-black text-amber-950 text-sm border-b border-amber-200 pb-1">👑 Tạo / Cập Nhật Tài Khoản Phụ (Phân Quyền Công Việc)</h5>
 
@@ -548,7 +539,6 @@
     </div>
   </div>
 
-  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
   <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
@@ -581,7 +571,6 @@
     </div>
   </div>
 
-  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP (ĐÃ THU NHỎ GỌN) -->
   <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-3 hidden z-[9999]">
     <div id="print-modal-inner" class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 font-black shadow-xl border-2 border-slate-300 max-h-[95vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-1.5 no-print">
@@ -633,7 +622,6 @@
     </div>
   </div>
 
-  <!-- MODAL TRẢ BỚT NỢ -->
   <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-xs w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">💵 Trả Bớt Khoản Nợ</h4>
@@ -866,7 +854,6 @@
       return 'Cá nhân';
     }
 
-    // KHO DỮ LIỆU LOCALSTORAGE
     let users = JSON.parse(localStorage.getItem('app_users')) || [];
     let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
     let transactions = JSON.parse(localStorage.getItem('app_transactions')) || [];
@@ -931,24 +918,11 @@
       return true;
     }
 
-    function hasUnsavedWorkInputs() {
-      const inputs = document.querySelectorAll('#tab-work input, #tab-work textarea');
-      for (let inp of inputs) {
-        if (inp.id === 'work-title-input' || inp.id === 'preset-name-input' || inp.id === 'preset-price-input') {
-          if (inp.value.trim() !== '') return true;
-        }
-        if (inp.type === 'number' && Number(inp.value) > 0) return true;
-        if (inp.type === 'text' && inp.value.trim() !== '' && !inp.id.startsWith('proj-type-sel')) return true;
-      }
-      return false;
-    }
-
-    // ĐỒNG BỘ ĐÁM MÂY MỖI 2 GIÂY KÈM DẤU THỜI GIAN TRÁNH BỊ ĐIỆN THOẠI CACHE BẢN CŨ
+    // ÉP ĐỒNG BỘ DỮ LIỆU ĐÁM MÂY KHÔNG CÓ TRỄ VÀ CHỐNG CACHE TRÊN IPHONE / SAFARI
     async function fetchCloudData() {
       if (!currentUser) return;
 
       try {
-        // Thêm tham số cache: 'no-store' ép Safari & Zalo WebView luôn lấy dữ liệu mới nhất từ D1
         const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&_t=${Date.now()}`, {
           cache: 'no-store',
           headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
@@ -980,6 +954,15 @@
 
     setInterval(fetchCloudData, 2000);
     window.addEventListener('focus', fetchCloudData);
+
+    // HÀM BẤM ÉP GỬI DỮ LIỆU LÊN CLOUD VÀ THÔNG BÁO KẾT QUẢ
+    async function forceSyncToCloud() {
+      if (!currentUser) return;
+      alert('⏳ Đang tiến hành đẩy toàn bộ dữ liệu Laptop lên Cloudfare...');
+      await saveStorage();
+      await fetchCloudData();
+      alert('🎉 Đã đẩy xong dữ liệu lên Cloud! Mở điện thoại nhấn Tải lại trang (F5) để kiểm tra nhé.');
+    }
 
     function getUserData() {
       if (!currentUser) return { myTrans: [], myDebts: [], myProjects: [] };
@@ -1255,7 +1238,6 @@
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      // Loại bỏ triệt để giao dịch công việc khỏi 4 ô cá nhân
       let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
@@ -2033,7 +2015,6 @@
       }
     }
 
-    // LƯU GIAO DỊCH CÔNG VIỆC CHUẨN XÁC
     function submitDynamicTransaction(projId, projName) {
       const typeSel = document.getElementById(`proj-type-sel-${projId}`);
       const type = typeSel ? typeSel.value : '';

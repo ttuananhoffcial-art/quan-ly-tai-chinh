@@ -3,7 +3,6 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
 
-  // BỔ SUNG HEADER CORS CHO TRÌNH DUYỆT ĐIỆN THOẠI & ZALO
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -17,7 +16,7 @@ export async function onRequest(context) {
   }
 
   try {
-    // 1. ĐỒNG BỘ DỮ LIỆU BẰNG BATCHING (GỬI 1 LẦN TẤT CẢ GIAO DỊCH LEÊN D1)
+    // 1. ĐỒNG BỘ DỮ LIỆU LÊN CLOUDFLARE D1 (CHIA GÓI 50 CÂU LỆNH CHỐNG LỖI BATCH LIMIT)
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
       const { userId, transactions, debts } = body;
@@ -63,15 +62,17 @@ export async function onRequest(context) {
           }
         }
 
-        if (stmts.length > 0) {
-          await env.DB.batch(stmts);
+        // CHIA NHỎ MỖI LẦN GỬI 50 CÂU LỆNH ĐỂ KHÔNG BỊ TRÌNH DUYỆT / D1 HỦY
+        for (let i = 0; i < stmts.length; i += 50) {
+          const chunk = stmts.slice(i, i + 50);
+          await env.DB.batch(chunk);
         }
       }
 
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // 2. TẢI TOÀN BỘ DỮ LIỆU ĐÁM MÂY VỀ ĐIỆN THOẠI
+    // 2. TẢI DỮ LIỆU ĐÁM MÂY VỀ THIẾT BỊ
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();
