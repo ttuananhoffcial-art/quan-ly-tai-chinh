@@ -25,9 +25,14 @@
     .st-radio-btn:hover { border-color: #2563eb; background-color: #eff6ff; }
     .st-radio-btn.active { border-color: #2563eb; background-color: #eff6ff; color: #2563eb; }
 
-    .st-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
-    .st-table th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 8px; font-weight: 900; color: #0f172a; }
-    .st-table td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 700; color: #000000; }
+    .st-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; table-layout: auto; }
+    .st-table th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 6px 8px; font-weight: 900; color: #0f172a; white-space: nowrap; }
+    .st-table td { border-bottom: 1px solid #e2e8f0; padding: 6px 8px; font-weight: 700; color: #000000; vertical-align: top; }
+
+    /* CSS ĐẶC BIỆT KHI IN BÁO CÁO DẠNG PDF CHUẨN SẮC NÉT */
+    .pdf-export-mode .no-print { display: none !important; }
+    .pdf-export-mode .st-table th, .pdf-export-mode .st-table td { padding: 4px 6px !important; font-size: 11px !important; }
+    .pdf-export-mode { padding: 10px !important; background: #fff !important; }
 
     @media print {
       body * { visibility: hidden; }
@@ -408,14 +413,14 @@
 
     <!-- TAB 5: BÁO CÁO CHI TIẾT TÁCH BIỆT CÁ NHÂN VÀ CÔNG VIỆC KÈM NÚT TẢI PDF -->
     <div id="tab-reports" class="hidden space-y-4">
-      <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2">
+      <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2 no-print">
         <h3 class="font-black text-lg text-slate-900">📊 Báo Cáo Chi Tiết Lịch Sử Dòng Tiền</h3>
         <button type="button" onclick="downloadReportPDF()" class="bg-red-600 hover:bg-red-700 text-white font-black px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1">
           📥 TẢI PDF BÁO CÁO
         </button>
       </div>
       
-      <div class="bg-slate-50 p-3 rounded-lg border-2 border-slate-300 space-y-3">
+      <div class="bg-slate-50 p-3 rounded-lg border-2 border-slate-300 space-y-3 no-print">
         <div class="flex flex-wrap gap-3 items-center text-sm font-black">
           <div id="report-scope-filter-wrapper">
             <label class="block text-xs font-black text-blue-900 mb-1">🎯 Nguồn tiền (Phân loại):</label>
@@ -476,7 +481,18 @@
       <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
         <table class="st-table">
           <thead>
-            <tr><th>ID</th><th>Ngày</th><th>Phân Loại</th><th>Mã Đơn Vị</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Ghi Chú / Chi Tiết</th><th>Thao Tác</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>Ngày GD</th>
+              <th>Phân Loại</th>
+              <th>Mã Đơn Vị</th>
+              <th>Loại</th>
+              <th>Danh Mục</th>
+              <th>Số Tiền</th>
+              <th>Bằng Chữ</th>
+              <th>Ghi Chú / Chi Tiết</th>
+              <th class="no-print">Thao Tác</th>
+            </tr>
           </thead>
           <tbody id="table-reports-trans-body"></tbody>
         </table>
@@ -835,9 +851,9 @@
       return htmlLines.join('');
     }
 
-    function formatNoteForTable(noteStr, transId) {
-      if (!noteStr) return '';
-      let parts = noteStr.split(/ \| |\n/);
+    function formatNoteForTable(noteStr, transId, updatedAt) {
+      if (!noteStr && !updatedAt) return '';
+      let parts = (noteStr || '').split(/ \| |\n/);
       let lines = [];
       parts.forEach(part => {
         part = part.trim();
@@ -853,10 +869,14 @@
         }
       });
 
+      if (updatedAt) {
+        lines.push(`<span class="text-[10px] text-amber-700 font-extrabold italic">✏️ Sửa lần cuối: ${updatedAt}</span>`);
+      }
+
       if (lines.length > 2 && transId) {
         return `
           <div>
-            <button type="button" onclick="document.getElementById('note-detail-${transId}').classList.toggle('hidden')" class="bg-purple-100 hover:bg-purple-200 text-purple-900 px-2 py-1 rounded text-xs font-black shadow-sm transition flex items-center gap-1">
+            <button type="button" onclick="document.getElementById('note-detail-${transId}').classList.toggle('hidden')" class="bg-purple-100 hover:bg-purple-200 text-purple-900 px-2 py-1 rounded text-xs font-black shadow-sm transition flex items-center gap-1 no-print">
               👁️ Xem chi tiết (${lines.length} mục) ▼
             </button>
             <div id="note-detail-${transId}" class="hidden mt-2 p-2 bg-slate-50 border-2 border-slate-200 rounded-lg text-xs leading-relaxed space-y-0.5">
@@ -899,7 +919,7 @@
 
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
-    let deletedProjectIds = new Set(); // MỚI: SET CHẶN KHÔI PHÚC MÃ CÔNG VIỆC ĐÃ XÓA
+    let deletedProjectIds = new Set();
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
@@ -1046,7 +1066,6 @@
         let projUnion = projTrans.filter(t => t.type === 'CK Liên đoàn').reduce((a,b) => a + parseAmount(b.amount), 0);
         let projBalance = projIncome - projExpense - projUnion - projDebt;
 
-        // Cập nhật ô TỔNG DƯ ngay thanh Tiêu Đề chính
         const headBal = document.getElementById(`proj-head-bal-${proj.id}`);
         if (headBal) headBal.innerText = projBalance.toLocaleString('vi-VN') + ' đ';
 
@@ -1730,6 +1749,16 @@
         newNote = noteParts.join(' | ');
       }
 
+      // TỰ ĐỘNG LƯU THỜI GIAN CHỈNH SỬA (NGÀY + GIỜ THỰC TẾ)
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      t.updatedAt = `${hours}:${mins}:${secs} ${day}/${month}/${year}`;
       t.amount = newAmount;
       t.date = newDate;
       t.category = newCategory;
@@ -1738,7 +1767,7 @@
       saveStorage();
       fetchCloudData();
       closeEditTransModal();
-      alert('✅ Đã cập nhật xong giao dịch! Số tiền và báo cáo đã tự động nhảy theo.');
+      alert('✅ Đã cập nhật xong giao dịch! Lịch sử chỉnh sửa đã được lưu cùng ngày giờ.');
     }
 
     async function deleteTransaction(transId) {
@@ -1780,7 +1809,13 @@
       document.getElementById('bill-print-date').innerText = t.date;
       document.getElementById('bill-print-category').innerText = t.category || 'Tài chính cá nhân';
       document.getElementById('bill-print-scope').innerText = realScope === 'Công việc' ? '💼 Công việc / Dự án' : '👤 Cá nhân';
-      document.getElementById('bill-print-details').innerHTML = formatNoteForPrint(t.note);
+      
+      let billDetails = formatNoteForPrint(t.note);
+      if (t.updatedAt) {
+        billDetails += `<div class="mt-2 text-[10px] text-slate-500 italic border-t pt-1">✏️ Đã chỉnh sửa lúc: ${t.updatedAt}</div>`;
+      }
+      
+      document.getElementById('bill-print-details').innerHTML = billDetails;
       document.getElementById('bill-print-amount').innerText = Number(t.amount).toLocaleString('vi-VN') + ' VNĐ';
       document.getElementById('bill-print-words').innerText = '🔤 Bằng chữ: ' + docSoVN(t.amount);
       document.getElementById('bill-print-user').innerText = currentUser ? currentUser.username : '';
@@ -1819,6 +1854,7 @@
       });
     }
 
+    // XUẤT PDF BÁO CÁO DẠNG XOAY NGANG (LANDSCAPE A4) CHUẨN ĐẸP KHÔNG BỊ VỠ HÌNH
     function downloadReportPDF() {
       const element = document.getElementById('tab-reports');
       const scopeFilter = document.getElementById('report-scope-filter') ? document.getElementById('report-scope-filter').value : 'ALL';
@@ -1829,16 +1865,21 @@
 
       const filename = `${titlePrefix}_${new Date().toISOString().split('T')[0]}.pdf`;
 
+      // Bật class tối ưu giao diện in PDF
+      element.classList.add('pdf-export-mode');
+
       const opt = {
-        margin: [8, 8, 8, 8],
+        margin: [6, 6, 6, 6],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, scrollY: 0, ignoreElements: (el) => el.classList.contains('no-print') || el.tagName === 'BUTTON' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        html2canvas: { scale: 2, scrollY: 0, useCORS: true, ignoreElements: (el) => el.classList.contains('no-print') || el.tagName === 'BUTTON' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, // GIẤY XOAY NGANG A4
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(element).save().then(() => {
+        element.classList.remove('pdf-export-mode');
+      });
     }
 
     function toggleWorkForm(forceState) {
@@ -2001,13 +2042,13 @@
 
       if (confirm('🗑️ Bạn có chắc muốn xóa mã công việc này không?')) {
         const idStr = String(projId);
-        deletedProjectIds.add(idStr); // Thêm vào danh sách chặn khôi phục
+        deletedProjectIds.add(idStr);
 
         workProjects = workProjects.filter(p => String(p.id) !== idStr);
         localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
 
         renderWorkProjectsList();
-        await saveStorage(); // Gửi lệnh xóa lên Cloud
+        await saveStorage();
       }
     }
 
@@ -2480,7 +2521,7 @@
           <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
           <td>${t.category || ''}</td>
           <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
-          <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id)}</td>
+          <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id, t.updatedAt)}</td>
           <td>
             ${canSua ? `<button type="button" onclick="openEditTransModal('${t.id}')" class="text-amber-600 hover:text-amber-800 text-xs px-1 font-black">✏️ Sửa</button>` : ''}
             ${canIn ? `<button type="button" onclick="printBill('${t.id}')" class="text-blue-600 hover:text-blue-800 text-xs px-1 font-black">🖨️ In</button>` : ''}
@@ -2890,8 +2931,8 @@
               <td>${t.category || ''}</td>
               <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
               <td class="text-slate-600 italic font-medium text-xs">${docSoVN(t.amount)}</td>
-              <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id)}</td>
-              <td>
+              <td class="text-slate-600 font-medium">${formatNoteForTable(t.note, t.id, t.updatedAt)}</td>
+              <td class="no-print">
                 ${canSua ? `<button type="button" onclick="openEditTransModal('${t.id}')" class="text-amber-600 hover:text-amber-800 text-xs px-1 font-black">✏️ Sửa</button>` : ''}
                 ${canIn ? `<button type="button" onclick="printBill('${t.id}')" class="text-blue-600 hover:text-blue-800 text-xs px-1 font-black">🖨️ In</button>` : ''}
                 ${canXoa ? `<button type="button" onclick="deleteTransaction('${t.id}')" class="text-red-600 hover:text-red-800 text-xs px-1 font-black">🗑️ Xóa</button>` : ''}
