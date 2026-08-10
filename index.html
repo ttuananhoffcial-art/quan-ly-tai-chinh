@@ -929,7 +929,6 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU ĐÁM MÂY KÈM CÁC THƯỜNG DÙNG ĐỂ KHÔNG BỊ TRÌNH DUYỆT ĐIỆN THOẠI CACHE BẢN CŨ
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -942,7 +941,6 @@
         if (res.ok) {
           const cloudData = await res.json();
 
-          // Đồng bộ Tài Khoản
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
             users.forEach(u => uMap.set(String(u.id), u));
@@ -951,7 +949,6 @@
             localStorage.setItem('app_users', JSON.stringify(users));
           }
 
-          // Đồng bộ Mã Công Việc
           if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
             const pMap = new Map();
             workProjects.forEach(p => pMap.set(String(p.id), p));
@@ -960,7 +957,6 @@
             localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
           }
 
-          // Đồng bộ Giao Dịch
           if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
             const transMap = new Map();
             transactions.forEach(t => transMap.set(String(t.id), t));
@@ -969,7 +965,6 @@
             localStorage.setItem('app_transactions', JSON.stringify(transactions));
           }
 
-          // Đồng bộ Khoản Nợ
           if (cloudData.debts && Array.isArray(cloudData.debts)) {
             const debtMap = new Map();
             debts.forEach(d => debtMap.set(String(d.id), d));
