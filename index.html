@@ -778,7 +778,7 @@
 
       parts.forEach(part => {
         part = part.trim();
-        if (!part) return;
+        if (!part || part.includes('[Nguồn: Công việc]')) return;
 
         if (part.startsWith('Chi tiết:')) {
           htmlLines.push('<div class="font-black text-slate-900 border-b pb-1 mb-1">📌 Danh sách hạng mục:</div>');
@@ -811,7 +811,7 @@
       let lines = [];
       parts.forEach(part => {
         part = part.trim();
-        if (!part) return;
+        if (!part || part.includes('[Nguồn: Công việc]')) return;
         if (part.startsWith('Chi tiết:')) {
           let itemsStr = part.replace(/^Chi tiết:\s*/, '');
           let items = itemsStr.split(/,\s*(?=\d+x\s+)/);
@@ -839,11 +839,12 @@
       return lines.join('<br/>');
     }
 
-    // HÀM NHẬN DIỆN CÔNG VIỆC HAY CÁ NHÂN
+    // NHẬN DIỆN CHUẨN 100% CÔNG VIỆC CÓ MÃ MÃ ĐỊNH DANH
     function getTransScope(t) {
+      if (!t) return 'Cá nhân';
       if (t.scope === 'Công việc' || t.projectId) return 'Công việc';
-      if (t.note && (t.note.includes('Mã đơn vị:') || t.note.includes('Chi tiết:'))) return 'Công việc';
-      if (workProjects && workProjects.some(p => p.name === t.category)) return 'Công việc';
+      if (t.note && (t.note.includes('[Nguồn: Công việc]') || t.note.includes('Mã đơn vị:') || t.note.includes('Chi tiết:') || t.note.includes('Ngày tạo:'))) return 'Công việc';
+      if (workProjects && Array.isArray(workProjects) && workProjects.some(p => p.name === t.category)) return 'Công việc';
       return 'Cá nhân';
     }
 
@@ -1232,7 +1233,7 @@
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      // Loại bỏ triệt để giao dịch công việc khỏi 4 ô cá nhân
+      // Chỉ lọc giao dịch CÁ NHÂN thực sự (Loại bỏ triệt để giao dịch Công việc)
       let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
@@ -1773,6 +1774,7 @@
       }
     }
 
+    // ĐỐI CHIẾU DỰ ÁN VỚI GIAO DỊCH BẰNG CẢ ID VA CATEGORY KHÔNG BỊ TRÔI BỎ SÓT
     function renderWorkProjectsList() {
       const { myProjects, myTrans } = getUserData();
       const container = document.getElementById('work-projects-list');
@@ -1785,7 +1787,8 @@
       }
 
       myProjects.forEach((proj, idx) => {
-        const projTrans = myTrans.filter(t => t.projectId === proj.id);
+        // ĐÍNH KÈM CẢ THEO PROJECTID LẪN CATEGORY ĐỂ TÍNH TIỀN CHUẨN XÁC 100%
+        const projTrans = myTrans.filter(t => (t.projectId && t.projectId === proj.id) || (t.category && t.category === proj.name) || (getTransScope(t) === 'Công việc' && t.category === proj.name));
 
         let projIncome = projTrans.filter(t => t.type === 'Thu nhập').reduce((a,b) => a + Number(b.amount), 0);
         let projExpense = projTrans.filter(t => t.type === 'Chi tiêu').reduce((a,b) => a + Number(b.amount), 0);
@@ -2004,7 +2007,7 @@
       }
     }
 
-    // LƯU GIAO DỊCH CÔNG VIỆC CHUẨN XÁC NGUỒN TIỀN
+    // LƯU GIAO DỊCH VÀ ĐÓNG DẤU CHÍNH XÁC [Nguồn: Công việc]
     function submitDynamicTransaction(projId, projName) {
       const typeSel = document.getElementById(`proj-type-sel-${projId}`);
       const type = typeSel ? typeSel.value : '';
@@ -2060,6 +2063,9 @@
         notes.unshift(`Chi tiết: ${presetNotes.join(', ')}`);
       }
 
+      // ĐÓNG DẤU NGUỒN CÔNG VIỆC VÀO TRỰC TIẾP CHUỖI GHI CHÚ CHỐNG BỊ NHẦM THÀNH CÁ NHÂN
+      notes.unshift('[Nguồn: Công việc]');
+
       const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
       const isSub = currentUser.isSubAccount;
 
@@ -2067,7 +2073,7 @@
         id: Date.now(),
         userId: currentUser.id,
         projectId: projId,
-        scope: 'Công việc', // Bắt buộc lưu đúng Nguồn tiền là Công việc
+        scope: 'Công việc',
         type: type,
         category: projName,
         amount: amount,
@@ -2475,7 +2481,6 @@
       renderReports();
     }
 
-    // RENDER BÁO CÁO CÓ CỘT MÃ ĐƠN VỊ VÀ PHÂN LOẠI CHUẨN XÁC
     function renderReports() {
       const { myTrans, myDebts } = getUserData();
       const type = document.getElementById('report-filter-type').value;
@@ -2606,7 +2611,7 @@
 
             let parts = [];
             if (choVayUnpaid > 0) parts.push(`Nợ bạn: ${choVayUnpaid.toLocaleString('vi-VN')} đ`);
-            if (sumBorrowed > 0) parts.push(`Bạn nợ: ${sumBorrowed.toLocaleString('vi-VN')} đ`);
+            if (diVayUnpaid > 0) parts.push(`Bạn nợ: ${diVayUnpaid.toLocaleString('vi-VN')} đ`);
             if (parts.length === 0) parts.push('Đã thanh toán hết ✅');
 
             const div = document.createElement('div');
