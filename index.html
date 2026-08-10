@@ -477,7 +477,7 @@
       <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
         <table class="st-table">
           <thead>
-            <tr><th>ID</th><th>Ngày</th><th>Phân Loại</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Ghi Chú / Chi Tiết</th><th>Thao Tác</th></tr>
+            <tr><th>ID</th><th>Ngày</th><th>Phân Loại</th><th>Mã Đơn Vị</th><th>Loại</th><th>Danh Mục</th><th>Số Tiền</th><th>Số Tiền Bằng Chữ</th><th>Ghi Chú / Chi Tiết</th><th>Thao Tác</th></tr>
           </thead>
           <tbody id="table-reports-trans-body"></tbody>
         </table>
@@ -582,53 +582,54 @@
     </div>
   </div>
 
-  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
-  <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
-    <div id="print-modal-inner" class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-2 no-print">
-        <h4 class="text-base text-slate-900">🖨️ Xem Trước & In Phiếu / Bill</h4>
-        <button type="button" onclick="closePrintModal()" class="text-red-600 font-black text-sm">❌ Đóng</button>
+  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP (ĐÃ THU NHỎ GỌN) -->
+  <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-3 hidden z-[9999]">
+    <div id="print-modal-inner" class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 font-black shadow-xl border-2 border-slate-300 max-h-[95vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-1.5 no-print">
+        <h4 class="text-sm text-slate-900">🖨️ Xem Trước & In Phiếu / Bill</h4>
+        <button type="button" onclick="closePrintModal()" class="text-red-600 font-black text-xs">❌ Đóng</button>
       </div>
 
-      <div id="printable-bill-container" class="border-2 border-slate-800 p-6 bg-white rounded-lg text-slate-900 space-y-4">
-        <div class="text-center border-b-2 border-slate-800 pb-3">
-          <h2 id="bill-print-title" class="text-xl font-black uppercase tracking-wide">PHIẾU THU TIỀN</h2>
-          <p class="text-xs font-bold text-slate-600 mt-1">Hệ Thống Quản Lý Tài Chính & Công Việc</p>
-          <p class="text-[11px] font-bold text-slate-500">Mã phiếu: <span id="bill-print-id" class="text-slate-900">#12345</span> | Ngày: <span id="bill-print-date">2026-08-09</span></p>
+      <div id="printable-bill-container" class="border-2 border-slate-800 p-4 bg-white rounded-lg text-slate-900 space-y-3">
+        <div class="text-center border-b-2 border-slate-800 pb-2">
+          <h2 id="bill-print-title" class="text-lg font-black uppercase tracking-wide">PHIẾU THU TIỀN</h2>
+          <p class="text-[11px] font-bold text-slate-600 mt-0.5">Hệ Thống Quản Lý Tài Chính & Công Việc</p>
+          <p class="text-[10px] font-bold text-slate-500">Mã phiếu: <span id="bill-print-id" class="text-slate-900">#12345</span> | Ngày: <span id="bill-print-date">2026-08-09</span></p>
         </div>
 
-        <div class="space-y-2 text-xs font-bold">
+        <div class="space-y-1.5 text-[11px] font-bold">
           <p>📍 <b>Đơn vị / Dự án:</b> <span id="bill-print-category" class="text-blue-900 font-black"></span></p>
           <p>👤 <b>Phân loại nguồn tiền:</b> <span id="bill-print-scope"></span></p>
-          <p class="pt-1">📝 <b>Nội dung & Chi tiết:</b></p>
-          <div id="bill-print-details" class="bg-slate-50 border-2 border-slate-200 p-3 rounded-lg text-slate-900 font-medium leading-relaxed"></div>
+          <p class="pt-0.5">📝 <b>Nội dung & Chi tiết:</b></p>
+          <div id="bill-print-details" class="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-900 font-medium leading-snug"></div>
         </div>
 
-        <div class="bg-green-50 border-2 border-green-600 p-3 rounded-lg text-center">
-          <p class="text-xs font-black text-green-800">💰 TỔNG SỐ TIỀN THU / CHI:</p>
-          <p id="bill-print-amount" class="text-xl font-black text-green-900">0 đ</p>
-          <p id="bill-print-words" class="text-xs font-black text-blue-900 italic mt-1"></p>
+        <div class="bg-green-50 border-2 border-green-600 p-2 rounded-lg text-center">
+          <p class="text-[11px] font-black text-green-800">💰 TỔNG SỐ TIỀN THU / CHI:</p>
+          <p id="bill-print-amount" class="text-lg font-black text-green-900">0 đ</p>
+          <p id="bill-print-words" class="text-[11px] font-black text-blue-900 italic mt-0.5"></p>
         </div>
 
-        <div class="grid grid-cols-2 text-center pt-6 text-xs font-bold">
+        <div class="grid grid-cols-2 text-center pt-3 text-[11px] font-bold">
           <div>
             <p class="font-black">NGƯỜI NỘP / NHẬN TIỀN</p>
-            <p class="text-[10px] text-slate-500 italic mt-0.5">(Ký & ghi rõ họ tên)</p>
-            <div class="h-16"></div>
-            <p id="bill-print-payer" class="font-black text-slate-900 text-sm"></p>
+            <p class="text-[9px] text-slate-500 italic">(Ký & ghi rõ họ tên)</p>
+            <div class="h-10"></div>
+            <p id="bill-print-payer" class="font-black text-slate-900 text-xs"></p>
           </div>
           <div>
             <p class="font-black">NGƯỜI LẬP PHIẾU</p>
-            <p class="text-[10px] text-slate-500 italic mt-0.5">(Ký & ghi rõ họ tên)</p>
-            <div class="h-16"></div>
-            <p id="bill-print-user" class="font-black text-blue-900 text-sm"></p>
+            <p class="text-[9px] text-slate-500 italic">(Ký & ghi rõ họ tên)</p>
+            <div class="h-10"></div>
+            <p id="bill-print-user" class="font-black text-blue-900 text-xs"></p>
           </div>
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 no-print">
-        <button type="button" onclick="downloadBillPDF()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow flex items-center gap-1">📥 TẢI PDF BILL</button>
-        <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-black text-xs shadow flex items-center gap-1">🖨️ BẤM IN PHIẾU</button>
+      <div class="flex justify-end gap-2 no-print pt-1">
+        <button type="button" onclick="closePrintModal()" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 font-black text-xs">Hủy</button>
+        <button type="button" onclick="downloadBillPDF()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow flex items-center gap-1">📥 TẢI PDF BILL</button>
+        <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-black text-xs shadow flex items-center gap-1">🖨️ BẤM IN PHIẾU</button>
       </div>
     </div>
   </div>
@@ -838,6 +839,14 @@
       return lines.join('<br/>');
     }
 
+    // HÀM NHẬN DIỆN CÔNG VIỆC HAY CÁ NHÂN
+    function getTransScope(t) {
+      if (t.scope === 'Công việc' || t.projectId) return 'Công việc';
+      if (t.note && (t.note.includes('Mã đơn vị:') || t.note.includes('Chi tiết:'))) return 'Công việc';
+      if (workProjects && workProjects.some(p => p.name === t.category)) return 'Công việc';
+      return 'Cá nhân';
+    }
+
     // KHO DỮ LIỆU LOCALSTORAGE
     let users = JSON.parse(localStorage.getItem('app_users')) || [];
     let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
@@ -974,7 +983,7 @@
       } else if (isSub) {
         const allowedProjIds = currentUser.allowedProjects || [];
         myTrans = transactions.filter(t => {
-          if (t.scope === 'Công việc') {
+          if (getTransScope(t) === 'Công việc') {
             return allowedProjIds.includes(t.projectId);
           }
           return t.userId === currentUser.id;
@@ -1223,7 +1232,8 @@
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      let personalTrans = myTrans.filter(t => t.scope !== 'Công việc');
+      // Loại bỏ triệt để giao dịch công việc khỏi 4 ô cá nhân
+      let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
@@ -1530,11 +1540,13 @@
       currentBillMaDonVi = extractMaDonVi(t.note);
       currentBillTransId = t.id;
 
+      const realScope = getTransScope(t);
+
       document.getElementById('bill-print-title').innerText = `PHIẾU ${t.type ? t.type.toUpperCase() : 'GIAO DỊCH'}`;
       document.getElementById('bill-print-id').innerText = '#' + t.id;
       document.getElementById('bill-print-date').innerText = t.date;
       document.getElementById('bill-print-category').innerText = t.category || 'Tài chính cá nhân';
-      document.getElementById('bill-print-scope').innerText = t.scope === 'Công việc' ? '💼 Công việc / Dự án' : '👤 Cá nhân';
+      document.getElementById('bill-print-scope').innerText = realScope === 'Công việc' ? '💼 Công việc / Dự án' : '👤 Cá nhân';
       document.getElementById('bill-print-details').innerHTML = formatNoteForPrint(t.note);
       document.getElementById('bill-print-amount').innerText = Number(t.amount).toLocaleString('vi-VN') + ' VNĐ';
       document.getElementById('bill-print-words').innerText = '🔤 Bằng chữ: ' + docSoVN(t.amount);
@@ -1548,14 +1560,12 @@
       document.getElementById('print-bill-modal').classList.add('hidden');
     }
 
-    // TẢI FILE PDF PHIẾU THU KHÔNG BỊ CẮT XÉN
     function downloadBillPDF() {
       const modalInner = document.getElementById('print-modal-inner');
       const element = document.getElementById('printable-bill-container');
       const maDV = currentBillMaDonVi || 'DonVi';
       const filename = `${maDV}_PhieuThu_${currentBillTransId || Date.now()}.pdf`;
 
-      // Tạm thời gỡ bỏ giới hạn chiều cao và thanh cuộn để chụp trọn vẹn 100% phiếu
       const origMaxH = modalInner.style.maxHeight;
       const origOverflow = modalInner.style.overflow;
       modalInner.style.maxHeight = 'none';
@@ -1571,13 +1581,11 @@
       };
 
       html2pdf().set(opt).from(element).save().then(() => {
-        // Phục hồi lại giao diện cũ sau khi tải xong
         modalInner.style.maxHeight = origMaxH;
         modalInner.style.overflow = origOverflow;
       });
     }
 
-    // TẢI FILE PDF BÁO CÁO TOÀN BỘ KHÔNG BỊ XÉN
     function downloadReportPDF() {
       const element = document.getElementById('tab-reports');
       const scopeFilter = document.getElementById('report-scope-filter') ? document.getElementById('report-scope-filter').value : 'ALL';
@@ -1996,6 +2004,7 @@
       }
     }
 
+    // LƯU GIAO DỊCH CÔNG VIỆC CHUẨN XÁC NGUỒN TIỀN
     function submitDynamicTransaction(projId, projName) {
       const typeSel = document.getElementById(`proj-type-sel-${projId}`);
       const type = typeSel ? typeSel.value : '';
@@ -2058,7 +2067,7 @@
         id: Date.now(),
         userId: currentUser.id,
         projectId: projId,
-        scope: 'Công việc',
+        scope: 'Công việc', // Bắt buộc lưu đúng Nguồn tiền là Công việc
         type: type,
         category: projName,
         amount: amount,
@@ -2103,7 +2112,7 @@
       if (isNaN(val)) return alert('⚠️ Vui lòng gõ số tiền hợp lệ!');
 
       const { myTrans } = getUserData();
-      let personalTrans = myTrans.filter(t => t.scope !== 'Công việc');
+      let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + Number(b.amount), 0);
       let currentBal = income - expense;
@@ -2179,11 +2188,12 @@
       const canXoa = hasPerm('xoa');
 
       recent.forEach(t => {
-        const scopeLabel = t.scope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
+        const realScope = getTransScope(t);
+        const scopeLabel = realScope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${t.date}</td>
-          <td><span class="px-2 py-0.5 rounded text-xs ${t.scope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
+          <td><span class="px-2 py-0.5 rounded text-xs ${realScope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
           <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
           <td>${t.category || ''}</td>
           <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
@@ -2465,6 +2475,7 @@
       renderReports();
     }
 
+    // RENDER BÁO CÁO CÓ CỘT MÃ ĐƠN VỊ VÀ PHÂN LOẠI CHUẨN XÁC
     function renderReports() {
       const { myTrans, myDebts } = getUserData();
       const type = document.getElementById('report-filter-type').value;
@@ -2492,9 +2503,9 @@
 
       if (scopeFilter !== 'ALL') {
         if (scopeFilter === 'Cá nhân') {
-          fTrans = fTrans.filter(t => t.scope !== 'Công việc');
+          fTrans = fTrans.filter(t => getTransScope(t) !== 'Công việc');
         } else {
-          fTrans = fTrans.filter(t => t.scope === 'Công việc');
+          fTrans = fTrans.filter(t => getTransScope(t) === 'Công việc');
         }
       }
 
@@ -2548,19 +2559,23 @@
       if (tbody) {
         tbody.innerHTML = '';
         if (fTrans.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-slate-500 italic text-center font-bold">Không có giao dịch thu/chi nào trong khoảng thời gian này.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="p-3 text-slate-500 italic text-center font-bold">Không có giao dịch thu/chi nào trong khoảng thời gian này.</td></tr>';
         } else {
           const canSua = hasPerm('sua');
           const canIn = hasPerm('in');
           const canXoa = hasPerm('xoa');
 
           [...fTrans].reverse().forEach(t => {
-            const scopeLabel = t.scope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
+            const realScope = getTransScope(t);
+            const scopeLabel = realScope === 'Công việc' ? '💼 Công việc' : '👤 Cá nhân';
+            const maDonVi = extractMaDonVi(t.note);
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td class="text-slate-500 font-normal">#${t.id}</td>
               <td>${t.date}</td>
-              <td><span class="px-2 py-0.5 rounded text-xs ${t.scope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
+              <td><span class="px-2 py-0.5 rounded text-xs ${realScope === 'Công việc' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-slate-100 text-slate-700'}">${scopeLabel}</span></td>
+              <td><span class="px-2 py-0.5 rounded text-xs font-black bg-amber-100 text-amber-900 border border-amber-300">${maDonVi || '-'}</span></td>
               <td><span class="px-2 py-0.5 rounded text-xs ${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.type}</span></td>
               <td>${t.category || ''}</td>
               <td class="${['Thu nhập', 'Thu nợ'].includes(t.type) ? 'text-green-700' : 'text-red-700'}">${Number(t.amount).toLocaleString('vi-VN')} đ</td>
@@ -2591,7 +2606,7 @@
 
             let parts = [];
             if (choVayUnpaid > 0) parts.push(`Nợ bạn: ${choVayUnpaid.toLocaleString('vi-VN')} đ`);
-            if (diVayUnpaid > 0) parts.push(`Bạn nợ: ${diVayUnpaid.toLocaleString('vi-VN')} đ`);
+            if (sumBorrowed > 0) parts.push(`Bạn nợ: ${sumBorrowed.toLocaleString('vi-VN')} đ`);
             if (parts.length === 0) parts.push('Đã thanh toán hết ✅');
 
             const div = document.createElement('div');
