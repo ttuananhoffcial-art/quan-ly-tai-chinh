@@ -6,7 +6,6 @@
   <title>Quản Lý Tài Chính Cá Nhân & Công Việc</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- THƯ VIỆN TẢI PDF CHUẨN SẮC NÉT -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -557,9 +556,9 @@
     </div>
   </div>
 
-  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT (ĐÃ BỔ SUNG Ô NHẬP HẠNG MỤC SỐ LƯỢNG) -->
   <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
-    <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
+    <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
       
       <div>
@@ -578,6 +577,19 @@
         <input type="text" id="edit-trans-category" class="w-full border-2 border-slate-300 rounded-lg p-2 text-sm font-black bg-white" />
       </div>
 
+      <!-- Khung Nhập Số Lượng Hạng Mục Cài Sẵn Trong Modal Chỉnh Sửa -->
+      <div id="edit-preset-container" class="bg-purple-50 border-2 border-purple-300 p-3 rounded-xl space-y-2">
+        <p class="text-xs font-black text-purple-900 border-b border-purple-200 pb-1">📊 NHẬP SỐ LƯỢNG HẠNG MỤC CÀI SẴN:</p>
+        <div id="edit-preset-items-list" class="space-y-1.5"></div>
+        <div class="flex justify-between items-center pt-2 border-t border-purple-200 font-black text-xs md:text-sm">
+          <span>📊 TỔNG CỘNG:</span>
+          <div class="flex gap-4">
+            <span>Tổng số lượng: <span id="edit-total-qty" class="text-red-600 font-black">0</span></span>
+            <span>Tổng tiền: <span id="edit-total-amount" class="text-green-700 font-black">0 đ</span></span>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label class="block text-xs text-slate-700 mb-1">Ghi chú nội dung:</label>
         <textarea id="edit-trans-note" rows="3" class="w-full border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white"></textarea>
@@ -590,7 +602,7 @@
     </div>
   </div>
 
-  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP (ĐÃ THU NHỎ GỌN) -->
+  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
   <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-3 hidden z-[9999]">
     <div id="print-modal-inner" class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 font-black shadow-xl border-2 border-slate-300 max-h-[95vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-1.5 no-print">
@@ -762,7 +774,11 @@
       }
       let formatted = rawVal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       inputEl.value = formatted;
-      previewWorkMoneyWords(rawVal, `work-money-words-${projId}-${fieldIdSafe}`);
+      if (projId === 'edit') {
+        previewWorkMoneyWords(rawVal, 'edit-trans-words');
+      } else {
+        previewWorkMoneyWords(rawVal, `work-money-words-${projId}-${fieldIdSafe}`);
+      }
     }
 
     function previewWorkMoneyWords(rawVal, targetId) {
@@ -882,7 +898,7 @@
     let workProjects = JSON.parse(localStorage.getItem('app_work_projects')) || [];
 
     let openProjectIds = new Set();
-    let deletedTransIds = new Set(); // SET LƯU CÁC ID ĐÃ XÓA CHỐNG KHÔI PHÚC
+    let deletedTransIds = new Set();
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
@@ -924,6 +940,7 @@
     let editingProjectId = null;
     let activeEditingTransId = null;
     let editingSubAccountId = null;
+    let editPresetItemsTemp = [];
 
     function hasPerm(act) {
       if (!currentUser) return false;
@@ -952,7 +969,6 @@
       return false;
     }
 
-    // ĐỒNG BỘ ĐÁM MÂY - CHẶN PHỤC HỒI ID ĐÃ BẤM XÓA
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1562,6 +1578,7 @@
       });
     }
 
+    // LOGIC CHO MODAL CHỈNH SỬA VỚI CÁC Ô SỐ LƯỢNG HẠNG MỤC
     function openEditTransModal(transId) {
       if (!hasPerm('sua')) return alert('⚠️ Tài khoản của bạn không được cấp quyền SỬA!');
 
@@ -1572,10 +1589,96 @@
       document.getElementById('edit-trans-amount').value = Number(t.amount).toLocaleString('vi-VN');
       document.getElementById('edit-trans-date').value = t.date;
       document.getElementById('edit-trans-category').value = t.category || '';
-      document.getElementById('edit-trans-note').value = t.note || '';
+
+      // Tách chuỗi Note để hiển thị nội dung gốc (không bao gồm chuỗi "Chi tiết:")
+      let noteParts = (t.note || '').split(/ \| |\n/);
+      let noteOnlyParts = [];
+      let parsedQuantities = {};
+
+      noteParts.forEach(part => {
+        part = part.trim();
+        if (part.startsWith('Chi tiết:')) {
+          let itemsStr = part.replace(/^Chi tiết:\s*/, '');
+          let items = itemsStr.split(/,\s*(?=\d+x\s+)/);
+          if (items.length === 1) items = itemsStr.split(', ');
+          items.forEach(it => {
+            let match = it.match(/(\d+)x\s+(.+?)\s+\(/);
+            if (match) {
+              let qty = Number(match[1]);
+              let name = match[2].trim();
+              parsedQuantities[name] = qty;
+            }
+          });
+        } else {
+          noteOnlyParts.push(part);
+        }
+      });
+
+      document.getElementById('edit-trans-note').value = noteOnlyParts.join(' | ');
+
+      // Lấy danh sách Hạng mục cài sẵn từ Mã công việc tương ứng
+      const projId = getTransProjectId(t);
+      const proj = workProjects.find(p => p.id === projId || p.name === t.category);
+      const presetContainer = document.getElementById('edit-preset-container');
+      const presetList = document.getElementById('edit-preset-items-list');
+
+      if (proj && proj.presetItems && proj.presetItems.length > 0) {
+        editPresetItemsTemp = proj.presetItems.map(item => ({ ...item }));
+        presetList.innerHTML = '';
+
+        editPresetItemsTemp.forEach((item, pIdx) => {
+          let oldQty = parsedQuantities[item.name] || 0;
+          presetList.innerHTML += `
+            <div class="flex flex-wrap justify-between items-center bg-white p-2 rounded-lg border gap-2">
+              <div class="text-xs font-black">
+                <span>🏷️ ${item.name}</span>
+                <span class="text-purple-700 ml-1">(${item.price.toLocaleString('vi-VN')} đ/đơn vị)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold">Số lượng:</span>
+                <input type="number" min="0" data-price="${item.price}" data-name="${item.name}" value="${oldQty}" oninput="calcEditPresetTotal()" class="edit-qty-input w-20 border-2 border-purple-400 rounded p-1 text-xs font-black text-center bg-white" />
+                <span class="text-xs font-black text-green-700 w-28 text-right edit-subtotal-price">0 đ</span>
+              </div>
+            </div>
+          `;
+        });
+
+        presetContainer.classList.remove('hidden');
+        calcEditPresetTotal();
+      } else {
+        presetContainer.classList.add('hidden');
+      }
 
       previewWorkMoneyWords(t.amount, 'edit-trans-words');
       document.getElementById('edit-trans-modal').classList.remove('hidden');
+    }
+
+    function calcEditPresetTotal() {
+      const inputs = document.querySelectorAll('.edit-qty-input');
+      let totalQty = 0;
+      let totalAmount = 0;
+
+      inputs.forEach(input => {
+        const qty = parseInt(input.value) || 0;
+        const price = parseInt(input.getAttribute('data-price')) || 0;
+        const rowSubtotal = qty * price;
+
+        const subtotalSpan = input.nextElementSibling;
+        if (subtotalSpan) {
+          subtotalSpan.textContent = rowSubtotal.toLocaleString('vi-VN') + ' đ';
+        }
+
+        totalQty += qty;
+        totalAmount += rowSubtotal;
+      });
+
+      document.getElementById('edit-total-qty').textContent = totalQty;
+      document.getElementById('edit-total-amount').textContent = totalAmount.toLocaleString('vi-VN') + ' đ';
+
+      if (totalAmount > 0) {
+        document.getElementById('edit-trans-amount').value = totalAmount.toLocaleString('vi-VN');
+        previewWorkMoneyWords(totalAmount, 'edit-trans-words');
+      }
     }
 
     function closeEditTransModal() {
@@ -1591,9 +1694,30 @@
       const newAmount = parseAmount(rawAmountStr);
       const newDate = document.getElementById('edit-trans-date').value;
       const newCategory = document.getElementById('edit-trans-category').value.trim();
-      const newNote = document.getElementById('edit-trans-note').value.trim();
+      let newNote = document.getElementById('edit-trans-note').value.trim();
 
       if (!newAmount || newAmount <= 0) return alert('⚠️ Số tiền không hợp lệ!');
+
+      // Xây dựng lại chuỗi "Chi tiết:" nếu có nhập số lượng hạng mục
+      const qtyInputs = document.querySelectorAll('.edit-qty-input');
+      let presetNotes = [];
+      qtyInputs.forEach(input => {
+        const qty = parseInt(input.value) || 0;
+        const price = parseInt(input.getAttribute('data-price')) || 0;
+        const name = input.getAttribute('data-name');
+
+        if (qty > 0) {
+          const sub = qty * price;
+          presetNotes.push(`${qty}x ${name} (${sub.toLocaleString('vi-VN')}đ)`);
+        }
+      });
+
+      if (presetNotes.length > 0) {
+        let noteParts = newNote ? newNote.split(/ \| |\n/) : [];
+        noteParts = noteParts.filter(p => !p.startsWith('Chi tiết:'));
+        noteParts.push(`Chi tiết: ${presetNotes.join(', ')}`);
+        newNote = noteParts.join(' | ');
+      }
 
       t.amount = newAmount;
       t.date = newDate;
@@ -1606,7 +1730,6 @@
       alert('✅ Đã cập nhật xong giao dịch! Số tiền và báo cáo đã tự động nhảy theo.');
     }
 
-    // XÓA GIAO DỊCH TỨC THỜI CHỐNG TRỄ / PHỤC HỒI DỮ LIỆU
     async function deleteTransaction(transId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
@@ -1614,12 +1737,10 @@
         const idStr = String(transId);
         deletedTransIds.add(idStr);
 
-        // Xóa ngay lập tức trên giao diện và LocalStorage
         transactions = transactions.filter(t => String(t.id) !== idStr);
         localStorage.setItem('app_transactions', JSON.stringify(transactions));
         updateSummaryAndData();
 
-        // Đẩy lệnh xóa ngầm lên Cloud
         await saveStorage();
       }
     }
