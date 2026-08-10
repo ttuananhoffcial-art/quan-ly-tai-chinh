@@ -29,7 +29,6 @@
     .st-table th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 6px 8px; font-weight: 900; color: #0f172a; white-space: nowrap; }
     .st-table td { border-bottom: 1px solid #e2e8f0; padding: 6px 8px; font-weight: 700; color: #000000; vertical-align: top; }
 
-    /* CSS ĐẶC BIỆT KHI IN BÁO CÁO DẠNG PDF CHUẨN SẮC NÉT */
     .pdf-export-mode .no-print { display: none !important; }
     .pdf-export-mode .st-table th, .pdf-export-mode .st-table td { padding: 4px 6px !important; font-size: 11px !important; }
     .pdf-export-mode { padding: 10px !important; background: #fff !important; }
@@ -204,6 +203,7 @@
       <button type="button" onclick="switchTab('tab-debts')" id="btn-tab-debts" class="st-radio-btn">🤝 Quản Lý Nợ</button>
       <button type="button" onclick="switchTab('tab-bill')" id="btn-tab-bill" class="st-radio-btn">🍕 Chia Bill</button>
       <button type="button" onclick="switchTab('tab-reports')" id="btn-tab-reports" class="st-radio-btn">📊 Báo Cáo Chi Tiết</button>
+      <button type="button" onclick="switchTab('tab-audit-logs')" id="btn-tab-audit-logs" class="st-radio-btn bg-amber-50 border-amber-400 text-amber-900">📜 Lịch Sử Thao Tác</button>
     </div>
 
     <hr class="border-slate-300 my-2" />
@@ -501,6 +501,30 @@
       <div id="report-debt-section-wrapper">
         <h4 class="font-black text-base pt-4 text-slate-900">💳 Danh Sách Khoản Nợ</h4>
         <div id="reports-debt-accordion-list" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- TAB 6: LỊCH SỬ THAO TÁC & CHỈNH SỬA CHI TIẾT (MỚI) -->
+    <div id="tab-audit-logs" class="hidden space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-black text-lg text-slate-900">📜 Nhật Ký Tất Cả Thao Tác & Chỉnh Sửa Hệ Thống</h3>
+        <button type="button" onclick="clearAuditLogs()" class="bg-red-600 hover:bg-red-700 text-white font-black px-3 py-1.5 rounded-lg text-xs shadow no-print">
+          🗑️ Xóa Lịch Sử Thao Tác
+        </button>
+      </div>
+
+      <div class="overflow-x-auto border-2 border-amber-200 rounded-xl bg-amber-50/30 p-2">
+        <table class="st-table">
+          <thead>
+            <tr class="bg-amber-100/70">
+              <th>⏰ Ngày & Giờ Thực Hiện</th>
+              <th>👤 Người Thực Hiện</th>
+              <th>⚡ Loại Thao Tác</th>
+              <th>📝 Chi Tiết Thao Tác / Dữ Liệu</th>
+            </tr>
+          </thead>
+          <tbody id="table-audit-logs-body"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -916,12 +940,72 @@
     let transactions = JSON.parse(localStorage.getItem('app_transactions')) || [];
     let debts = JSON.parse(localStorage.getItem('app_debts')) || [];
     let workProjects = JSON.parse(localStorage.getItem('app_work_projects')) || [];
+    let auditLogs = JSON.parse(localStorage.getItem('app_audit_logs')) || [];
 
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
+
+    // HÀM TỰ ĐỘNG GHI LỊCH SỬ THAO TÁC CÓ NGÀY & GIỜ
+    function logAction(actionType, details) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      const timestamp = `${hours}:${mins}:${secs} ${day}/${month}/${year}`;
+      const logItem = {
+        id: 'log_' + Date.now(),
+        timestamp: timestamp,
+        user: currentUser ? `${currentUser.username} (${currentUser.phone})` : 'Hệ thống',
+        actionType: actionType,
+        details: details
+      };
+
+      auditLogs.unshift(logItem);
+      localStorage.setItem('app_audit_logs', JSON.stringify(auditLogs));
+      renderAuditLogs();
+    }
+
+    function renderAuditLogs() {
+      const tbody = document.getElementById('table-audit-logs-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (auditLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 italic text-center font-bold">Chưa có lịch sử thao tác nào được ghi nhận.</td></tr>';
+        return;
+      }
+
+      auditLogs.forEach(log => {
+        let badgeClass = 'bg-blue-100 text-blue-900 border-blue-300';
+        if (log.actionType.includes('Xóa')) badgeClass = 'bg-red-100 text-red-900 border-red-300';
+        if (log.actionType.includes('Chỉnh sửa')) badgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
+        if (log.actionType.includes('Tạo mới')) badgeClass = 'bg-green-100 text-green-900 border-green-300';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="whitespace-nowrap font-bold text-slate-700">${log.timestamp}</td>
+          <td class="whitespace-nowrap font-black text-blue-800">${log.user}</td>
+          <td class="whitespace-nowrap"><span class="px-2 py-0.5 rounded text-xs font-black border ${badgeClass}">${log.actionType}</span></td>
+          <td class="font-medium text-slate-800">${log.details}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearAuditLogs() {
+      if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ Lịch Sử Thao Tác không?')) {
+        auditLogs = [];
+        localStorage.setItem('app_audit_logs', JSON.stringify(auditLogs));
+        renderAuditLogs();
+      }
+    }
 
     function toggleProjectCard(projId, idx) {
       const detailsEl = document.getElementById(`proj-details-${idx}`);
@@ -1251,6 +1335,7 @@
       users.push(newUser);
       currentUser = newUser;
       saveStorage();
+      logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
       initApp();
     }
 
@@ -1264,6 +1349,7 @@
 
       currentUser = found;
       saveStorage();
+      logAction('Đăng nhập', `Đăng nhập thành công vào hệ thống.`);
       initApp();
     }
 
@@ -1279,11 +1365,13 @@
 
       user.password = pass;
       saveStorage();
+      logAction('Đổi mật khẩu', `Tài khoản ${phone} đổi mật khẩu mới.`);
       alert('✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.');
       setAuthTab('login');
     }
 
     function handleLogout() {
+      logAction('Đăng xuất', `Đăng xuất khỏi hệ thống.`);
       currentUser = null;
       saveStorage();
       initApp();
@@ -1353,6 +1441,7 @@
       }
 
       renderBillMembers();
+      renderAuditLogs();
       updateSummaryAndData();
 
       if (currentUser.isSubAccount) {
@@ -1474,6 +1563,7 @@
           u.allowedProjects = allowed;
           u.permissions = perms;
         }
+        logAction('Cập nhật tài khoản phụ', `Cập nhật tài khoản "${username}" (${phone}).`);
         alert(`🎉 Đã cập nhật thành công tài khoản "${username}"!`);
         editingSubAccountId = null;
       } else {
@@ -1495,6 +1585,7 @@
         };
 
         users.push(newSub);
+        logAction('Tạo tài khoản phụ', `Tạo tài khoản phụ "${username}" (${phone}).`);
         alert(`🎉 Đã tạo tài khoản phụ "${username}" thành công với bộ quyền đã chọn!`);
       }
 
@@ -1550,6 +1641,7 @@
       saveStorage();
       renderAdminAllUsersList();
 
+      logAction('Phân quyền công việc', `${targetUser.hasWorkAccess ? 'Cấp quyền' : 'Tắt quyền'} công việc riêng cho "${targetUser.username}".`);
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
@@ -1559,6 +1651,7 @@
       if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
 
       if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
+        logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         users = users.filter(u => u.id !== targetUserId);
         saveStorage();
         renderAdminAllUsersList();
@@ -1749,7 +1842,6 @@
         newNote = noteParts.join(' | ');
       }
 
-      // TỰ ĐỘNG LƯU THỜI GIAN CHỈNH SỬA (NGÀY + GIỜ THỰC TẾ)
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const mins = String(now.getMinutes()).padStart(2, '0');
@@ -1757,6 +1849,9 @@
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const year = now.getFullYear();
+
+      const oldAmtStr = Number(t.amount).toLocaleString('vi-VN');
+      const newAmtStr = Number(newAmount).toLocaleString('vi-VN');
 
       t.updatedAt = `${hours}:${mins}:${secs} ${day}/${month}/${year}`;
       t.amount = newAmount;
@@ -1766,12 +1861,18 @@
 
       saveStorage();
       fetchCloudData();
+
+      // GHI NHẬT KÝ SỬA DỮ LIỆU CÓ NGÀY GIỜ VÀ CHI TIẾT
+      logAction('Chỉnh sửa giao dịch', `Chỉnh sửa GD #${t.id} (${newCategory}): Số tiền từ ${oldAmtStr}đ ➔ ${newAmtStr}đ | Ngày: ${newDate}.`);
+
       closeEditTransModal();
-      alert('✅ Đã cập nhật xong giao dịch! Lịch sử chỉnh sửa đã được lưu cùng ngày giờ.');
+      alert('✅ Đã cập nhật xong giao dịch! Lịch sử chỉnh sửa đã được lưu lại.');
     }
 
     async function deleteTransaction(transId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
+
+      const t = transactions.find(item => String(item.id) === String(transId));
 
       if (confirm('🗑️ Bạn có chắc muốn xóa giao dịch này không?')) {
         const idStr = String(transId);
@@ -1779,8 +1880,12 @@
 
         transactions = transactions.filter(t => String(t.id) !== idStr);
         localStorage.setItem('app_transactions', JSON.stringify(transactions));
-        updateSummaryAndData();
+        
+        if (t) {
+          logAction('Xóa giao dịch', `Xóa giao dịch #${t.id} (${t.category}): ${Number(t.amount).toLocaleString('vi-VN')}đ.`);
+        }
 
+        updateSummaryAndData();
         await saveStorage();
       }
     }
@@ -1854,7 +1959,6 @@
       });
     }
 
-    // XUẤT PDF BÁO CÁO DẠNG XOAY NGANG (LANDSCAPE A4) CHUẨN ĐẸP KHÔNG BỊ VỠ HÌNH
     function downloadReportPDF() {
       const element = document.getElementById('tab-reports');
       const scopeFilter = document.getElementById('report-scope-filter') ? document.getElementById('report-scope-filter').value : 'ALL';
@@ -1865,7 +1969,6 @@
 
       const filename = `${titlePrefix}_${new Date().toISOString().split('T')[0]}.pdf`;
 
-      // Bật class tối ưu giao diện in PDF
       element.classList.add('pdf-export-mode');
 
       const opt = {
@@ -1873,7 +1976,7 @@
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, scrollY: 0, useCORS: true, ignoreElements: (el) => el.classList.contains('no-print') || el.tagName === 'BUTTON' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, // GIẤY XOAY NGANG A4
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
@@ -1951,6 +2054,7 @@
           proj.presetItems = [...tempPresetItems];
           proj.fields = { thu: thuFields, chi: chiFields, no: noFields };
         }
+        logAction('Cập nhật mã công việc', `Sửa thông tin mã công việc "${title}".`);
         alert(`✅ Đã cập nhật thành công mã công việc: "${title}"!`);
         editingProjectId = null;
       } else {
@@ -1964,6 +2068,7 @@
           fields: { thu: thuFields, chi: chiFields, no: noFields }
         };
         workProjects.push(newProj);
+        logAction('Tạo mã công việc', `Tạo mới mã công việc "${title}".`);
         alert(`✅ Đã tạo mã công việc: "${title}"!`);
       }
 
@@ -2040,12 +2145,18 @@
     async function deleteWorkProject(projId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
+      const proj = workProjects.find(p => String(p.id) === String(projId));
+
       if (confirm('🗑️ Bạn có chắc muốn xóa mã công việc này không?')) {
         const idStr = String(projId);
         deletedProjectIds.add(idStr);
 
         workProjects = workProjects.filter(p => String(p.id) !== idStr);
         localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+
+        if (proj) {
+          logAction('Xóa mã công việc', `Xóa mã công việc "${proj.name}".`);
+        }
 
         renderWorkProjectsList();
         await saveStorage();
@@ -2388,6 +2499,8 @@
 
       saveStorage();
 
+      logAction('Tạo mới giao dịch', `Tạo GD Công việc (${projName}): ${type} ${amount.toLocaleString('vi-VN')}đ | Ghi chú: ${notes.join(' | ')}.`);
+
       document.querySelectorAll(`.preset-qty-${projId}`).forEach(i => i.value = '');
       const subTotDisplay = document.getElementById(`preset-total-display-${projId}`);
       if (subTotDisplay) subTotDisplay.innerText = '0 đ';
@@ -2451,6 +2564,7 @@
 
       saveStorage();
       fetchCloudData();
+      logAction('Điều chỉnh số dư', `Điều chỉnh số dư cá nhân trực tiếp về: ${val.toLocaleString('vi-VN')}đ.`);
       toggleSecretPanel(false);
       alert(`✅ Đã điều chỉnh Số dư cá nhân về đúng: ${val.toLocaleString('vi-VN')} đ!`);
     }
@@ -2460,6 +2574,7 @@
         transactions = transactions.filter(t => String(t.userId) !== String(currentUser.id));
         saveStorage();
         fetchCloudData();
+        logAction('Reset giao dịch', `Xóa sạch toàn bộ lịch sử giao dịch cá nhân.`);
       }
     }
 
@@ -2468,6 +2583,7 @@
         debts = debts.filter(d => String(d.userId) !== String(currentUser.id));
         saveStorage();
         fetchCloudData();
+        logAction('Reset danh sách nợ', `Xóa sạch toàn bộ danh sách khoản nợ cá nhân.`);
       }
     }
 
@@ -2478,12 +2594,13 @@
         workProjects = workProjects.filter(p => String(p.userId) !== String(currentUser.id));
         saveStorage();
         fetchCloudData();
+        logAction('Reset toàn bộ phần mềm', `Thực hiện reset toàn bộ ứng dụng về 0.`);
         toggleSecretPanel(false);
       }
     }
 
     function switchTab(tabId) {
-      ['tab-overview', 'tab-work', 'tab-add', 'tab-debts', 'tab-bill', 'tab-reports'].forEach(id => {
+      ['tab-overview', 'tab-work', 'tab-add', 'tab-debts', 'tab-bill', 'tab-reports', 'tab-audit-logs'].forEach(id => {
         const tEl = document.getElementById(id);
         const bEl = document.getElementById(`btn-${id}`);
         if (tEl) tEl.classList.add('hidden');
@@ -2590,13 +2707,16 @@
         const noteFinal = `Cho ${person} vay` + (note ? `: ${note}` : '');
         transactions.push({ id: Date.now(), userId: currentUser.id, scope, type: 'Chi tiêu', category: 'Cho vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Cho vay (Người khác nợ mình)', amount, status: 'Đang nợ', date });
+        logAction('Tạo khoản nợ', `Ghi cho ${person} vay ${amount.toLocaleString('vi-VN')}đ.`);
       } else if (type === 'Đi vay (Mình nợ người khác)') {
         const noteFinal = `Mượn tiền từ ${person}` + (note ? `: ${note}` : '');
         transactions.push({ id: Date.now(), userId: currentUser.id, scope, type: 'Thu nhập', category: 'Đi vay', amount, note: noteFinal, date });
         debts.push({ id: Date.now() + 1, userId: currentUser.id, personName: person, debtType: 'Đi vay (Mình nợ người khác)', amount, status: 'Đang nợ', date });
+        logAction('Tạo khoản nợ', `Ghi đi vay từ ${person} số tiền ${amount.toLocaleString('vi-VN')}đ.`);
       } else {
         const category = document.getElementById('trans-category').value.trim() || 'Khác';
         transactions.push({ id: Date.now(), userId: currentUser.id, scope, type, category, amount, note, date });
+        logAction('Tạo mới giao dịch', `Tạo GD ${scope} (${category}): ${type} ${amount.toLocaleString('vi-VN')}đ.`);
       }
 
       saveStorage();
@@ -2698,6 +2818,7 @@
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: debt.amount, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Thanh toán xong)`, date: today
         });
+        logAction('Thanh toán nợ', `Thanh toán toàn bộ nợ ${debt.personName}: ${debt.amount.toLocaleString('vi-VN')}đ.`);
         alert(`🎉 Đã thu/trả xong toàn bộ khoản ${debt.amount.toLocaleString('vi-VN')}đ!`);
       } else {
         debt.amount -= pAmt;
@@ -2706,6 +2827,7 @@
           type: isChoVay ? 'Thu nợ' : 'Trả nợ', category: isChoVay ? 'Thu hồi nợ' : 'Trả nợ',
           amount: pAmt, note: `${isChoVay ? 'Thu nợ từ' : 'Trả nợ cho'} ${debt.personName} (Trả bớt ${pAmt.toLocaleString('vi-VN')}đ)`, date: today
         });
+        logAction('Trả bớt nợ', `Trả bớt nợ ${debt.personName}: ${pAmt.toLocaleString('vi-VN')}đ.`);
         alert(`✅ Đã thu/trả bớt ${pAmt.toLocaleString('vi-VN')}đ của ${debt.personName}! Số tiền còn lại: ${debt.amount.toLocaleString('vi-VN')}đ.`);
       }
 
@@ -2728,6 +2850,7 @@
         amount: debt.amount, note: `${isChoVay ? 'Thu xong toàn bộ nợ từ' : 'Thanh toán xong toàn bộ nợ cho'} ${debt.personName}`, date: today
       });
 
+      logAction('Thanh toán xong nợ', `Thu/Trả xong toàn bộ khoản ${debt.amount.toLocaleString('vi-VN')}đ của ${debt.personName}.`);
       saveStorage();
       fetchCloudData();
       alert(`🎉 Đã thu/trả xong khoản ${debt.amount.toLocaleString('vi-VN')}đ của ${debt.personName}!`);
@@ -2807,6 +2930,7 @@
         validMembers.forEach((m, i) => {
           debts.push({ id: Date.now() + i + 1, userId: currentUser.id, personName: m.trim(), debtType: 'Cho vay (Người khác nợ mình)', amount: perPerson, status: 'Đang nợ', date });
         });
+        logAction('Chia bill', `Chia bill "${title}": Tổng ${total.toLocaleString('vi-VN')}đ cho ${count} người.`);
         alert(`✅ Đã chia bill thành công! Đã lưu ${perPerson.toLocaleString('vi-VN')}đ vào Chi tiêu và ghi nợ cho ${validMembers.length} người.`);
       } else {
         alert(`✅ Đã tính xong: Mỗi người trả ${perPerson.toLocaleString('vi-VN')} đ!`);
