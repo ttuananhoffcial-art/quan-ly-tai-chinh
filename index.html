@@ -483,7 +483,7 @@
     </div>
   </div>
 
-  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <!-- MODAL CÀI ĐẶT & PHÂN QUYỀN TÀI KHOẢN (ADMIN / USER) -->
   <div id="settings-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-2xl w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
@@ -493,17 +493,16 @@
 
       <div id="admin-settings-content" class="space-y-4 hidden">
         <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl space-y-3">
-          <h5 class="font-black text-amber-950 text-sm border-b border-amber-200 pb-1">👑 Tạo Tài Khoản Phụ (Phân Quyền Công Việc Đóng Góp Cho Admin)</h5>
-          <p class="text-xs text-slate-600 font-bold">Tài khoản phụ sẽ được tích chọn các Mã công việc cụ thể. Tiền thu chi sẽ được cộng dồn chung với Admin, nhưng KHÔNG thấy dữ liệu cá nhân của Admin!</p>
+          <h5 class="font-black text-amber-950 text-sm border-b border-amber-200 pb-1">👑 Tạo / Cập Nhật Tài Khoản Phụ (Phân Quyền Công Việc)</h5>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
             <input type="text" id="sub-phone-input" placeholder="Số điện thoại..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
-            <input type="text" id="sub-user-input" placeholder="Tên tài khoản phụ..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
+            <input type="text" id="sub-user-input" placeholder="Tên tài khoản..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
             <input type="password" id="sub-pass-input" placeholder="Mật khẩu..." class="border-2 border-slate-300 rounded-lg p-2 text-xs font-black bg-white" />
           </div>
 
           <div class="space-y-1">
-            <label class="block text-xs font-black text-amber-950">⚡ Tích chọn Quyền thao tác cho Tài khoản phụ:</label>
+            <label class="block text-xs font-black text-amber-950">⚡ Tích chọn Quyền thao tác:</label>
             <div class="flex flex-wrap gap-3 text-xs font-bold bg-white p-2.5 rounded-lg border border-slate-300">
               <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-thu" checked class="accent-amber-600" /> 💵 Tạo Thu</label>
               <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="sub-perm-chi" checked class="accent-amber-600" /> 💸 Tạo Chi</label>
@@ -519,7 +518,7 @@
             <div id="sub-allowed-projects-boxes" class="flex flex-wrap gap-2 text-xs font-bold bg-white p-2.5 rounded-lg border border-slate-300"></div>
           </div>
 
-          <button type="button" onclick="createSubAccount()" class="bg-amber-600 hover:bg-amber-700 text-white font-black px-4 py-2 rounded-lg text-xs shadow">➕ TẠO TÀI KHOẢN PHỤ</button>
+          <button type="button" id="btn-save-sub-acc" onclick="createSubAccount()" class="bg-amber-600 hover:bg-amber-700 text-white font-black px-4 py-2 rounded-lg text-xs shadow">➕ TẠO TÀI KHOẢN PHỤ</button>
         </div>
 
         <div class="space-y-2">
@@ -543,7 +542,7 @@
     </div>
   </div>
 
-  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH SAI SÓT -->
   <div id="edit-trans-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">✏️ Chỉnh Sửa Giao Dịch Sai Sót</h4>
@@ -576,7 +575,7 @@
     </div>
   </div>
 
-  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <!-- MODAL XEM & IN PHIẾU / BILL CHUẨN ĐẸP -->
   <div id="print-bill-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-lg w-full space-y-4 font-black shadow-xl border-2 border-slate-300 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2 no-print">
@@ -627,7 +626,7 @@
     </div>
   </div>
 
-  <!-- MODAL TRẢ BỚT NỢ - NÂNG z-[9999] CHỐNG ĐÈ -->
+  <!-- MODAL TRẢ BỚT NỢ -->
   <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-xs w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">💵 Trả Bớt Khoản Nợ</h4>
@@ -858,6 +857,7 @@
     let tempPresetItems = [];
     let editingProjectId = null;
     let activeEditingTransId = null;
+    let editingSubAccountId = null; // BIẾN CHỨA ID TÀI KHOẢN ĐANG SỬA
 
     function hasPerm(act) {
       if (!currentUser) return false;
@@ -1241,16 +1241,13 @@
       });
     }
 
+    // TẠO HOẶC CẬP NHẬT TÀI KHOẢN PHỤ
     function createSubAccount() {
       const phone = document.getElementById('sub-phone-input').value.trim();
       const username = document.getElementById('sub-user-input').value.trim();
       const password = document.getElementById('sub-pass-input').value;
 
       if (!phone || !username || !password) return alert('⚠️ Vui lòng gõ đầy đủ SĐT, Tên và Mật khẩu!');
-
-      if (users.find(u => u.phone === phone)) {
-        return alert('⚠️ Số điện thoại này đã tồn tại!');
-      }
 
       const chks = document.querySelectorAll('.sub-proj-chk:checked');
       let allowed = [];
@@ -1265,28 +1262,82 @@
         xoa: document.getElementById('sub-perm-xoa').checked
       };
 
-      const newSub = {
-        id: 'sub_' + Date.now(),
-        phone,
-        username,
-        password,
-        isAdmin: false,
-        isSubAccount: true,
-        createdByAdmin: true,
-        allowedProjects: allowed,
-        permissions: perms,
-        hasWorkAccess: true
-      };
+      if (editingSubAccountId) {
+        const u = users.find(item => item.id === editingSubAccountId);
+        if (u) {
+          u.phone = phone;
+          u.username = username;
+          u.password = password;
+          u.allowedProjects = allowed;
+          u.permissions = perms;
+        }
+        alert(`🎉 Đã cập nhật thành công tài khoản "${username}"!`);
+        editingSubAccountId = null;
+      } else {
+        if (users.find(u => u.phone === phone)) {
+          return alert('⚠️ Số điện thoại này đã tồn tại!');
+        }
 
-      users.push(newSub);
+        const newSub = {
+          id: 'sub_' + Date.now(),
+          phone,
+          username,
+          password,
+          isAdmin: false,
+          isSubAccount: true,
+          createdByAdmin: true,
+          allowedProjects: allowed,
+          permissions: perms,
+          hasWorkAccess: true
+        };
+
+        users.push(newSub);
+        alert(`🎉 Đã tạo tài khoản phụ "${username}" thành công với bộ quyền đã chọn!`);
+      }
+
       saveStorage();
 
       document.getElementById('sub-phone-input').value = '';
       document.getElementById('sub-user-input').value = '';
       document.getElementById('sub-pass-input').value = '';
 
+      const btn = document.getElementById('btn-save-sub-acc');
+      if (btn) btn.innerText = '➕ TẠO TÀI KHOẢN PHỤ';
+
       renderAdminAllUsersList();
-      alert(`🎉 Đã tạo tài khoản phụ "${username}" thành công với bộ quyền đã chọn!`);
+    }
+
+    // HÀM CHỈNH SỬA TÀI KHOẢN (SỬA SĐT, TÊN, MK, CẤP QUYỀN, GÁN MÃ DỰ ÁN)
+    function editSubAccount(userId) {
+      const u = users.find(item => item.id === userId);
+      if (!u) return;
+
+      editingSubAccountId = userId;
+
+      document.getElementById('sub-phone-input').value = u.phone || '';
+      document.getElementById('sub-user-input').value = u.username || '';
+      document.getElementById('sub-pass-input').value = u.password || '';
+
+      if (u.permissions) {
+        document.getElementById('sub-perm-thu').checked = u.permissions.thu !== false;
+        document.getElementById('sub-perm-chi').checked = u.permissions.chi !== false;
+        document.getElementById('sub-perm-no').checked = u.permissions.no !== false;
+        document.getElementById('sub-perm-in').checked = u.permissions.in !== false;
+        document.getElementById('sub-perm-sua').checked = u.permissions.sua !== false;
+        document.getElementById('sub-perm-xoa').checked = u.permissions.xoa !== false;
+      }
+
+      renderAdminSubAccountBoxes();
+
+      const allowed = u.allowedProjects || [];
+      document.querySelectorAll('.sub-proj-chk').forEach(chk => {
+        chk.checked = allowed.includes(chk.value);
+      });
+
+      const btn = document.getElementById('btn-save-sub-acc');
+      if (btn) btn.innerText = '💾 CẬP NHẬT TÀI KHOẢN';
+
+      document.getElementById('sub-phone-input').focus();
     }
 
     function toggleUserWorkAccess(targetUserId) {
@@ -1312,6 +1363,7 @@
       }
     }
 
+    // RENDER DANH SÁCH TÀI KHOẢN CÓ NÚT BÚT SỬA ✏️ DÀNH CHO ADMIN
     function renderAdminAllUsersList() {
       const container = document.getElementById('all-users-admin-list');
       if (!container) return;
@@ -1343,14 +1395,15 @@
               <div class="text-[11px] text-red-600 font-black mt-0.5">🔑 <b>Mật khẩu:</b> ${u.password || 'Chưa có'}</div>
               ${permBadge}
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
               ${!u.isSubAccount ? `
-                <label class="flex items-center gap-1 cursor-pointer text-purple-900">
+                <label class="flex items-center gap-1 cursor-pointer text-purple-900 mr-1">
                   <input type="checkbox" ${allowWorkChk} onchange="toggleUserWorkAccess('${u.id}')" class="accent-purple-600" />
                   <span>Cấp quyền Công việc riêng</span>
                 </label>
-              ` : `<span class="text-amber-900 font-bold">Mã CV: ${(u.allowedProjects || []).length} mục</span>`}
-              <button type="button" onclick="deleteUserByAdmin('${u.id}')" class="text-red-600 hover:text-red-800">🗑️ Xóa</button>
+              ` : `<span class="text-amber-900 font-bold mr-1">Mã CV: ${(u.allowedProjects || []).length} mục</span>`}
+              <button type="button" onclick="editSubAccount('${u.id}')" class="text-amber-600 hover:text-amber-800 font-black">✏️ Sửa</button>
+              <button type="button" onclick="deleteUserByAdmin('${u.id}')" class="text-red-600 hover:text-red-800 font-black">🗑️ Xóa</button>
             </div>
           </div>
         `;
