@@ -899,6 +899,7 @@
 
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
+    let deletedProjectIds = new Set(); // MỚI: SET CHẶN KHÔI PHÚC MÃ CÔNG VIỆC ĐÃ XÓA
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
@@ -994,8 +995,12 @@
 
           if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
             const pMap = new Map();
-            workProjects.forEach(p => pMap.set(String(p.id), p));
-            cloudData.workProjects.forEach(p => pMap.set(String(p.id), p));
+            workProjects.forEach(p => {
+              if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
+            });
+            cloudData.workProjects.forEach(p => {
+              if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
+            });
             workProjects = Array.from(pMap.values());
             localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
           }
@@ -1040,6 +1045,10 @@
         let projDebt = projTrans.filter(t => t.type === 'Ghi nợ').reduce((a,b) => a + parseAmount(b.amount), 0);
         let projUnion = projTrans.filter(t => t.type === 'CK Liên đoàn').reduce((a,b) => a + parseAmount(b.amount), 0);
         let projBalance = projIncome - projExpense - projUnion - projDebt;
+
+        // Cập nhật ô TỔNG DƯ ngay thanh Tiêu Đề chính
+        const headBal = document.getElementById(`proj-head-bal-${proj.id}`);
+        if (headBal) headBal.innerText = projBalance.toLocaleString('vi-VN') + ' đ';
 
         const detailsEl = document.getElementById(`proj-details-${idx}`);
         if (detailsEl) {
@@ -1987,13 +1996,18 @@
       document.getElementById('work-create-form-box').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function deleteWorkProject(projId) {
+    async function deleteWorkProject(projId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
       if (confirm('🗑️ Bạn có chắc muốn xóa mã công việc này không?')) {
-        workProjects = workProjects.filter(p => p.id !== projId);
-        saveStorage();
+        const idStr = String(projId);
+        deletedProjectIds.add(idStr); // Thêm vào danh sách chặn khôi phục
+
+        workProjects = workProjects.filter(p => String(p.id) !== idStr);
+        localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+
         renderWorkProjectsList();
+        await saveStorage(); // Gửi lệnh xóa lên Cloud
       }
     }
 
@@ -2038,10 +2052,11 @@
         const card = document.createElement('div');
         card.className = 'border-2 border-slate-300 rounded-xl bg-slate-50 overflow-hidden shadow-sm';
         card.innerHTML = `
-          <div class="p-3 bg-white hover:bg-slate-100 cursor-pointer flex justify-between items-center border-b-2 border-slate-200 transition" onclick="toggleProjectCard('${proj.id}', ${idx})">
+          <div class="p-3 bg-white hover:bg-slate-100 cursor-pointer flex flex-wrap justify-between items-center border-b-2 border-slate-200 gap-2 transition" onclick="toggleProjectCard('${proj.id}', ${idx})">
             <div>
               <span class="font-black text-base text-slate-900">💼 ${proj.name}</span>
               <span class="text-xs text-slate-500 font-bold ml-2">(🗓️ Tạo ngày: ${proj.createdDate})</span>
+              <span class="ml-2 text-xs font-black bg-blue-100 text-blue-900 px-2 py-0.5 rounded border border-blue-300">Dư: <b id="proj-head-bal-${proj.id}">${projBalance.toLocaleString('vi-VN')} đ</b></span>
             </div>
             <div class="flex items-center gap-1 md:gap-2">
               <span class="text-xs font-black text-blue-700">Mở ô nhập liệu ▼</span>
