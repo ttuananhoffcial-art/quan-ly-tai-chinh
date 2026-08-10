@@ -948,7 +948,12 @@
       if (!currentUser) return;
 
       try {
-        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&_t=${Date.now()}`);
+        // Thêm tham số cache: 'no-store' ép Safari & Zalo WebView luôn lấy dữ liệu mới nhất từ D1
+        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
+
         if (res.ok) {
           const cloudData = await res.json();
           if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
