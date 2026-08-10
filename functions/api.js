@@ -3,63 +3,76 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
 
-  // 1. ĐỒNG BỘ DỮ LIỆU TỪ THIẾT BỊ LÊN CLOUDFLARE D1
-  if (request.method === "POST" && action === "sync-data") {
-    try {
+  // BỔ SUNG HEADER CORS CHO TRÌNH DUYỆT ĐIỆN THOẠI & ZALO
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate"
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // 1. ĐỒNG BỘ DỮ LIỆU BẰNG BATCHING (GỬI 1 LẦN TẤT CẢ GIAO DỊCH LEÊN D1)
+    if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
       const { userId, transactions, debts } = body;
 
       if (userId) {
-        // Xóa dữ liệu cũ của user để ghi đè bản mới nhất
-        await env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)).run();
-        await env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)).run();
+        const stmts = [];
+        stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
+        stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
 
-        // Ghi lại danh sách giao dịch
         if (transactions && Array.isArray(transactions)) {
           for (let t of transactions) {
-            await env.DB.prepare(
-              "INSERT INTO transactions (id, user_id, type, category, amount, note, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
-            ).bind(
-              String(t.id),
-              String(t.userId || userId),
-              String(t.type || ''),
-              String(t.category || ''),
-              Number(t.amount) || 0,
-              String(t.note || ''),
-              String(t.date || '')
-            ).run();
+            stmts.push(
+              env.DB.prepare(
+                "INSERT INTO transactions (id, user_id, type, category, amount, note, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+              ).bind(
+                String(t.id),
+                String(t.userId || userId),
+                String(t.type || ''),
+                String(t.category || ''),
+                Number(t.amount) || 0,
+                String(t.note || ''),
+                String(t.date || '')
+              )
+            );
           }
         }
 
-        // Ghi lại danh sách khoản nợ
         if (debts && Array.isArray(debts)) {
           for (let d of debts) {
-            await env.DB.prepare(
-              "INSERT INTO debts (id, user_id, person_name, debt_type, amount, status, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
-            ).bind(
-              String(d.id),
-              String(d.userId || userId),
-              String(d.personName || ''),
-              String(d.debtType || ''),
-              Number(d.amount) || 0,
-              String(d.status || ''),
-              String(d.date || '')
-            ).run();
+            stmts.push(
+              env.DB.prepare(
+                "INSERT INTO debts (id, user_id, person_name, debt_type, amount, status, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+              ).bind(
+                String(d.id),
+                String(d.userId || userId),
+                String(d.personName || ''),
+                String(d.debtType || ''),
+                Number(d.amount) || 0,
+                String(d.status || ''),
+                String(d.date || '')
+              )
+            );
           }
+        }
+
+        if (stmts.length > 0) {
+          await env.DB.batch(stmts);
         }
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
-  }
 
-  // 2. LẤY TOÀN BỘ DỮ LIỆU ĐÁM MÂY VỀ THIẾT BỊ
-  if (request.method === "GET" && action === "get-data") {
-    try {
+    // 2. TẢI TOÀN BỘ DỮ LIỆU ĐÁM MÂY VỀ ĐIỆN THOẠI
+    if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();
 
@@ -83,13 +96,11 @@ export async function onRequest(context) {
         date: d.date
       }));
 
-      return new Response(JSON.stringify({ transactions: formattedTrans, debts: formattedDebts }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      return new Response(JSON.stringify({ transactions: formattedTrans, debts: formattedDebts }), { headers: corsHeaders });
     }
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 
-  return new Response("Not found", { status: 404 });
+  return new Response("Not found", { status: 404, headers: corsHeaders });
 }

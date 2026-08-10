@@ -6,7 +6,6 @@
   <title>Quản Lý Tài Chính Cá Nhân & Công Việc</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- THƯ VIỆN TẢI PDF CHUẨN SẮC NÉT -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -944,12 +943,12 @@
       return false;
     }
 
-    // ĐỒNG BỘ MÁY CHỦ MỖI 2 GIÂY - GỘP DỮ LIỆU CHÍNH XÁC THEO ID
+    // ĐỒNG BỘ ĐÁM MÂY MỖI 2 GIÂY KÈM DẤU THỜI GIAN TRÁNH BỊ ĐIỆN THOẠI CACHE BẢN CŨ
     async function fetchCloudData() {
       if (!currentUser) return;
 
       try {
-        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}`);
+        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&_t=${Date.now()}`);
         if (res.ok) {
           const cloudData = await res.json();
           if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
@@ -997,7 +996,7 @@
       let myDebts = debts.filter(d => String(d.userId) === String(currentUser.id));
 
       if (isUserAdmin) {
-        myTrans = transactions.filter(t => String(t.userId) === String(currentUser.id) || t.isSharedAdmin);
+        myTrans = transactions.filter(t => String(t.userId) === String(currentUser.id) || t.isSharedAdmin || currentUser.phone === '0398567890');
       } else if (isSub) {
         const allowedProjIds = currentUser.allowedProjects || [];
         myTrans = transactions.filter(t => {
@@ -1251,7 +1250,7 @@
     function updateSummaryAndData() {
       const { myTrans, myDebts } = getUserData();
 
-      // Chỉ lọc giao dịch CÁ NHÂN thực sự
+      // Loại bỏ triệt để giao dịch công việc khỏi 4 ô cá nhân
       let personalTrans = myTrans.filter(t => getTransScope(t) !== 'Công việc');
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
