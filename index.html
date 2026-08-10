@@ -784,7 +784,7 @@
 
       parts.forEach(part => {
         part = part.trim();
-        if (!part || part.includes('[Nguồn: Công việc]')) return;
+        if (!part || part.includes('[Nguồn: Công việc]') || part.includes('[ProjId:')) return;
 
         if (part.startsWith('Chi tiết:')) {
           htmlLines.push('<div class="font-black text-slate-900 border-b pb-1 mb-1">📌 Danh sách hạng mục:</div>');
@@ -817,7 +817,7 @@
       let lines = [];
       parts.forEach(part => {
         part = part.trim();
-        if (!part || part.includes('[Nguồn: Công việc]')) return;
+        if (!part || part.includes('[Nguồn: Công việc]') || part.includes('[ProjId:')) return;
         if (part.startsWith('Chi tiết:')) {
           let itemsStr = part.replace(/^Chi tiết:\s*/, '');
           let items = itemsStr.split(/,\s*(?=\d+x\s+)/);
@@ -845,11 +845,26 @@
       return lines.join('<br/>');
     }
 
+    // NHẬN DIỆN MÃ CÔNG VIỆC CHÍNH XÁC
+    function getTransProjectId(t) {
+      if (!t) return null;
+      if (t.projectId) return t.projectId;
+      if (t.note) {
+        const match = t.note.match(/\[ProjId:\s*([^\]]+)\]/);
+        if (match && match[1]) return match[1].trim();
+      }
+      if (workProjects && Array.isArray(workProjects)) {
+        const found = workProjects.find(p => p.name === t.category);
+        if (found) return found.id;
+      }
+      return null;
+    }
+
     // NHẬN DIỆN CHUẨN 100% CÔNG VIỆC CÓ MÃ MÃ ĐỊNH DANH
     function getTransScope(t) {
       if (!t) return 'Cá nhân';
       if (t.scope === 'Công việc' || t.projectId) return 'Công việc';
-      if (t.note && (t.note.includes('[Nguồn: Công việc]') || t.note.includes('Mã đơn vị:') || t.note.includes('Chi tiết:') || t.note.includes('Ngày tạo:'))) return 'Công việc';
+      if (t.note && (t.note.includes('[Nguồn: Công việc]') || t.note.includes('[ProjId:') || t.note.includes('Mã đơn vị:') || t.note.includes('Chi tiết:') || t.note.includes('Ngày tạo:'))) return 'Công việc';
       if (workProjects && Array.isArray(workProjects) && workProjects.some(p => p.name === t.category)) return 'Công việc';
       return 'Cá nhân';
     }
@@ -931,13 +946,9 @@
       return false;
     }
 
-    // ĐỒNG BỘ ĐÁM MÂY - HỢP NHẤT DỮ LIỆU THEO ID CHỐNG BỊ MẤT GIAO DỊCH
+    // ĐỒNG BỘ ĐÁM MÂY TỰ ĐỘNG MỖI 2 GIÂY
     async function fetchCloudData() {
       if (!currentUser) return;
-
-      const activeEl = document.activeElement;
-      const isTypingInWork = activeEl && activeEl.closest('#tab-work');
-      const hasUnsaved = hasUnsavedWorkInputs();
 
       try {
         const res = await fetch(`/api?action=get-data&userId=${currentUser.id}`);
@@ -958,16 +969,14 @@
             localStorage.setItem('app_debts', JSON.stringify(debts));
           }
 
-          if (!isTypingInWork && !hasUnsaved) {
-            updateSummaryAndData();
-          }
+          updateSummaryAndData();
         }
       } catch (e) {
         console.log('Sync offline');
       }
     }
 
-    setInterval(fetchCloudData, 4000);
+    setInterval(fetchCloudData, 2000);
     window.addEventListener('focus', fetchCloudData);
 
     function getUserData() {
@@ -995,7 +1004,8 @@
         const allowedProjIds = currentUser.allowedProjects || [];
         myTrans = transactions.filter(t => {
           if (getTransScope(t) === 'Công việc') {
-            return allowedProjIds.includes(t.projectId);
+            const pId = getTransProjectId(t);
+            return allowedProjIds.includes(pId);
           }
           return String(t.userId) === String(currentUser.id);
         });
@@ -1262,7 +1272,13 @@
       if (cardBal) cardBal.innerText = balance.toLocaleString('vi-VN') + ' đ';
 
       renderRecentTransactions();
-      renderWorkProjectsList();
+
+      const activeEl = document.activeElement;
+      const isEditingWork = activeEl && activeEl.closest('#tab-work') && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      if (!isEditingWork) {
+        renderWorkProjectsList();
+      }
+
       renderDebtsList();
       renderReports();
       populatePersonSelector();
@@ -2015,7 +2031,7 @@
       }
     }
 
-    // LƯU GIAO DỊCH CÔNG VIỆC CHUẨN XÁC NGUỒN TIỀN
+    // LƯU GIAO DỊCH CÔNG VIỆC CHUẨN XÁC
     function submitDynamicTransaction(projId, projName) {
       const typeSel = document.getElementById(`proj-type-sel-${projId}`);
       const type = typeSel ? typeSel.value : '';
@@ -2071,7 +2087,7 @@
         notes.unshift(`Chi tiết: ${presetNotes.join(', ')}`);
       }
 
-      // ĐÓNG DẤU NGUỒN CÔNG VIỆC CHẮC CHẮN VÀO GHI CHÚ
+      notes.unshift(`[ProjId: ${projId}]`);
       notes.unshift('[Nguồn: Công việc]');
 
       const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
@@ -2093,7 +2109,7 @@
       transactions.push(newTrans);
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
 
       if (hasPerm('in')) {
         if (confirm(`✅ Đã lưu thành công ${amount.toLocaleString('vi-VN')}đ vào công việc "${projName}"!\n\n🖨️ Bạn có muốn IN PHIẾU / IN BILL ngay bây giờ không?`)) {
@@ -2140,34 +2156,34 @@
       }
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       toggleSecretPanel(false);
       alert(`✅ Đã điều chỉnh Số dư cá nhân về đúng: ${val.toLocaleString('vi-VN')} đ!`);
     }
 
     function clearAllTransactions() {
       if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ lịch sử Giao dịch?')) {
-        transactions = transactions.filter(t => t.userId !== currentUser.id);
+        transactions = transactions.filter(t => String(t.userId) !== String(currentUser.id));
         saveStorage();
-        updateSummaryAndData();
+        fetchCloudData();
       }
     }
 
     function clearAllDebts() {
       if (confirm('🗑️ Bạn có chắc muốn xóa sạch toàn bộ danh sách Nợ?')) {
-        debts = debts.filter(d => d.userId !== currentUser.id);
+        debts = debts.filter(d => String(d.userId) !== String(currentUser.id));
         saveStorage();
-        updateSummaryAndData();
+        fetchCloudData();
       }
     }
 
     function resetAppZero() {
       if (confirm('🔥 Cảnh báo: Phần mềm sẽ được reset hoàn toàn về 0 đ!')) {
-        transactions = transactions.filter(t => t.userId !== currentUser.id);
-        debts = debts.filter(d => d.userId !== currentUser.id);
-        workProjects = workProjects.filter(p => p.userId !== currentUser.id);
+        transactions = transactions.filter(t => String(t.userId) !== String(currentUser.id));
+        debts = debts.filter(d => String(d.userId) !== String(currentUser.id));
+        workProjects = workProjects.filter(p => String(p.userId) !== String(currentUser.id));
         saveStorage();
-        updateSummaryAndData();
+        fetchCloudData();
         toggleSecretPanel(false);
       }
     }
@@ -2230,12 +2246,28 @@
     }
 
     function populatePersonSelector() {
-      const { myDebts } = getUserData();
-      const persons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
       const sel = document.getElementById('select-person');
       if (!sel) return;
+      const currentVal = sel.value;
+      const inputNew = document.getElementById('input-person-new');
+      const inputNewVal = inputNew ? inputNew.value : '';
+
+      const { myDebts } = getUserData();
+      const persons = [...new Set(myDebts.map(d => d.personName))].filter(p => p);
+
       sel.innerHTML = '<option value="">-- Chọn người từ danh bạ --</option><option value="NEW">➕ Nhập tên người mới...</option>';
       persons.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
+
+      if (currentVal && sel.querySelector(`option[value="${currentVal}"]`)) {
+        sel.value = currentVal;
+      } else if (currentVal === 'NEW') {
+        sel.value = 'NEW';
+      }
+
+      if (inputNew) {
+        inputNew.value = inputNewVal;
+      }
+      handlePersonSelect();
     }
 
     function handlePersonSelect() {
@@ -2243,6 +2275,7 @@
       document.getElementById('input-person-new').classList.toggle('hidden', val !== 'NEW');
     }
 
+    // LƯU GIAO DỊCH CÁ NHÂN VÀ TỰ ĐỘNG XÓA TRẮNG FORM
     function saveTransaction() {
       const scope = document.getElementById('trans-scope').value;
       const date = document.getElementById('trans-date').value;
@@ -2274,12 +2307,25 @@
       }
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       alert(`✅ Đã lưu giao dịch ${scope} thành công!`);
+
+      // RESET FORM SẠCH SẼ
       document.getElementById('trans-amount').value = '';
       document.getElementById('trans-note').value = '';
       document.getElementById('trans-category').value = '';
-      document.getElementById('add-money-box').classList.add('hidden');
+      
+      const inputNew = document.getElementById('input-person-new');
+      if (inputNew) {
+        inputNew.value = '';
+        inputNew.classList.add('hidden');
+      }
+
+      const selP = document.getElementById('select-person');
+      if (selP) selP.value = '';
+
+      const addMoneyBox = document.getElementById('add-money-box');
+      if (addMoneyBox) addMoneyBox.classList.add('hidden');
     }
 
     function renderDebtsList() {
@@ -2372,7 +2418,7 @@
       }
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       closePartialModal();
     }
 
@@ -2391,7 +2437,7 @@
       });
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       alert(`🎉 Đã thu/trả xong khoản ${debt.amount.toLocaleString('vi-VN')}đ của ${debt.personName}!`);
     }
 
@@ -2475,7 +2521,7 @@
       }
 
       saveStorage();
-      updateSummaryAndData();
+      fetchCloudData();
       document.getElementById('bill-amount').value = '';
       document.getElementById('bill-summary-box').classList.add('hidden');
     }
