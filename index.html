@@ -693,7 +693,7 @@
     </div>
   </div>
 
-  <!-- MODAL TRẢ BỚT NỢ (ĐÃ TÍCH HỢP TỰ ĐỘNG HIỂN THỊ BẰNG CHỮ & ĐỊNH DẠNG SỐ) -->
+  <!-- MODAL TRẢ BỚT NỢ -->
   <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
     <div class="bg-white rounded-xl p-5 max-w-sm w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">💵 Trả Bớt Khoản Nợ</h4>
@@ -2795,8 +2795,8 @@
               <p class="text-xs text-slate-600 italic font-medium">${docSoVN(d.amount)}</p>
             </div>
             <div class="flex gap-2">
-              <button type="button" onclick="openPartialModal(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">💵 Trả bớt</button>
-              <button type="button" onclick="payFullDebt(${d.id})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
+              <button type="button" onclick="openPartialModal('${d.id}')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">💵 Trả bớt</button>
+              <button type="button" onclick="payFullDebt('${d.id}')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">✅ ${d.debtType.includes('Cho vay') ? 'Đã Thu Xong' : 'Đã Trả Nợ'}</button>
             </div>
           `;
           subContainer.appendChild(row);
@@ -2806,7 +2806,7 @@
 
     let activePartialDebtId = null;
     function openPartialModal(debtId) {
-      activePartialDebtId = debtId;
+      activePartialDebtId = String(debtId);
       document.getElementById('partial-amount-input').value = '';
       const wordsEl = document.getElementById('partial-money-words');
       if (wordsEl) { wordsEl.classList.add('hidden'); wordsEl.innerText = ''; }
@@ -2821,7 +2821,7 @@
       const pAmt = parseAmount(rawInp);
       if (!pAmt || pAmt <= 0) return alert('⚠️ Số tiền trả bớt không hợp lệ!');
 
-      const debt = debts.find(d => d.id === activePartialDebtId);
+      const debt = debts.find(d => String(d.id) === String(activePartialDebtId));
       if (!debt) return alert('⚠️ Không tìm thấy khoản nợ!');
 
       const today = new Date().toISOString().split('T')[0];
@@ -2853,7 +2853,7 @@
     }
 
     function payFullDebt(debtId) {
-      const debt = debts.find(d => d.id === debtId);
+      const debt = debts.find(d => String(d.id) === String(debtId));
       if (!debt) return;
 
       const today = new Date().toISOString().split('T')[0];
