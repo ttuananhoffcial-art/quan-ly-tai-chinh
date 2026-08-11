@@ -1103,12 +1103,12 @@
       return false;
     }
 
-    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ TÍNH NĂNG GỘP (MERGE) DANH SÁCH TÀI KHOẢN CHUẨN
+    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ BỔ SUNG KHÔNG DÙNG BỘ NHỚ ĐỆM (NO-CACHE) VÀ MERGE CHUẨN ĐẸP
     async function fetchCloudData() {
       if (!currentUser) return;
 
       try {
-        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&_t=${Date.now()}`, {
+        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&nocache=${Date.now()}`, {
           cache: 'no-store',
           headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
         });
@@ -1130,7 +1130,6 @@
                 if (!uMap.has(String(u.id))) {
                   uMap.set(String(u.id), u);
                 } else {
-                  // Cập nhật thông tin phân quyền mới nhất
                   const exist = uMap.get(String(u.id));
                   uMap.set(String(u.id), { ...exist, ...u });
                 }
@@ -1339,7 +1338,7 @@
 
       if (currentUser) {
         try {
-          await fetch(`/api?action=sync-data`, {
+          await fetch(`/api?action=sync-data&nocache=${Date.now()}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
