@@ -548,7 +548,10 @@
             <p class="text-xs font-black text-blue-950">🔄 Đẩy Dữ Liệu Laptop Lên Máy Chủ Cloud</p>
             <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả Mã công việc & Tài khoản phụ lên Cloud.</p>
           </div>
-          <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="fetchCloudData(); alert('✅ Đã tải lại danh sách tài khoản từ máy chủ!')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-black shadow">📥 TẢI DỮ LIỆU VỀ</button>
+            <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
+          </div>
         </div>
 
         <div class="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl space-y-3">
@@ -1100,6 +1103,7 @@
       return false;
     }
 
+    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ TÍNH NĂNG GỘP (MERGE) DANH SÁCH TÀI KHOẢN CHUẨN
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1114,12 +1118,25 @@
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
+
+            // Đưa tất cả user dưới máy vào trước
             users.forEach(u => {
               if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.id), u);
             });
+
+            // Gộp thêm user từ Cloud về
             cloudData.users.forEach(u => {
-              if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.id), u);
+              if (!deletedUserIds.has(String(u.id))) {
+                if (!uMap.has(String(u.id))) {
+                  uMap.set(String(u.id), u);
+                } else {
+                  // Cập nhật thông tin phân quyền mới nhất
+                  const exist = uMap.get(String(u.id));
+                  uMap.set(String(u.id), { ...exist, ...u });
+                }
+              }
             });
+
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
           }
@@ -1438,7 +1455,6 @@
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
-      // MỞ QUYỀN TẠO MÃ CÔNG VIỆC CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
