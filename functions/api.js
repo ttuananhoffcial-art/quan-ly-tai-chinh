@@ -17,7 +17,7 @@ export async function onRequest(context) {
 
   try {
     await env.DB.exec(`
-      CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT UNIQUE, data TEXT);
+      CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT, data TEXT);
       CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
       CREATE TABLE IF NOT EXISTS transactions (id TEXT PRIMARY KEY, user_id TEXT, type TEXT, category TEXT, amount REAL, note TEXT, date TEXT);
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
@@ -25,34 +25,62 @@ export async function onRequest(context) {
 
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
-      const { userId, users, workProjects, transactions, debts } = body;
+      const { userId, users, workProjects, transactions, debts, deletedUserIds, deletedProjectIds, deletedTransIds } = body;
 
       const stmts = [];
 
+      // 1. XÓA VĨNH VIỄN TÀI KHOẢN KHỎI DATABASE D1 THEO ID HOẶC SĐT
+      if (deletedUserIds && Array.isArray(deletedUserIds)) {
+        for (let delId of deletedUserIds) {
+          if (delId) {
+            stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(delId), String(delId)));
+          }
+        }
+      }
+
+      // 2. XÓA VĨNH VIỄN MÃ CÔNG VIỆC KHỎI D1
+      if (deletedProjectIds && Array.isArray(deletedProjectIds)) {
+        for (let pId of deletedProjectIds) {
+          if (pId) {
+            stmts.push(env.DB.prepare("DELETE FROM work_projects WHERE id = ?").bind(String(pId)));
+          }
+        }
+      }
+
+      // 3. XÓA VĨNH VIỄN GIAO DỊCH KHỎI D1
+      if (deletedTransIds && Array.isArray(deletedTransIds)) {
+        for (let tId of deletedTransIds) {
+          if (tId) {
+            stmts.push(env.DB.prepare("DELETE FROM transactions WHERE id = ?").bind(String(tId)));
+          }
+        }
+      }
+
+      // 4. LƯU TÀI KHOẢN MỚI / CHỈNH SỬA (LÀM SẠCH BẢN GHI CŨ TRƯỚC KHI INSERT TRÁNH LỖI CONFLICT)
       if (users && Array.isArray(users)) {
         for (let u of users) {
           if (u && u.id && u.phone) {
+            stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(u.id), String(u.phone)));
             stmts.push(
-              env.DB.prepare(
-                "INSERT INTO sys_users (id, phone, data) VALUES (?, ?, ?) ON CONFLICT(phone) DO UPDATE SET id=excluded.id, data=excluded.data"
-              ).bind(String(u.id), String(u.phone), JSON.stringify(u))
+              env.DB.prepare("INSERT INTO sys_users (id, phone, data) VALUES (?, ?, ?)").bind(String(u.id), String(u.phone), JSON.stringify(u))
             );
           }
         }
       }
 
+      // 5. LƯU CÔNG VIỆC MỚI
       if (workProjects && Array.isArray(workProjects)) {
         for (let p of workProjects) {
           if (p && p.id) {
+            stmts.push(env.DB.prepare("DELETE FROM work_projects WHERE id = ?").bind(String(p.id)));
             stmts.push(
-              env.DB.prepare(
-                "INSERT INTO work_projects (id, user_id, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data"
-              ).bind(String(p.id), String(p.userId || userId || ''), JSON.stringify(p))
+              env.DB.prepare("INSERT INTO work_projects (id, user_id, data) VALUES (?, ?, ?)").bind(String(p.id), String(p.userId || userId || ''), JSON.stringify(p))
             );
           }
         }
       }
 
+      // 6. LƯU GIAO DỊCH & NỢ
       if (userId) {
         stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
         stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
