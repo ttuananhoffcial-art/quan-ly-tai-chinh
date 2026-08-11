@@ -2,13 +2,20 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- ĐÃ KHÓA TÍNH NĂNG PHÓNG TO THU NHỎ VÀ CĂN FULL MÀN HÌNH ĐIỆN THOẠI -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Quản Lý Tài Chính Cá Nhân & Công Việc</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    /* CHẶN THAO TÁC ZOOM BẰNG NGÓN TAY TRÊN CẢ IOS VÀ ANDROID */
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior-y: none;
+    }
     .sticky-header { position: sticky; top: 0px; z-index: 20; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
     .main-app-title { font-size: clamp(18px, 4vw, 28px); font-weight: 900; color: #0f172a; text-align: center; margin-bottom: 6px; }
     
@@ -1018,7 +1025,6 @@
 
       const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
 
-      // Danh sách ID các Mã Công Việc do chính currentUser TẠO NÊN
       const myCreatedProjectIds = workProjects
         .filter(p => p && String(p.userId) === String(currentUser.id))
         .map(p => String(p.id));
@@ -1029,11 +1035,9 @@
         filteredLogs = auditLogs.filter(log => {
           if (!log) return false;
 
-          // 1. Thao tác do chính tài khoản này thực hiện
           const isMyAction = (log.userId && String(log.userId) === String(currentUser.id)) || 
                              (log.user && currentUser.phone && log.user.includes(`(${currentUser.phone})`));
 
-          // 2. Thao tác thuộc về Mã Công Việc mà tài khoản này là người TẠO RA
           const isLogForMyProject = log.projectId && myCreatedProjectIds.includes(String(log.projectId));
 
           return isMyAction || isLogForMyProject;
@@ -1132,7 +1136,6 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1145,14 +1148,12 @@
           const cloudData = await res.json();
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
-            // Cloud D1 là nguồn sự thật duy nhất (Single Source of Truth)
             const cloudUsers = cloudData.users.filter(u => u && u.phone && u.username);
 
             users = cloudUsers;
             ensureAdminUser();
             localStorage.setItem('app_users', JSON.stringify(users));
 
-            // TỰ ĐỘNG ÉP ĐĂNG XUẤT NẾU TÀI KHOẢN ĐANG DÙNG BỊ ADMIN XÓA TRÊN D1
             if (currentUser && currentUser.phone !== '0398567890' && !currentUser.isAdmin) {
               const stillExists = users.some(u => String(u.id) === String(currentUser.id) || u.phone === currentUser.phone);
               if (!stillExists) {
@@ -1383,9 +1384,13 @@
             users: isUserAdmin ? users : undefined, 
             workProjects, 
             transactions, 
-            debts
+            debts,
+            deletedProjectIds: Array.from(deletedProjectIds),
+            deletedTransIds: Array.from(deletedTransIds)
           })
         });
+        deletedProjectIds.clear();
+        deletedTransIds.clear();
       } catch (e) {
         console.log('Lỗi kết nối D1:', e);
       }
@@ -2008,7 +2013,7 @@
         const idStr = String(transId);
         deletedTransIds.add(idStr);
 
-        // 1. Gọi API xóa trực tiếp vĩnh viễn trên Server D1
+        // 1. Gọi API xóa trực tiếp vĩnh viễn trên Server D1 ngay lập tức
         try {
           await fetch(`/api?action=delete-trans&nocache=${Date.now()}`, {
             method: 'POST',
