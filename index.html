@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TOÀN BỘ TÀI KHOẢN TỪ CLOUD BẤT KỂ ĐÃ ĐĂNG NHẬP HAY CHƯA
+    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD BẤT KỂ ĐÃ ĐĂNG NHẬP HAY CHƯA
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1113,15 +1113,14 @@
         if (res.ok) {
           const cloudData = await res.json();
 
+          // LƯU DANH SÁCH USER TỪ CLOUD VỀ
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Lấy danh sách local trước
             users.forEach(u => {
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            // Gộp tất cả user từ Cloud về
             cloudData.users.forEach(u => {
               if (u && u.phone) {
                 if (!uMap.has(String(u.phone))) {
@@ -1389,7 +1388,7 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // LƯU ĐỒNG BỘ NGAO DỮ LIỆU ĐĂNG KÝ LÊN SERVER D1
+      // ĐẨY NGAY TÀI KHOẢN MỚI LÊN CLOUDFLARE D1
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1397,10 +1396,13 @@
       initApp();
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       const acc = document.getElementById('login-acc').value.trim();
       const pwd = document.getElementById('login-pwd').value;
+
+      // KÉO DỮ LIỆU TỪ SERVER VỀ TRƯỚC KHI ĐĂNG NHẬP
+      await fetchCloudData();
 
       let found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
       
@@ -1409,7 +1411,7 @@
       }
 
       currentUser = found;
-      saveStorage();
+      await saveStorage();
       logAction('Đăng nhập', `Đăng nhập thành công vào hệ thống.`);
       initApp();
     }
@@ -1439,13 +1441,14 @@
     }
 
     async function initApp() {
+      // TẢI DỮ LIỆU BAN ĐẦU DÙ ĐÃ ĐĂNG NHẬP HAY CHƯA
+      await fetchCloudData();
+
       if (!currentUser) {
         document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('main-screen').classList.add('hidden');
         return;
       }
-
-      await fetchCloudData();
 
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('main-screen').classList.remove('hidden');
