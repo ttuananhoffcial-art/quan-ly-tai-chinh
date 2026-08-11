@@ -549,7 +549,7 @@
             <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả Mã công việc & Tài khoản phụ lên Cloud.</p>
           </div>
           <div class="flex gap-2">
-            <button type="button" onclick="fetchCloudData(); alert('✅ Đã tải lại danh sách tài khoản từ máy chủ!')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-black shadow">📥 TẢI DỮ LIỆU VỀ</button>
+            <button type="button" onclick="fetchCloudData(); alert('✅ Đã tải lại danh sách tài khoản mới nhất!')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-black shadow">📥 TẢI DỮ LIỆU VỀ</button>
             <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
           </div>
         </div>
@@ -977,7 +977,7 @@
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
     
-    // LƯU CỐ ĐỊNH DANH SÁCH USER ĐÃ XÓA VÀO LOCALSTORAGE
+    // BỘ NHỚ CHẶN XÓA TÀI KHOẢN DƯỚI LOCAL
     let deletedUserIds = new Set(JSON.parse(localStorage.getItem('app_deleted_users')) || []);
 
     let currentBillMaDonVi = '';
@@ -1103,7 +1103,7 @@
       return false;
     }
 
-    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ BỔ SUNG KHÔNG DÙNG BỘ NHỚ ĐỆM (NO-CACHE) VÀ MERGE CHUẨN ĐẸP
+    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ BỔ SUNG MERGE KHÔNG TRÙNG LẮP LÊN TỚI BẢNG TÀI KHOẢN
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1119,12 +1119,10 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Đưa tất cả user dưới máy vào trước
             users.forEach(u => {
               if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.id), u);
             });
 
-            // Gộp thêm user từ Cloud về
             cloudData.users.forEach(u => {
               if (!deletedUserIds.has(String(u.id))) {
                 if (!uMap.has(String(u.id))) {
@@ -1380,7 +1378,7 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // ĐẨY NGAO DỮ LIỆU ĐĂNG KÝ LÊN CLOUD VÀ LƯU LOCALSTORAGE
+      // LƯU DƯỚI MÁY VÀ ĐẨY NGAO LÊN SERVER CLOUD
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1394,7 +1392,10 @@
       const pwd = document.getElementById('login-pwd').value;
 
       let found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
-      if (!found) return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
+      
+      if (!found) {
+        return alert('⚠️ Tài khoản này chưa được ghi nhận trên hệ thống Admin hoặc chưa đăng ký!');
+      }
 
       currentUser = found;
       saveStorage();
@@ -1700,7 +1701,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN ĐÃ CÓ CHẶN KHÔI PHÚC TỪ CLOUD
+    // HÀM XÓA TÀI KHOẢN CHO PHÉP ĐĂNG KÝ LẠI
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1708,15 +1709,19 @@
 
       if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
         const idStr = String(targetUserId);
-        deletedUserIds.add(idStr); // LƯU VĨNH VIỄN VÀO DANH SÁCH XÓA DƯỚI MÁY
-        localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
+        // Xóa hoàn toàn khỏi danh sách local
         users = users.filter(u => String(u.id) !== idStr);
+
+        // Cho phép SĐT này đăng ký mới lại
+        deletedUserIds.delete(idStr);
+        localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
+
         renderAdminAllUsersList();
-        
-        await saveStorage(); // GỬI LỆNH XÓA LÊN CLOUD
+        await saveStorage(); // Đẩy lệnh xóa lên Server Cloud ngay
+        alert(`✅ Đã xóa tài khoản "${targetUser.username}". SĐT này hiện có thể đăng ký mới lại bình thường.`);
       }
     }
 
