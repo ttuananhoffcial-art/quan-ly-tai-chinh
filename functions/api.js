@@ -16,7 +16,6 @@ export async function onRequest(context) {
   }
 
   try {
-    // 1. TỰ ĐỘNG TẠO BẢNG CHUẨN ĐỊNH DẠNG D1 (KÈM UNIQUE CHO PHONE)
     await env.DB.exec(`
       CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT UNIQUE, data TEXT);
       CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
@@ -24,21 +23,12 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
-    // 2. ĐỒNG BỘ DỮ LIỆU TỪ THIẾT BỊ LÊN SERVER
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
-      const { userId, users, workProjects, transactions, debts, deletedUserIds } = body;
+      const { userId, users, workProjects, transactions, debts } = body;
 
       const stmts = [];
 
-      // A. XỬ LÝ LỆNH XÓA TÀI KHOẢN TỪ ADMIN (NẾU CÓ)
-      if (deletedUserIds && Array.isArray(deletedUserIds)) {
-        for (let delId of deletedUserIds) {
-          stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(delId), String(delId)));
-        }
-      }
-
-      // B. LƯU & CẬP NHẬT TÀI KHOẢN (UPSERT THEO CẢ ID VÀ PHONE)
       if (users && Array.isArray(users)) {
         for (let u of users) {
           if (u && u.id && u.phone) {
@@ -51,7 +41,6 @@ export async function onRequest(context) {
         }
       }
 
-      // C. LƯU & CẬP NHẬT MÃ CÔNG VIỆC
       if (workProjects && Array.isArray(workProjects)) {
         for (let p of workProjects) {
           if (p && p.id) {
@@ -64,7 +53,6 @@ export async function onRequest(context) {
         }
       }
 
-      // D. LƯU GIAO DỊCH & NỢ CỦA USER
       if (userId) {
         stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
         stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
@@ -110,7 +98,6 @@ export async function onRequest(context) {
         }
       }
 
-      // THỰC THI TOÀN BỘ CÂU LỆNH THEO BÁCH BATCH 50
       if (stmts.length > 0) {
         for (let i = 0; i < stmts.length; i += 50) {
           const chunk = stmts.slice(i, i + 50);
@@ -121,7 +108,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // 3. TẢI TOÀN BỘ DỮ LIỆU TỪ CLOUD VỀ MÁY
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();
