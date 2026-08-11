@@ -11,14 +11,17 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     .sticky-header { position: sticky; top: 0px; z-index: 20; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
     .main-app-title { font-size: clamp(18px, 4vw, 28px); font-weight: 900; color: #0f172a; text-align: center; margin-bottom: 6px; }
-    .summary-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+    
+    /* ĐÃ SỬA THÀNH 5 CỘT NẰM NGANG */
+    .summary-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; }
     .card-box { border-radius: 10px; padding: 8px 4px; text-align: center; box-shadow: 0px 2px 5px rgba(0,0,0,0.04); cursor: pointer; user-select: none; min-width: 0; }
     .card-income { background-color: #f0fdf4; border: 2px solid #22c55e; }
     .card-expense { background-color: #fef2f2; border: 2px solid #ef4444; }
     .card-debt { background-color: #fff7ed; border: 2px solid #f97316; }
+    .card-my-debt { background-color: #fdf2f8; border: 2px solid #ec4899; }
     .card-balance { background-color: #eff6ff; border: 2px solid #3b82f6; }
-    .card-title { font-size: clamp(9px, 2.2vw, 13px); font-weight: 900; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-amount { font-size: clamp(11px, 3.2vw, 22px); font-weight: 900; margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-title { font-size: clamp(8px, 1.8vw, 12px); font-weight: 900; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-amount { font-size: clamp(10px, 2.5vw, 18px); font-weight: 900; margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     .st-radio-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; justify-content: center; background-color: #f8fafc; padding: 8px; border-radius: 12px; border: 1px solid #e2e8f0; }
     .st-radio-btn { background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; margin: 0; box-shadow: 0px 2px 4px rgba(0,0,0,0.03); cursor: pointer; font-size: 15px; font-weight: 800; color: #0f172a; transition: all 0.15s; }
@@ -152,7 +155,7 @@
       </div>
     </div>
 
-    <!-- 4 Ô THỐNG KÊ CỐ ĐỊNH CHỈ TÍNH RIÊNG CÁ NHÂN -->
+    <!-- 5 Ô THỐNG KÊ CỐ ĐỊNH NẰM NGANG (THÊM Ô MÌNH NỢ) -->
     <div id="sticky-summary" class="sticky-header">
       <div class="main-app-title">💰 Quản Lý Tài Chính Cá Nhân</div>
       <div class="summary-container">
@@ -167,6 +170,10 @@
         <div class="card-box card-debt" onclick="handleCardClick()">
           <p class="card-title" style="color: #c2410c;">🤝 NỢ MÌNH</p>
           <p id="card-debt" class="card-amount" style="color: #9a3412;">0 đ</p>
+        </div>
+        <div class="card-box card-my-debt" onclick="handleCardClick()">
+          <p class="card-title" style="color: #be185d;">💸 MÌNH NỢ</p>
+          <p id="card-my-debt" class="card-amount" style="color: #9d174d;">0 đ</p>
         </div>
         <div class="card-box card-balance" onclick="handleCardClick()">
           <p class="card-title" style="color: #1d4ed8;">💳 SỐ DƯ CÁ NHÂN</p>
@@ -1471,17 +1478,23 @@
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
       let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
+      
+      // TÍNH RIÊNG NỢ MÌNH VÀ MÌNH NỢ
       let lentUnpaid = myDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + parseAmount(b.amount), 0);
+      let borrowedUnpaid = myDebts.filter(d => d.debtType.includes('Đi vay') && d.status === 'Đang nợ').reduce((a,b) => a + parseAmount(b.amount), 0);
+      
       let balance = income - expense;
 
       const cardInc = document.getElementById('card-income');
       const cardExp = document.getElementById('card-expense');
       const cardDebt = document.getElementById('card-debt');
+      const cardMyDebt = document.getElementById('card-my-debt');
       const cardBal = document.getElementById('card-balance');
 
       if (cardInc) cardInc.innerText = income.toLocaleString('vi-VN') + ' đ';
       if (cardExp) cardExp.innerText = expense.toLocaleString('vi-VN') + ' đ';
       if (cardDebt) cardDebt.innerText = lentUnpaid.toLocaleString('vi-VN') + ' đ';
+      if (cardMyDebt) cardMyDebt.innerText = borrowedUnpaid.toLocaleString('vi-VN') + ' đ';
       if (cardBal) cardBal.innerText = balance.toLocaleString('vi-VN') + ' đ';
 
       renderRecentTransactions();
