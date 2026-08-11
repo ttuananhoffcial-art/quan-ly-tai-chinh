@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ
+    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1114,7 +1114,7 @@
           const cloudData = await res.json();
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
-            // Xem Cloud D1 là nguồn thông tin chính chủ
+            // Cloud D1 là nguồn sự thật duy nhất (Single Source of Truth)
             const cloudUsers = cloudData.users.filter(u => u && u.phone && u.username);
 
             users = cloudUsers;
@@ -1126,7 +1126,9 @@
               const stillExists = users.some(u => String(u.id) === String(currentUser.id) || u.phone === currentUser.phone);
               if (!stillExists) {
                 alert('⚠️ Tài khoản của bạn đã bị Quản trị viên xóa khỏi hệ thống!');
-                handleLogout();
+                currentUser = null;
+                localStorage.removeItem('app_current_user');
+                initApp();
                 return;
               }
             }
@@ -1401,15 +1403,17 @@
       const acc = document.getElementById('login-acc').value.trim();
       const pwd = document.getElementById('login-pwd').value;
 
+      // Lấy danh sách tài khoản mới nhất từ CSDL Cloud D1 trước khi xác thực
       await fetchCloudData();
 
       let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
-        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
+        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu hoặc tài khoản đã bị xóa!');
       }
 
       currentUser = found;
+      localStorage.setItem('app_current_user', JSON.stringify(currentUser));
       await saveStorage();
       logAction('Đăng nhập', `Đăng nhập thành công vào hệ thống.`);
       initApp();
@@ -1435,6 +1439,7 @@
     function handleLogout() {
       logAction('Đăng xuất', `Đăng xuất khỏi hệ thống.`);
       currentUser = null;
+      localStorage.removeItem('app_current_user');
       saveStorage();
       initApp();
     }
@@ -1721,12 +1726,12 @@
       if (!targetUser) return;
       if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
 
-      if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
+      if (confirm(`🗑️ Bạn có chắc muốn xóa vĩnh viễn tài khoản "${targetUser.username}" không?`)) {
         const idStr = String(targetUserId);
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
-        // Gọi API xóa trực tiếp vĩnh viễn trên Server D1
+        // 1. Gọi API xóa trực tiếp vĩnh viễn trên Server D1
         try {
           await fetch(`/api?action=delete-user&nocache=${Date.now()}`, {
             method: 'POST',
@@ -1737,13 +1742,13 @@
           console.log('Lỗi xóa API:', e);
         }
 
-        // Loại bỏ khỏi mảng local
+        // 2. Loại bỏ khỏi mảng local
         users = users.filter(u => u && String(u.id) !== idStr && u.phone !== targetUser.phone);
         localStorage.setItem('app_users', JSON.stringify(users));
 
         renderAdminAllUsersList();
         await fetchCloudData();
-        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}".`);
+        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}". Tài khoản này không còn đăng nhập được nữa!`);
       }
     }
 

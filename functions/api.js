@@ -24,7 +24,7 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
-    // A. XỬ LÝ XÓA TÀI KHOẢN TỨC THÌ TRÊN D1 (NGẮN CHẶN Bị HỒI SINH)
+    // A. XỬ LÝ XÓA TÀI KHOẢN TỨC THÌ TRÊN D1 (NGẮN CHẶN BỊ HỒI SINH)
     if (request.method === "POST" && action === "delete-user") {
       const body = await request.json();
       const { targetId, targetPhone } = body;
