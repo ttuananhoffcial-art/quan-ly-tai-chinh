@@ -132,7 +132,7 @@
 
   <!-- MAN HINH APPLICATION CHINH -->
   <div id="main-screen" class="hidden max-w-5xl mx-auto space-y-4">
-    <!-- USER BAR (NÚT LỊCH SỬ THAO TÁC NẰM GIỮA CÀI ĐẶT VÀ ĐĂNG XUẤT) -->
+    <!-- USER BAR -->
     <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-300 text-sm font-black">
       <div>
         👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-700"></span> 
@@ -693,17 +693,18 @@
     </div>
   </div>
 
-  <!-- MODAL TRẢ BỚT NỢ -->
+  <!-- MODAL TRẢ BỚT NỢ (ĐÃ TÍCH HỢP TỰ ĐỘNG HIỂN THỊ BẰNG CHỮ & ĐỊNH DẠNG SỐ) -->
   <div id="partial-debt-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[9999]">
-    <div class="bg-white rounded-xl p-5 max-w-xs w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
+    <div class="bg-white rounded-xl p-5 max-w-sm w-full space-y-4 font-black shadow-xl border-2 border-slate-300">
       <h4 class="text-base border-b-2 border-slate-200 pb-2 text-slate-900">💵 Trả Bớt Khoản Nợ</h4>
       <div>
         <label class="block text-xs text-slate-700 mb-1">Số tiền trả bớt (VNĐ):</label>
-        <input type="number" id="partial-amount-input" placeholder="Gõ số tiền..." class="w-full border-2 border-blue-500 rounded-lg p-2.5 text-base font-black bg-white" />
+        <input type="text" id="partial-amount-input" oninput="formatPartialDebtMoneyInput(this)" placeholder="Gõ số tiền..." class="w-full border-2 border-blue-500 rounded-lg p-2.5 text-base font-black bg-white" />
+        <p id="partial-money-words" class="text-xs text-blue-800 font-bold italic mt-1.5 hidden"></p>
       </div>
       <div class="flex justify-end gap-2 text-xs">
         <button type="button" onclick="closePartialModal()" class="px-3.5 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 font-black">Hủy</button>
-        <button type="button" onclick="confirmPartialPay()" class="px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-black">XÁC NHẬN</button>
+        <button type="button" onclick="confirmPartialPay()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-black shadow">XÁC NHẬN</button>
       </div>
     </div>
   </div>
@@ -817,6 +818,28 @@
         previewWorkMoneyWords(rawVal, 'edit-trans-words');
       } else {
         previewWorkMoneyWords(rawVal, `work-money-words-${projId}-${fieldIdSafe}`);
+      }
+    }
+
+    function formatPartialDebtMoneyInput(inputEl) {
+      let rawVal = inputEl.value.replace(/\D/g, '');
+      const wordsEl = document.getElementById('partial-money-words');
+      if (!rawVal) {
+        inputEl.value = '';
+        if (wordsEl) { wordsEl.classList.add('hidden'); wordsEl.innerText = ''; }
+        return;
+      }
+      let formatted = rawVal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      inputEl.value = formatted;
+      const num = Number(rawVal);
+      if (wordsEl) {
+        if (num > 0) {
+          wordsEl.classList.remove('hidden');
+          wordsEl.innerText = '🔤 Bằng chữ: ' + docSoVN(num);
+        } else {
+          wordsEl.classList.add('hidden');
+          wordsEl.innerText = '';
+        }
       }
     }
 
@@ -2784,6 +2807,9 @@
     let activePartialDebtId = null;
     function openPartialModal(debtId) {
       activePartialDebtId = debtId;
+      document.getElementById('partial-amount-input').value = '';
+      const wordsEl = document.getElementById('partial-money-words');
+      if (wordsEl) { wordsEl.classList.add('hidden'); wordsEl.innerText = ''; }
       document.getElementById('partial-debt-modal').classList.remove('hidden');
     }
     function closePartialModal() {
@@ -2791,11 +2817,12 @@
     }
 
     function confirmPartialPay() {
-      const pAmt = parseAmount(document.getElementById('partial-amount-input').value);
-      if (!pAmt || pAmt <= 0) return alert('⚠️ Số tiền không hợp lệ!');
+      const rawInp = document.getElementById('partial-amount-input').value;
+      const pAmt = parseAmount(rawInp);
+      if (!pAmt || pAmt <= 0) return alert('⚠️ Số tiền trả bớt không hợp lệ!');
 
       const debt = debts.find(d => d.id === activePartialDebtId);
-      if (!debt) return;
+      if (!debt) return alert('⚠️ Không tìm thấy khoản nợ!');
 
       const today = new Date().toISOString().split('T')[0];
       const isChoVay = debt.debtType.includes('Cho vay');
