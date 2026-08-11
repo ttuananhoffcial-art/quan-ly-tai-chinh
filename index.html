@@ -12,7 +12,6 @@
     .sticky-header { position: sticky; top: 0px; z-index: 20; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
     .main-app-title { font-size: clamp(18px, 4vw, 28px); font-weight: 900; color: #0f172a; text-align: center; margin-bottom: 6px; }
     
-    /* ĐÃ SỬA THÀNH 5 CỘT NẰM NGANG */
     .summary-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; }
     .card-box { border-radius: 10px; padding: 8px 4px; text-align: center; box-shadow: 0px 2px 5px rgba(0,0,0,0.04); cursor: pointer; user-select: none; min-width: 0; }
     .card-income { background-color: #f0fdf4; border: 2px solid #22c55e; }
@@ -155,7 +154,7 @@
       </div>
     </div>
 
-    <!-- 5 Ô THỐNG KÊ CỐ ĐỊNH NẰM NGANG (THÊM Ô MÌNH NỢ) -->
+    <!-- 5 Ô THỐNG KÊ CỐ ĐỊNH NẰM NGANG -->
     <div id="sticky-summary" class="sticky-header">
       <div class="main-app-title">💰 Quản Lý Tài Chính Cá Nhân</div>
       <div class="summary-container">
@@ -1425,9 +1424,11 @@
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
+      // SỬA ĐIỀU KIỆN HIỂN THỊ NÚT TẠO MÃ CÔNG VIỆC: MỞ CẢ KHI CẤP QUYỀN WORK ACCESS
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
-        createWorkBtnWrapper.classList.toggle('hidden', !!currentUser.isSubAccount);
+        const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
+        createWorkBtnWrapper.classList.toggle('hidden', !canCreateWork);
       }
 
       const btnTabAdd = document.getElementById('btn-tab-add');
@@ -1478,11 +1479,10 @@
 
       let income = personalTrans.filter(t => ['Thu nhập', 'Thu nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
       let expense = personalTrans.filter(t => ['Chi tiêu', 'Trả nợ'].includes(t.type)).reduce((a,b) => a + parseAmount(b.amount), 0);
-      
-      // TÍNH RIÊNG NỢ MÌNH VÀ MÌNH NỢ
+
       let lentUnpaid = myDebts.filter(d => d.debtType.includes('Cho vay') && d.status === 'Đang nợ').reduce((a,b) => a + parseAmount(b.amount), 0);
       let borrowedUnpaid = myDebts.filter(d => d.debtType.includes('Đi vay') && d.status === 'Đang nợ').reduce((a,b) => a + parseAmount(b.amount), 0);
-      
+
       let balance = income - expense;
 
       const cardInc = document.getElementById('card-income');
@@ -2011,6 +2011,7 @@
     }
 
     function toggleWorkForm(forceState) {
+      // SỬA ĐIỀU KIỆN CHẶN: MỞ QUYỀN TẠO MÃ CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       if (currentUser && currentUser.isSubAccount) {
         return alert('⚠️ Tài khoản phụ không có quyền tạo mã công việc mới!');
       }
