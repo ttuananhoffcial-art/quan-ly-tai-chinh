@@ -973,7 +973,10 @@
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
-    let deletedUserIds = new Set(); // MỚI: CHẶN KHÔI PHÚC TÀI KHOẢN ĐÃ XÓA TỪ SERVER CLOUD
+    
+    // LƯU CỐ ĐỊNH DANH SÁCH USER ĐÃ XÓA VÀO LOCALSTORAGE
+    let deletedUserIds = new Set(JSON.parse(localStorage.getItem('app_deleted_users')) || []);
+
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
@@ -1315,6 +1318,7 @@
       localStorage.setItem('app_transactions', JSON.stringify(transactions));
       localStorage.setItem('app_debts', JSON.stringify(debts));
       localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+      localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
 
       if (currentUser) {
         try {
@@ -1335,7 +1339,7 @@
       }
     }
 
-    function handleRegister(e) {
+    async function handleRegister(e) {
       e.preventDefault();
       const phone = document.getElementById('reg-phone').value.trim();
       const user = document.getElementById('reg-user').value.trim();
@@ -1356,10 +1360,15 @@
         isSubAccount: false,
         hasWorkAccess: false 
       };
+
       users.push(newUser);
       currentUser = newUser;
-      saveStorage();
+      
+      // ĐẨY NGAY DỮ LIỆU ĐĂNG KÝ LÊN CLOUD VÀ LƯU LOCALSTORAGE
+      await saveStorage();
+
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
+      alert('🎉 Đăng ký tài khoản mới thành công!');
       initApp();
     }
 
@@ -1429,7 +1438,6 @@
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
-      // MỞ QUYỀN TẠO MÃ CÔNG VIỆC CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
@@ -1665,7 +1673,7 @@
     }
 
     function toggleUserWorkAccess(targetUserId) {
-      const targetUser = users.find(u => u.id === targetUserId);
+      const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
 
       targetUser.hasWorkAccess = !targetUser.hasWorkAccess;
@@ -1676,23 +1684,22 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN ĐÃ CÓ CHẶN KHÔI PHÚC TỪ CLOUD
     async function deleteUserByAdmin(targetUserId) {
-      const targetUser = users.find(u => u.id === targetUserId);
+      const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
       if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
 
       if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
         const idStr = String(targetUserId);
-        deletedUserIds.add(idStr); // Thêm ID vào danh sách chặn khôi phục
+        deletedUserIds.add(idStr); // LƯU VĨNH VIỄN VÀO DANH SÁCH XÓA DƯỚI MÁY
+        localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
         users = users.filter(u => String(u.id) !== idStr);
-        localStorage.setItem('app_users', JSON.stringify(users));
-
         renderAdminAllUsersList();
-        await saveStorage(); // Đẩy lệnh xóa trực tiếp lên Cloud
+        
+        await saveStorage(); // GỬI LỆNH XÓA LÊN CLOUD
       }
     }
 
