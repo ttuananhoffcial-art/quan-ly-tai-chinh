@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD BẤT KỂ ĐÃ ĐĂNG NHẬP HAY CHƯA
+    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD MỖI 3 GIÂY VÀ CẬP NHẬT TRỰC TIẾP LÊN DĨA VÀ MÀN HÌNH ADMIN
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1113,28 +1113,29 @@
         if (res.ok) {
           const cloudData = await res.json();
 
-          // LƯU DANH SÁCH USER TỪ CLOUD VỀ
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            users.forEach(u => {
+            // Ưu tiên đưa toàn bộ user từ Cloud D1 vào map trước
+            cloudData.users.forEach(u => {
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            cloudData.users.forEach(u => {
-              if (u && u.phone) {
-                if (!uMap.has(String(u.phone))) {
-                  uMap.set(String(u.phone), u);
-                } else {
-                  const exist = uMap.get(String(u.phone));
-                  uMap.set(String(u.phone), { ...exist, ...u });
-                }
+            // Gộp với user ở local nếu có
+            users.forEach(u => {
+              if (u && u.phone && !uMap.has(String(u.phone))) {
+                uMap.set(String(u.phone), u);
               }
             });
 
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
-            renderAdminAllUsersList();
+
+            // TỰ ĐỘNG LÀM MỚI DANH SÁCH TÀI KHOẢN TRÊN MÀN HÌNH ADMIN MỖI LẦN CÓ TÀI KHOẢN MỚI
+            const modal = document.getElementById('settings-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+              renderAdminAllUsersList();
+            }
           }
 
           if (currentUser) {
@@ -1368,7 +1369,6 @@
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
 
-      // KÉO DỮ LIỆU TỪ SERVER VỀ TRƯỚC ĐỂ KIỂM TRA SĐT ĐÃ TỒN TẠI CHƯA
       await fetchCloudData();
 
       if (users.find(u => u.phone === phone || u.username.toLowerCase() === user.toLowerCase())) {
@@ -1388,7 +1388,6 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // ĐẨY NGAY TÀI KHOẢN MỚI LÊN CLOUDFLARE D1
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1401,7 +1400,6 @@
       const acc = document.getElementById('login-acc').value.trim();
       const pwd = document.getElementById('login-pwd').value;
 
-      // KÉO DỮ LIỆU TỪ SERVER VỀ TRƯỚC KHI ĐĂNG NHẬP
       await fetchCloudData();
 
       let found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
@@ -1441,7 +1439,6 @@
     }
 
     async function initApp() {
-      // TẢI DỮ LIỆU BAN ĐẦU DÙ ĐÃ ĐĂNG NHẬP HAY CHƯA
       await fetchCloudData();
 
       if (!currentUser) {
@@ -1558,7 +1555,7 @@
       populatePersonSelector();
     }
 
-    function openSettingsModal() {
+    async function openSettingsModal() {
       const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
       const adminBox = document.getElementById('admin-settings-content');
       const userBox = document.getElementById('user-settings-content');
@@ -1567,6 +1564,9 @@
         adminBox.classList.remove('hidden');
         userBox.classList.add('hidden');
         renderAdminSubAccountBoxes();
+        
+        // TẢI MỚI DỮ LIỆU TỪ SERVER KHI BẤM MỞ BẢNG CÀI ĐẶT
+        await fetchCloudData();
         renderAdminAllUsersList();
       } else {
         adminBox.classList.add('hidden');
@@ -1715,7 +1715,6 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN ĐỒNG BỘ LÊN D1 ĐỂ BÀN GIAO SĐT ĐĂNG KÝ LẠI
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1726,15 +1725,13 @@
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
-        // Xóa hoàn toàn khỏi danh sách local
         users = users.filter(u => String(u.id) !== idStr);
 
-        // Đưa ID và Phone vào mảng deletedUserIds để gửi lệnh DELETE lên D1
         deletedUserIds.add(idStr);
         deletedUserIds.add(String(targetUser.phone));
 
         renderAdminAllUsersList();
-        await saveStorage(); // GỬI LỆNH XÓA LÊN SERVER CLOUD NGAY
+        await saveStorage();
         alert(`✅ Đã xóa tài khoản "${targetUser.username}". SĐT này hiện có thể đăng ký mới lại bình thường.`);
       }
     }
