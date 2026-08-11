@@ -1018,14 +1018,10 @@
 
       const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
 
-      // Danh sách ID các Mã Công Việc do chính currentUser TẠO BẰNG CẤP QUYỀN
+      // Danh sách ID các Mã Công Việc do chính currentUser TẠO NÊN
       const myCreatedProjectIds = workProjects
         .filter(p => p && String(p.userId) === String(currentUser.id))
         .map(p => String(p.id));
-
-      const myCreatedProjectNames = workProjects
-        .filter(p => p && String(p.userId) === String(currentUser.id))
-        .map(p => p.name);
 
       let filteredLogs = auditLogs;
 
@@ -1033,17 +1029,14 @@
         filteredLogs = auditLogs.filter(log => {
           if (!log) return false;
 
-          // 1. Lịch sử thao tác do chính tài khoản này thực hiện
+          // 1. Thao tác do chính tài khoản này thực hiện (khớp userId hoặc phone chuẩn)
           const isMyAction = (log.userId && String(log.userId) === String(currentUser.id)) || 
-                             (log.user && log.user.includes(currentUser.phone));
+                             (log.user && currentUser.phone && log.user.includes(`(${currentUser.phone})`));
 
-          // 2. Lịch sử thao tác thuộc về Mã Công Việc mà tài khoản này tạo ra
+          // 2. Thao tác thuộc về Mã Công Việc mà tài khoản này là người TẠO RA
           const isLogForMyProject = log.projectId && myCreatedProjectIds.includes(String(log.projectId));
 
-          // 3. So khớp chi tiết nội dung log với tên công việc do mình tạo
-          const isProjectNameInDetails = myCreatedProjectNames.some(pName => pName && log.details && log.details.includes(pName));
-
-          return isMyAction || isLogForMyProject || isProjectNameInDetails;
+          return isMyAction || isLogForMyProject;
         });
       }
 
@@ -1262,19 +1255,20 @@
 
       let myProjects = [];
       if (isUserAdmin) {
-        myProjects = workProjects.filter(p => p.isSharedAdmin || String(p.userId) === String(currentUser.id) || !p.userId);
+        myProjects = workProjects; // Admin thấy tất cả các Mã Công Việc
       } else if (isSub) {
         const allowed = currentUser.allowedProjects || [];
         myProjects = workProjects.filter(p => allowed.includes(p.id));
       } else {
-        myProjects = workProjects.filter(p => String(p.userId) === String(currentUser.id) && !p.isSharedAdmin);
+        // Tài khoản tự đăng ký thấy các công việc do chính mình tạo ra
+        myProjects = workProjects.filter(p => String(p.userId) === String(currentUser.id));
       }
 
       let myTrans = [];
       let myDebts = debts.filter(d => String(d.userId) === String(currentUser.id));
 
       if (isUserAdmin) {
-        myTrans = transactions.filter(t => String(t.userId) === String(currentUser.id) || t.isSharedAdmin || currentUser.phone === '0398567890');
+        myTrans = transactions; // Admin thấy tất cả giao dịch
       } else if (isSub) {
         const allowedProjIds = currentUser.allowedProjects || [];
         myTrans = transactions.filter(t => {
@@ -1285,7 +1279,15 @@
           return String(t.userId) === String(currentUser.id);
         });
       } else {
-        myTrans = transactions.filter(t => String(t.userId) === String(currentUser.id));
+        // Tài khoản tự đăng ký: thấy giao dịch cá nhân CỘNG VỚI giao dịch thuộc Mã Công Việc do chính mình tạo
+        const myProjIds = myProjects.map(p => String(p.id));
+        myTrans = transactions.filter(t => {
+          if (getTransScope(t) === 'Công việc') {
+            const pId = getTransProjectId(t);
+            if (pId && myProjIds.includes(String(pId))) return true;
+          }
+          return String(t.userId) === String(currentUser.id);
+        });
       }
 
       return { myTrans, myDebts, myProjects };
@@ -1446,7 +1448,7 @@
       let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
-        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
+        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu hoặc tài khoản đã bị xóa!');
       }
 
       currentUser = found;
