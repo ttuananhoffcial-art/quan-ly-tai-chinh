@@ -981,7 +981,7 @@
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
-    function logAction(actionType, details) {
+    function logAction(actionType, details, projectId = null) {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const mins = String(now.getMinutes()).padStart(2, '0');
@@ -995,8 +995,10 @@
         id: 'log_' + Date.now(),
         timestamp: timestamp,
         user: currentUser ? `${currentUser.username} (${currentUser.phone})` : 'Hệ thống',
+        userId: currentUser ? currentUser.id : 'system',
         actionType: actionType,
-        details: details
+        details: details,
+        projectId: projectId
       };
 
       auditLogs.unshift(logItem);
@@ -1009,23 +1011,59 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      if (auditLogs.length === 0) {
+      if (!currentUser) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 italic text-center font-bold">Vui lòng đăng nhập để xem lịch sử thao tác.</td></tr>';
+        return;
+      }
+
+      const isUserAdmin = currentUser.phone === '0398567890' || currentUser.isAdmin;
+
+      // Danh sách ID các Mã Công Việc do chính currentUser TẠO BẰNG CẤP QUYỀN
+      const myCreatedProjectIds = workProjects
+        .filter(p => p && String(p.userId) === String(currentUser.id))
+        .map(p => String(p.id));
+
+      const myCreatedProjectNames = workProjects
+        .filter(p => p && String(p.userId) === String(currentUser.id))
+        .map(p => p.name);
+
+      let filteredLogs = auditLogs;
+
+      if (!isUserAdmin) {
+        filteredLogs = auditLogs.filter(log => {
+          if (!log) return false;
+
+          // 1. Lịch sử thao tác do chính tài khoản này thực hiện
+          const isMyAction = (log.userId && String(log.userId) === String(currentUser.id)) || 
+                             (log.user && log.user.includes(currentUser.phone));
+
+          // 2. Lịch sử thao tác thuộc về Mã Công Việc mà tài khoản này tạo ra
+          const isLogForMyProject = log.projectId && myCreatedProjectIds.includes(String(log.projectId));
+
+          // 3. So khớp chi tiết nội dung log với tên công việc do mình tạo
+          const isProjectNameInDetails = myCreatedProjectNames.some(pName => pName && log.details && log.details.includes(pName));
+
+          return isMyAction || isLogForMyProject || isProjectNameInDetails;
+        });
+      }
+
+      if (filteredLogs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-500 italic text-center font-bold">Chưa có lịch sử thao tác nào được ghi nhận.</td></tr>';
         return;
       }
 
-      auditLogs.forEach(log => {
+      filteredLogs.forEach(log => {
         let badgeClass = 'bg-blue-100 text-blue-900 border-blue-300';
-        if (log.actionType.includes('Xóa')) badgeClass = 'bg-red-100 text-red-900 border-red-300';
-        if (log.actionType.includes('Chỉnh sửa')) badgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
-        if (log.actionType.includes('Tạo mới')) badgeClass = 'bg-green-100 text-green-900 border-green-300';
+        if (log.actionType && log.actionType.includes('Xóa')) badgeClass = 'bg-red-100 text-red-900 border-red-300';
+        if (log.actionType && log.actionType.includes('Chỉnh sửa')) badgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
+        if (log.actionType && log.actionType.includes('Tạo')) badgeClass = 'bg-green-100 text-green-900 border-green-300';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="whitespace-nowrap font-bold text-slate-700">${log.timestamp}</td>
-          <td class="whitespace-nowrap font-black text-blue-800">${log.user}</td>
-          <td class="whitespace-nowrap"><span class="px-2 py-0.5 rounded text-xs font-black border ${badgeClass}">${log.actionType}</span></td>
-          <td class="font-medium text-slate-800">${log.details}</td>
+          <td class="whitespace-nowrap font-bold text-slate-700">${log.timestamp || ''}</td>
+          <td class="whitespace-nowrap font-black text-blue-800">${log.user || ''}</td>
+          <td class="whitespace-nowrap"><span class="px-2 py-0.5 rounded text-xs font-black border ${badgeClass}">${log.actionType || ''}</span></td>
+          <td class="font-medium text-slate-800">${log.details || ''}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1101,7 +1139,7 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
+    // TẢI TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1403,13 +1441,12 @@
       const acc = document.getElementById('login-acc').value.trim();
       const pwd = document.getElementById('login-pwd').value;
 
-      // Lấy danh sách tài khoản mới nhất từ CSDL Cloud D1 trước khi xác thực
       await fetchCloudData();
 
       let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
-        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu hoặc tài khoản đã bị xóa!');
+        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
       }
 
       currentUser = found;
@@ -1474,6 +1511,7 @@
 
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
+        // Nút tạo mã công việc hiện khi: là Admin CHẶẶC là tài khoản tự đăng ký ĐƯỢC CẤP QUYỀN CÔNG VIỆC RIÊNG
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
         createWorkBtnWrapper.classList.toggle('hidden', !canCreateWork);
       }
@@ -1748,7 +1786,7 @@
 
         renderAdminAllUsersList();
         await fetchCloudData();
-        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}". Tài khoản này không còn đăng nhập được nữa!`);
+        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}". Tài khoản không còn đăng nhập được nữa!`);
       }
     }
 
@@ -1946,6 +1984,8 @@
       const oldAmtStr = Number(t.amount).toLocaleString('vi-VN');
       const newAmtStr = Number(newAmount).toLocaleString('vi-VN');
 
+      const projId = getTransProjectId(t);
+
       t.updatedAt = `${hours}:${mins}:${secs} ${day}/${month}/${year}`;
       t.amount = newAmount;
       t.date = newDate;
@@ -1955,7 +1995,7 @@
       saveStorage();
       fetchCloudData();
 
-      logAction('Chỉnh sửa giao dịch', `Chỉnh sửa GD #${t.id} (${newCategory}): Số tiền từ ${oldAmtStr}đ ➔ ${newAmtStr}đ | Ngày: ${newDate}.`);
+      logAction('Chỉnh sửa giao dịch', `Chỉnh sửa GD #${t.id} (${newCategory}): Số tiền từ ${oldAmtStr}đ ➔ ${newAmtStr}đ | Ngày: ${newDate}.`, projId);
 
       closeEditTransModal();
       alert('✅ Đã cập nhật xong giao dịch! Lịch sử chỉnh sửa đã được lưu lại.');
@@ -1974,7 +2014,8 @@
         localStorage.setItem('app_transactions', JSON.stringify(transactions));
         
         if (t) {
-          logAction('Xóa giao dịch', `Xóa giao dịch #${t.id} (${t.category}): ${Number(t.amount).toLocaleString('vi-VN')}đ.`);
+          const projId = getTransProjectId(t);
+          logAction('Xóa giao dịch', `Xóa giao dịch #${t.id} (${t.category}): ${Number(t.amount).toLocaleString('vi-VN')}đ.`, projId);
         }
 
         updateSummaryAndData();
@@ -2078,8 +2119,9 @@
     }
 
     function toggleWorkForm(forceState) {
-      if (currentUser && currentUser.isSubAccount) {
-        return alert('⚠️ Tài khoản phụ không có quyền tạo mã công việc mới!');
+      const canCreateWork = (currentUser && (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess)));
+      if (!canCreateWork) {
+        return alert('⚠️ Tài khoản của bạn chưa được cấp quyền tạo mã công việc mới!');
       }
 
       const box = document.getElementById('work-create-form-box');
@@ -2105,8 +2147,9 @@
     }
 
     function createWorkProject() {
-      if (currentUser && currentUser.isSubAccount) {
-        return alert('⚠️ Tài khoản phụ không được phép tạo mã công việc!');
+      const canCreateWork = (currentUser && (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess)));
+      if (!canCreateWork) {
+        return alert('⚠️ Tài khoản của bạn chưa được cấp quyền tạo mã công việc mới!');
       }
 
       const title = document.getElementById('work-title-input').value.trim();
@@ -2146,7 +2189,7 @@
           proj.presetItems = [...tempPresetItems];
           proj.fields = { thu: thuFields, chi: chiFields, no: noFields };
         }
-        logAction('Cập nhật mã công việc', `Sửa thông tin mã công việc "${title}".`);
+        logAction('Cập nhật mã công việc', `Sửa thông tin mã công việc "${title}".`, editingProjectId);
         alert(`✅ Đã cập nhật thành công mã công việc: "${title}"!`);
         editingProjectId = null;
       } else {
@@ -2160,7 +2203,7 @@
           fields: { thu: thuFields, chi: chiFields, no: noFields }
         };
         workProjects.push(newProj);
-        logAction('Tạo mã công việc', `Tạo mới mã công việc "${title}".`);
+        logAction('Tạo mã công việc', `Tạo mới mã công việc "${title}".`, newProj.id);
         alert(`✅ Đã tạo mã công việc: "${title}"!`);
       }
 
@@ -2247,7 +2290,7 @@
         localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
 
         if (proj) {
-          logAction('Xóa mã công việc', `Xóa mã công việc "${proj.name}".`);
+          logAction('Xóa mã công việc', `Xóa mã công việc "${proj.name}".`, projId);
         }
 
         renderWorkProjectsList();
@@ -2591,7 +2634,7 @@
 
       saveStorage();
 
-      logAction('Tạo mới giao dịch', `Tạo GD Công việc (${projName}): ${type} ${amount.toLocaleString('vi-VN')}đ | Ghi chú: ${notes.join(' | ')}.`);
+      logAction('Tạo mới giao dịch', `Tạo GD Công việc (${projName}): ${type} ${amount.toLocaleString('vi-VN')}đ | Ghi chú: ${notes.join(' | ')}.`, projId);
 
       document.querySelectorAll(`.preset-qty-${projId}`).forEach(i => i.value = '');
       const subTotDisplay = document.getElementById(`preset-total-display-${projId}`);
