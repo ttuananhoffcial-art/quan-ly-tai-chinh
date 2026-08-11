@@ -16,7 +16,7 @@ export async function onRequest(context) {
   }
 
   try {
-    // TỰ ĐỘNG KHỞI TẠO CÁC BẢNG CSDL TRÊN CLOUDFLARE D1
+    // KHỞI TẠO BẢNG CSDL D1
     await env.DB.exec(`
       CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT, data TEXT);
       CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
@@ -24,7 +24,22 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
-    // A. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI TRỰC TIẾP
+    // A. XỬ LÝ XÓA TÀI KHOẢN TỨC THÌ TRÊN D1 (NGẮN CHẶN Bị HỒI SINH)
+    if (request.method === "POST" && action === "delete-user") {
+      const body = await request.json();
+      const { targetId, targetPhone } = body;
+      const stmts = [];
+
+      if (targetId) stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ?").bind(String(targetId)));
+      if (targetPhone) stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE phone = ?").bind(String(targetPhone)));
+
+      if (stmts.length > 0) {
+        await env.DB.batch(stmts);
+      }
+      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    }
+
+    // B. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI TRỰC TIẾP
     if (request.method === "POST" && action === "register-user") {
       const body = await request.json();
       const { user } = body;
@@ -37,23 +52,13 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ error: "Invalid user data" }), { status: 400, headers: corsHeaders });
     }
 
-    // B. ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG LÊN SERVER
+    // C. ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG LÊN SERVER
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
-      const { userId, users, workProjects, transactions, debts, deletedUserIds, deletedProjectIds, deletedTransIds } = body;
+      const { userId, users, workProjects, transactions, debts, deletedProjectIds, deletedTransIds } = body;
 
       const stmts = [];
 
-      // XÓA VĨNH VIỄN TÀI KHOẢN KHỎI CSDL KHI ADMIN XÓA
-      if (deletedUserIds && Array.isArray(deletedUserIds)) {
-        for (let delId of deletedUserIds) {
-          if (delId) {
-            stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(delId), String(delId)));
-          }
-        }
-      }
-
-      // XÓA MÃ CÔNG VIỆC KHỎI D1
       if (deletedProjectIds && Array.isArray(deletedProjectIds)) {
         for (let pId of deletedProjectIds) {
           if (pId) {
@@ -62,7 +67,6 @@ export async function onRequest(context) {
         }
       }
 
-      // XÓA GIAO DỊCH KHỎI D1
       if (deletedTransIds && Array.isArray(deletedTransIds)) {
         for (let tId of deletedTransIds) {
           if (tId) {
@@ -71,7 +75,7 @@ export async function onRequest(context) {
         }
       }
 
-      // LƯU CẬP NHẬT TÀI KHOẢN HỢP LỆ
+      // CHỈ CẬP NHẬT TÀI KHOẢN KHI ĐƯỢC TRUYỀN TỪ MÁY ADMIN
       if (users && Array.isArray(users)) {
         for (let u of users) {
           if (u && u.id && u.phone && u.username) {
@@ -83,7 +87,6 @@ export async function onRequest(context) {
         }
       }
 
-      // LƯU MÃ CÔNG VIỆC
       if (workProjects && Array.isArray(workProjects)) {
         for (let p of workProjects) {
           if (p && p.id) {
@@ -95,7 +98,6 @@ export async function onRequest(context) {
         }
       }
 
-      // LƯU GIAO DỊCH VÀ NỢ
       if (userId && userId !== 'guest') {
         stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
         stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
@@ -151,7 +153,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // C. TẢI DỮ LIỆU TỪ SERVER VỀ
+    // D. TẢI DỮ LIỆU TỪ SERVER VỀ
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();

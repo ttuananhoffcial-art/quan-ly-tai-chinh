@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
+    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1114,7 +1114,7 @@
           const cloudData = await res.json();
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
-            // Cloud D1 là nguồn sự thật duy nhất (Single Source of Truth)
+            // Xem Cloud D1 là nguồn thông tin chính chủ
             const cloudUsers = cloudData.users.filter(u => u && u.phone && u.username);
 
             users = cloudUsers;
@@ -1332,6 +1332,7 @@
       localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
 
       const syncUserId = currentUser ? currentUser.id : 'guest';
+      const isUserAdmin = currentUser && (currentUser.phone === '0398567890' || currentUser.isAdmin);
 
       try {
         await fetch(`/api?action=sync-data&nocache=${Date.now()}`, {
@@ -1339,18 +1340,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: syncUserId, 
-            users, 
+            // CHỈ MÁY ADMIN MỚI ĐƯỢC PHÉP ĐẨY MẢNG USERS LÊN SERVER TRÁNH CÁC MÁY KHÁC ĐẨY LẠI TÀI KHOẢN CŨ ĐÃ XÓA
+            users: isUserAdmin ? users : undefined, 
             workProjects, 
             transactions, 
-            debts,
-            deletedUserIds: Array.from(deletedUserIds),
-            deletedProjectIds: Array.from(deletedProjectIds),
-            deletedTransIds: Array.from(deletedTransIds)
+            debts
           })
         });
-        deletedUserIds.clear();
-        deletedProjectIds.clear();
-        deletedTransIds.clear();
       } catch (e) {
         console.log('Lỗi kết nối D1:', e);
       }
@@ -1410,7 +1406,7 @@
       let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
-        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu hoặc tài khoản đã bị xóa!');
+        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
       }
 
       currentUser = found;
@@ -1719,7 +1715,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA VĨNH VIỄN TÀI KHOẢN TRÊN D1 VÀ BẢO BỘ KHÔNG BỊ PHỤC HỒI LẠI
+    // HÀM XÓA VĨNH VIỄN TÀI KHOẢN TRÊN D1 VÀ LOẠI BỎ KHỎI DẢI LOCAL
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => u && String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1730,14 +1726,24 @@
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
-        users = users.filter(u => u && String(u.id) !== idStr && u.phone !== targetUser.phone);
+        // Gọi API xóa trực tiếp vĩnh viễn trên Server D1
+        try {
+          await fetch(`/api?action=delete-user&nocache=${Date.now()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetId: idStr, targetPhone: targetUser.phone })
+          });
+        } catch(e) {
+          console.log('Lỗi xóa API:', e);
+        }
 
-        deletedUserIds.add(idStr);
-        if (targetUser.phone) deletedUserIds.add(String(targetUser.phone));
+        // Loại bỏ khỏi mảng local
+        users = users.filter(u => u && String(u.id) !== idStr && u.phone !== targetUser.phone);
+        localStorage.setItem('app_users', JSON.stringify(users));
 
         renderAdminAllUsersList();
-        await saveStorage();
-        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}". Tài khoản không còn đăng nhập được nữa!`);
+        await fetchCloudData();
+        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}".`);
       }
     }
 
