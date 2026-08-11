@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC VÀ BẢO BỘ BẢN GHI VỪA ĐĂNG KÝ)
+    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC VÀ BẢO BỘ BẢN GHI VỪA ĐĂNG KÝ)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1371,7 +1371,7 @@
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
 
-      if (users.find(u => u.phone === phone || (u.username && u.username.toLowerCase() === user.toLowerCase()))) {
+      if (users.find(u => u && u.phone === phone || (u.username && u.username.toLowerCase() === user.toLowerCase()))) {
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
 
@@ -1385,11 +1385,20 @@
         hasWorkAccess: false 
       };
 
-      // 1. LƯU NGAY VÀO BỘ NHỚ TRONG CỦA MÁY ĐĂNG KÝ
+      // 1. TẠO TÀI KHOẢN MỚI TRỰC TIẾP TRÊN DATABASE D1 (LƯU TRỰC TIẾP KHÔNG QUA MẢNG ĐỒNG BỘ NÊN KHÔNG BỊ RÁC/TRỄ)
+      try {
+        await fetch(`/api?action=register-user&nocache=${Date.now()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: newUser })
+        });
+      } catch (err) {
+        console.log('Lỗi gửi đăng ký:', err);
+      }
+
       users.push(newUser);
       currentUser = newUser;
       
-      // 2. ÉP GỬI NGAY ĐẾN DATABASE D1
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1626,7 +1635,7 @@
       };
 
       if (editingSubAccountId) {
-        const u = users.find(item => item.id === editingSubAccountId);
+        const u = users.find(item => item && item.id === editingSubAccountId);
         if (u) {
           u.phone = phone;
           u.username = username;
@@ -1716,7 +1725,6 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN ĐỒNG BỘ LÊN D1 ĐỂ BÀN GIAO SĐT ĐĂNG KÝ LẠI
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => u && String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1744,7 +1752,6 @@
       container.innerHTML = '';
 
       users.forEach(u => {
-        // LỌC BỎ BẢN GHI RÁC VÀ TÀI KHOẢN ADMIN CHÍNH HOẶC KHÔNG BẤM NÚT ĐƯỢC
         if (!u || !u.phone || !u.username || u.phone === '0398567890') return;
 
         let roleText = u.isSubAccount ? 'Tài khoản phụ Admin tạo' : 'Thành viên tự đăng ký';
