@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ
+    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1116,14 +1116,14 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Ưu tiên đưa toàn bộ tài khoản từ Cloud D1 vào trước
+            // Lấy toàn bộ tài khoản từ Cloud D1 trước (chỉ lấy tài khoản có đủ Tên và SĐT)
             cloudData.users.forEach(u => {
-              if (u && u.phone) uMap.set(String(u.phone), u);
+              if (u && u.phone && u.username) uMap.set(String(u.phone), u);
             });
 
-            // Gộp tài khoản local vừa đăng ký dưới máy nếu chưa kịp lên Cloud
+            // Gộp với local nếu có tài khoản vừa tạo dưới máy
             users.forEach(u => {
-              if (u && u.phone && !uMap.has(String(u.phone))) {
+              if (u && u.phone && u.username && !uMap.has(String(u.phone))) {
                 uMap.set(String(u.phone), u);
               }
             });
@@ -1738,7 +1738,7 @@
       container.innerHTML = '';
 
       users.forEach(u => {
-        if (u.phone === '0398567890') return;
+        if (!u || !u.phone || u.phone === '0398567890') return; // Lọc bỏ bản ghi rác và tài khoản Admin chính
 
         let roleText = u.isSubAccount ? 'Tài khoản phụ Admin tạo' : 'Thành viên tự đăng ký';
         let allowWorkChk = u.hasWorkAccess ? 'checked' : '';
@@ -1758,7 +1758,7 @@
         container.innerHTML += `
           <div class="flex flex-wrap justify-between items-center bg-slate-100 p-2.5 rounded-lg border border-slate-300 text-xs font-black gap-2">
             <div>
-              <span class="text-slate-900 font-extrabold">👤 ${u.username}</span> (${u.phone})
+              <span class="text-slate-900 font-extrabold">👤 ${u.username || 'Tài khoản'}</span> (${u.phone})
               <span class="text-[10px] text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded ml-1">${roleText}</span>
               <div class="text-[11px] text-red-600 font-black mt-0.5">🔑 <b>Mật khẩu:</b> ${u.password || 'Chưa có'}</div>
               ${permBadge}

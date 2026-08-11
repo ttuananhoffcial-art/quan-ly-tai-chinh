@@ -16,7 +16,7 @@ export async function onRequest(context) {
   }
 
   try {
-    // TỰ ĐỘNG KHỞI TẠO BẢNG CSDL TRÊN CLOUDFLARE D1
+    // TỰ ĐỘNG KHỞI TẠO CÁC BẢNG CSDL TRÊN CLOUDFLARE D1
     await env.DB.exec(`
       CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT, data TEXT);
       CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
@@ -24,7 +24,7 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
-    // 1. ĐỒNG BỘ DỮ LIỆU TỪ THIẾT BỊ LÊN SERVER
+    // 1. ĐỒNG BỘ DỮ LIỆU TỪ CÁC THIẾT BỊ LÊN SERVER
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
       const { userId, users, workProjects, transactions, debts, deletedUserIds, deletedProjectIds, deletedTransIds } = body;
@@ -58,10 +58,10 @@ export async function onRequest(context) {
         }
       }
 
-      // D. LƯU & CẬP NHẬT TÀI KHOẢN ĐĂNG KÝ MỚI LÊN DATABASE D1
+      // D. LƯU & CẬP NHẬT TÀI KHOẢN (CHỈ LƯU TÀI KHOẢN HỢP LỆ CÓ ĐỦ ID VÀ PHONE)
       if (users && Array.isArray(users)) {
         for (let u of users) {
-          if (u && u.id && u.phone) {
+          if (u && u.id && u.phone && u.username) {
             stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(u.id), String(u.phone)));
             stmts.push(
               env.DB.prepare("INSERT INTO sys_users (id, phone, data) VALUES (?, ?, ?)").bind(String(u.id), String(u.phone), JSON.stringify(u))
@@ -128,6 +128,7 @@ export async function onRequest(context) {
         }
       }
 
+      // THỰC THI TOÀN BỘ CÂU LỆNH SQL THEO GÓI 50 LỆNH
       if (stmts.length > 0) {
         for (let i = 0; i < stmts.length; i += 50) {
           const chunk = stmts.slice(i, i + 50);
@@ -166,7 +167,10 @@ export async function onRequest(context) {
       }));
 
       const formattedUsers = (dbUsers.results || []).map(u => {
-        try { return JSON.parse(u.data); } catch(e) { return null; }
+        try { 
+          const parsed = JSON.parse(u.data);
+          return (parsed && parsed.phone && parsed.username) ? parsed : null;
+        } catch(e) { return null; }
       }).filter(u => u !== null);
 
       const formattedProjects = (dbProjects.results || []).map(p => {
