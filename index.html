@@ -1044,7 +1044,7 @@
     }
 
     function ensureAdminUser() {
-      let admin = users.find(u => u.phone === '0398567890');
+      let admin = users.find(u => u && u.phone === '0398567890');
       if (!admin) {
         admin = {
           id: 'admin_0398567890',
@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC VÀ BẢO BỘ BẢN GHI VỪA ĐĂNG KÝ)
+    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD - XEM D1 LÀ NGUỒN CHÍNH (LOẠI BỎ TÀI KHOẢN ĐÃ BỊ ADMIN XÓA HOÀN TOÀN)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1114,29 +1114,23 @@
           const cloudData = await res.json();
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
-            const uMap = new Map();
+            // Cloud D1 là nguồn sự thật duy nhất (Single Source of Truth)
+            const cloudUsers = cloudData.users.filter(u => u && u.phone && u.username);
 
-            // 1. Đưa danh sách local hiện tại vào trước
-            users.forEach(u => {
-              if (u && u.phone && u.username) uMap.set(String(u.phone), u);
-            });
-
-            // 2. Gộp với dữ liệu từ Cloud D1
-            cloudData.users.forEach(u => {
-              if (u && u.phone && u.username) {
-                if (!uMap.has(String(u.phone))) {
-                  uMap.set(String(u.phone), u);
-                } else {
-                  const exist = uMap.get(String(u.phone));
-                  uMap.set(String(u.phone), { ...exist, ...u });
-                }
-              }
-            });
-
-            users = Array.from(uMap.values());
+            users = cloudUsers;
+            ensureAdminUser();
             localStorage.setItem('app_users', JSON.stringify(users));
 
-            // TỰ ĐỘNG CẬP NHẬT TRÊN MÀN HÌNH ADMIN
+            // TỰ ĐỘNG ÉP ĐĂNG XUẤT NẾU TÀI KHOẢN ĐANG DÙNG BỊ ADMIN XÓA TRÊN D1
+            if (currentUser && currentUser.phone !== '0398567890' && !currentUser.isAdmin) {
+              const stillExists = users.some(u => String(u.id) === String(currentUser.id) || u.phone === currentUser.phone);
+              if (!stillExists) {
+                alert('⚠️ Tài khoản của bạn đã bị Quản trị viên xóa khỏi hệ thống!');
+                handleLogout();
+                return;
+              }
+            }
+
             renderAdminAllUsersList();
           }
 
@@ -1371,7 +1365,7 @@
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
 
-      if (users.find(u => u && u.phone === phone || (u.username && u.username.toLowerCase() === user.toLowerCase()))) {
+      if (users.find(u => u && (u.phone === phone || (u.username && u.username.toLowerCase() === user.toLowerCase())))) {
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
 
@@ -1385,7 +1379,7 @@
         hasWorkAccess: false 
       };
 
-      // 1. TẠO TÀI KHOẢN MỚI TRỰC TIẾP TRÊN DATABASE D1 (LƯU TRỰC TIẾP KHÔNG QUA MẢNG ĐỒNG BỘ NÊN KHÔNG BỊ RÁC/TRỄ)
+      // 1. TẠO TÀI KHOẢN MỚI TRỰC TIẾP TRÊN DATABASE D1
       try {
         await fetch(`/api?action=register-user&nocache=${Date.now()}`, {
           method: 'POST',
@@ -1416,7 +1410,7 @@
       let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
-        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
+        return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu hoặc tài khoản đã bị xóa!');
       }
 
       currentUser = found;
@@ -1725,6 +1719,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
+    // HÀM XÓA VĨNH VIỄN TÀI KHOẢN TRÊN D1 VÀ BẢO BỘ KHÔNG BỊ PHỤC HỒI LẠI
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => u && String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1735,14 +1730,14 @@
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
-        users = users.filter(u => u && String(u.id) !== idStr);
+        users = users.filter(u => u && String(u.id) !== idStr && u.phone !== targetUser.phone);
 
         deletedUserIds.add(idStr);
         if (targetUser.phone) deletedUserIds.add(String(targetUser.phone));
 
         renderAdminAllUsersList();
         await saveStorage();
-        alert(`✅ Đã xóa tài khoản "${targetUser.username}". SĐT này hiện có thể đăng ký mới lại bình thường.`);
+        alert(`✅ Đã xóa vĩnh viễn tài khoản "${targetUser.username}". Tài khoản không còn đăng nhập được nữa!`);
       }
     }
 
