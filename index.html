@@ -976,6 +976,7 @@
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
+    let deletedUserIds = new Set();
 
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
@@ -1100,7 +1101,6 @@
       return false;
     }
 
-    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ CHẾ ĐỘ MERGE CHUẨN XÁC NẠP TOÀN BỘ TÀI KHOẢN MỚI TỪ IPHONE
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1116,12 +1116,10 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Lấy danh sách local trước
             users.forEach(u => {
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            // Gộp tất cả user từ Cloud (Cả tự đăng ký và Admin tạo)
             cloudData.users.forEach(u => {
               if (u && u.phone) {
                 if (!uMap.has(String(u.phone))) {
@@ -1135,6 +1133,7 @@
 
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
+            renderAdminAllUsersList();
           }
 
           if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
@@ -1176,7 +1175,7 @@
       }
     }
 
-    setInterval(fetchCloudData, 2000);
+    setInterval(fetchCloudData, 3000);
     window.addEventListener('focus', fetchCloudData);
 
     function updateProjectTotalsOnly() {
@@ -1342,9 +1341,15 @@
               users, 
               workProjects, 
               transactions, 
-              debts 
+              debts,
+              deletedUserIds: Array.from(deletedUserIds),
+              deletedProjectIds: Array.from(deletedProjectIds),
+              deletedTransIds: Array.from(deletedTransIds)
             })
           });
+          deletedUserIds.clear();
+          deletedProjectIds.clear();
+          deletedTransIds.clear();
         } catch (e) {
           console.log('Lỗi kết nối D1:', e);
         }
@@ -1376,7 +1381,6 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // LƯU VÀ ÉP ĐẨY NGAO TÀI KHOẢN LÊN SERVER CLOUD
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1699,7 +1703,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN HOÀN TOÀN GIÚP SĐT CÓ THỂ ĐĂNG KÝ LẠI NGAY LẬP TỨC
+    // HÀM XÓA TÀI KHOẢN ĐỒNG BỘ LÊN D1 ĐỂ BÀN GIAO SĐT ĐĂNG KÝ LẠI
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1712,6 +1716,10 @@
         
         // Xóa hoàn toàn khỏi danh sách local
         users = users.filter(u => String(u.id) !== idStr);
+
+        // Đưa ID và Phone vào mảng deletedUserIds để gửi lệnh DELETE lên D1
+        deletedUserIds.add(idStr);
+        deletedUserIds.add(String(targetUser.phone));
 
         renderAdminAllUsersList();
         await saveStorage(); // GỬI LỆNH XÓA LÊN SERVER CLOUD NGAY
@@ -1765,7 +1773,6 @@
       });
     }
 
-    // LOGIC CHO MODAL CHỈNH SỬA VỚI CÁC Ô SỐ LƯỢNG HẠNG MỤC
     function openEditTransModal(transId) {
       if (!hasPerm('sua')) return alert('⚠️ Tài khoản của bạn không được cấp quyền SỬA!');
 
