@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD MỖI 3 GIÂY VÀ CẬP NHẬT TRỰC TIẾP LÊN MÀN HÌNH ADMIN
+    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ BẢO BỘ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1113,16 +1113,15 @@
         if (res.ok) {
           const cloudData = await res.json();
 
-          // LƯU DANH SÁCH USER TỪ CLOUD VỀ VÀ BẢO BỘ KHÔNG BỊ TRỄ NHỊP
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Ưu tiên đưa toàn bộ user từ Cloud D1 vào map trước
+            // Ưu tiên đưa toàn bộ tài khoản từ Cloud D1 vào trước
             cloudData.users.forEach(u => {
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            // Gộp với user ở local nếu chưa có trên Cloud
+            // Gộp tài khoản local vừa đăng ký dưới máy nếu chưa kịp lên Cloud
             users.forEach(u => {
               if (u && u.phone && !uMap.has(String(u.phone))) {
                 uMap.set(String(u.phone), u);
@@ -1132,11 +1131,8 @@
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
 
-            // TỰ ĐỘNG CẬP NHẬT DANH SÁCH TÀI KHOẢN TRÊN MÀN HÌNH ADMIN
-            const modal = document.getElementById('settings-modal');
-            if (modal && !modal.classList.contains('hidden')) {
-              renderAdminAllUsersList();
-            }
+            // TỰ ĐỘNG CẬP NHẬT TRÊN MÀN HÌNH ADMIN
+            renderAdminAllUsersList();
           }
 
           if (currentUser) {
@@ -1384,10 +1380,11 @@
         hasWorkAccess: false 
       };
 
+      // THÊM TÀI KHOẢN MỚI VÀO DẢI BỘ NHỚ LẬP TỨC
       users.push(newUser);
       currentUser = newUser;
       
-      // ĐẨY TRỰC TIẾP LÊN SERVER D1 NGAY LẬP TỨC
+      // ĐẨY NGAY LÊN SERVER D1 KHÔNG ĐƯỢC CHỜ LỆNH FETCH
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
