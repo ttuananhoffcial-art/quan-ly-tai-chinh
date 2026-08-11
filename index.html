@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD MỖI 3 GIÂY VÀ CẬP NHẬT TRỰC TIẾP LÊN DĨA VÀ MÀN HÌNH ADMIN
+    // TẢI DỮ LIỆU TÀI KHOẢN TỪ CLOUD MỖI 3 GIÂY VÀ CẬP NHẬT TRỰC TIẾP LÊN MÀN HÌNH ADMIN
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1113,6 +1113,7 @@
         if (res.ok) {
           const cloudData = await res.json();
 
+          // LƯU DANH SÁCH USER TỪ CLOUD VỀ VÀ BẢO BỘ KHÔNG BỊ TRỄ NHỊP
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
@@ -1121,7 +1122,7 @@
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            // Gộp với user ở local nếu có
+            // Gộp với user ở local nếu chưa có trên Cloud
             users.forEach(u => {
               if (u && u.phone && !uMap.has(String(u.phone))) {
                 uMap.set(String(u.phone), u);
@@ -1131,7 +1132,7 @@
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
 
-            // TỰ ĐỘNG LÀM MỚI DANH SÁCH TÀI KHOẢN TRÊN MÀN HÌNH ADMIN MỖI LẦN CÓ TÀI KHOẢN MỚI
+            // TỰ ĐỘNG CẬP NHẬT DANH SÁCH TÀI KHOẢN TRÊN MÀN HÌNH ADMIN
             const modal = document.getElementById('settings-modal');
             if (modal && !modal.classList.contains('hidden')) {
               renderAdminAllUsersList();
@@ -1369,8 +1370,6 @@
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
 
-      await fetchCloudData();
-
       if (users.find(u => u.phone === phone || u.username.toLowerCase() === user.toLowerCase())) {
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
@@ -1388,6 +1387,7 @@
       users.push(newUser);
       currentUser = newUser;
       
+      // ĐẨY TRỰC TIẾP LÊN SERVER D1 NGAY LẬP TỨC
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1565,7 +1565,6 @@
         userBox.classList.add('hidden');
         renderAdminSubAccountBoxes();
         
-        // TẢI MỚI DỮ LIỆU TỪ SERVER KHI BẤM MỞ BẢNG CÀI ĐẶT
         await fetchCloudData();
         renderAdminAllUsersList();
       } else {
