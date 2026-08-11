@@ -16,6 +16,7 @@ export async function onRequest(context) {
   }
 
   try {
+    // KHIỂN DATABASE TỰ ĐỘNG TẠO BẢNG AN TOÀN
     await env.DB.exec(`
       CREATE TABLE IF NOT EXISTS sys_users (id TEXT PRIMARY KEY, phone TEXT, data TEXT);
       CREATE TABLE IF NOT EXISTS work_projects (id TEXT PRIMARY KEY, user_id TEXT, data TEXT);
@@ -23,13 +24,14 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
+    // 1. ĐỒNG BỘ DỮ LIỆU TỪ CÁC THIẾT BỊ LÊN CLOUD D1
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
       const { userId, users, workProjects, transactions, debts, deletedUserIds, deletedProjectIds, deletedTransIds } = body;
 
       const stmts = [];
 
-      // 1. XÓA VĨNH VIỄN TÀI KHOẢN KHỎI DATABASE D1 THEO ID HOẶC SĐT
+      // XÓA TÀI KHOẢN VĨNH VIỄN KHỎI CSDL KHI ADMIN XÓA
       if (deletedUserIds && Array.isArray(deletedUserIds)) {
         for (let delId of deletedUserIds) {
           if (delId) {
@@ -38,7 +40,7 @@ export async function onRequest(context) {
         }
       }
 
-      // 2. XÓA VĨNH VIỄN MÃ CÔNG VIỆC KHỎI D1
+      // XÓA MÃ CÔNG VIỆC KHỎI D1
       if (deletedProjectIds && Array.isArray(deletedProjectIds)) {
         for (let pId of deletedProjectIds) {
           if (pId) {
@@ -47,7 +49,7 @@ export async function onRequest(context) {
         }
       }
 
-      // 3. XÓA VĨNH VIỄN GIAO DỊCH KHỎI D1
+      // XÓA GIAO DỊCH KHỎI D1
       if (deletedTransIds && Array.isArray(deletedTransIds)) {
         for (let tId of deletedTransIds) {
           if (tId) {
@@ -56,7 +58,7 @@ export async function onRequest(context) {
         }
       }
 
-      // 4. LƯU TÀI KHOẢN MỚI / CHỈNH SỬA (LÀM SẠCH BẢN GHI CŨ TRƯỚC KHI INSERT TRÁNH LỖI CONFLICT)
+      // LƯU VÀ CẬP NHẬT TÀI KHOẢN (SỬ DỤNG DELETE + INSERT CHUẨN SQLITE TRÁNH LỖI CONFLICT)
       if (users && Array.isArray(users)) {
         for (let u of users) {
           if (u && u.id && u.phone) {
@@ -68,7 +70,7 @@ export async function onRequest(context) {
         }
       }
 
-      // 5. LƯU CÔNG VIỆC MỚI
+      // LƯU CÔNG VIỆC MỚI
       if (workProjects && Array.isArray(workProjects)) {
         for (let p of workProjects) {
           if (p && p.id) {
@@ -80,7 +82,7 @@ export async function onRequest(context) {
         }
       }
 
-      // 6. LƯU GIAO DỊCH & NỢ
+      // LƯU GIAO DỊCH VÀ NỢ
       if (userId) {
         stmts.push(env.DB.prepare("DELETE FROM transactions WHERE user_id = ?").bind(String(userId)));
         stmts.push(env.DB.prepare("DELETE FROM debts WHERE user_id = ?").bind(String(userId)));
@@ -126,6 +128,7 @@ export async function onRequest(context) {
         }
       }
 
+      // THỰC THI TOÀN BỘ THEO BÁCH BATCH 50 LỆNH
       if (stmts.length > 0) {
         for (let i = 0; i < stmts.length; i += 50) {
           const chunk = stmts.slice(i, i + 50);
@@ -136,6 +139,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
+    // 2. TẢI DỮ LIỆU TỪ SERVER VỀ MÁY
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();

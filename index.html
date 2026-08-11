@@ -1101,11 +1101,11 @@
       return false;
     }
 
+    // TẢI TOÀN BỘ TÀI KHOẢN TỪ CLOUD BẤT KỂ ĐÃ ĐĂNG NHẬP HAY CHƯA
     async function fetchCloudData() {
-      if (!currentUser) return;
-
       try {
-        const res = await fetch(`/api?action=get-data&userId=${currentUser.id}&nocache=${Date.now()}`, {
+        const reqUserId = currentUser ? currentUser.id : 'guest';
+        const res = await fetch(`/api?action=get-data&userId=${reqUserId}&nocache=${Date.now()}`, {
           cache: 'no-store',
           headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
         });
@@ -1116,10 +1116,12 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
+            // Lấy danh sách local trước
             users.forEach(u => {
               if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
+            // Gộp tất cả user từ Cloud về
             cloudData.users.forEach(u => {
               if (u && u.phone) {
                 if (!uMap.has(String(u.phone))) {
@@ -1136,39 +1138,41 @@
             renderAdminAllUsersList();
           }
 
-          if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
-            const pMap = new Map();
-            workProjects.forEach(p => {
-              if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
-            });
-            cloudData.workProjects.forEach(p => {
-              if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
-            });
-            workProjects = Array.from(pMap.values());
-            localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
-          }
+          if (currentUser) {
+            if (cloudData.workProjects && Array.isArray(cloudData.workProjects)) {
+              const pMap = new Map();
+              workProjects.forEach(p => {
+                if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
+              });
+              cloudData.workProjects.forEach(p => {
+                if (!deletedProjectIds.has(String(p.id))) pMap.set(String(p.id), p);
+              });
+              workProjects = Array.from(pMap.values());
+              localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
+            }
 
-          if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
-            const transMap = new Map();
-            transactions.forEach(t => {
-              if (!deletedTransIds.has(String(t.id))) transMap.set(String(t.id), t);
-            });
-            cloudData.transactions.forEach(t => {
-              if (!deletedTransIds.has(String(t.id))) transMap.set(String(t.id), t);
-            });
-            transactions = Array.from(transMap.values());
-            localStorage.setItem('app_transactions', JSON.stringify(transactions));
-          }
+            if (cloudData.transactions && Array.isArray(cloudData.transactions)) {
+              const transMap = new Map();
+              transactions.forEach(t => {
+                if (!deletedTransIds.has(String(t.id))) transMap.set(String(t.id), t);
+              });
+              cloudData.transactions.forEach(t => {
+                if (!deletedTransIds.has(String(t.id))) transMap.set(String(t.id), t);
+              });
+              transactions = Array.from(transMap.values());
+              localStorage.setItem('app_transactions', JSON.stringify(transactions));
+            }
 
-          if (cloudData.debts && Array.isArray(cloudData.debts)) {
-            const debtMap = new Map();
-            debts.forEach(d => debtMap.set(String(d.id), d));
-            cloudData.debts.forEach(d => debtMap.set(String(d.id), d));
-            debts = Array.from(debtMap.values());
-            localStorage.setItem('app_debts', JSON.stringify(debts));
-          }
+            if (cloudData.debts && Array.isArray(cloudData.debts)) {
+              const debtMap = new Map();
+              debts.forEach(d => debtMap.set(String(d.id), d));
+              cloudData.debts.forEach(d => debtMap.set(String(d.id), d));
+              debts = Array.from(debtMap.values());
+              localStorage.setItem('app_debts', JSON.stringify(debts));
+            }
 
-          updateSummaryAndData();
+            updateSummaryAndData();
+          }
         }
       } catch (e) {
         console.log('Sync offline');
@@ -1331,28 +1335,28 @@
       localStorage.setItem('app_debts', JSON.stringify(debts));
       localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
 
-      if (currentUser) {
-        try {
-          await fetch(`/api?action=sync-data&nocache=${Date.now()}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              userId: currentUser.id, 
-              users, 
-              workProjects, 
-              transactions, 
-              debts,
-              deletedUserIds: Array.from(deletedUserIds),
-              deletedProjectIds: Array.from(deletedProjectIds),
-              deletedTransIds: Array.from(deletedTransIds)
-            })
-          });
-          deletedUserIds.clear();
-          deletedProjectIds.clear();
-          deletedTransIds.clear();
-        } catch (e) {
-          console.log('Lỗi kết nối D1:', e);
-        }
+      const syncUserId = currentUser ? currentUser.id : 'guest';
+
+      try {
+        await fetch(`/api?action=sync-data&nocache=${Date.now()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: syncUserId, 
+            users, 
+            workProjects, 
+            transactions, 
+            debts,
+            deletedUserIds: Array.from(deletedUserIds),
+            deletedProjectIds: Array.from(deletedProjectIds),
+            deletedTransIds: Array.from(deletedTransIds)
+          })
+        });
+        deletedUserIds.clear();
+        deletedProjectIds.clear();
+        deletedTransIds.clear();
+      } catch (e) {
+        console.log('Lỗi kết nối D1:', e);
       }
     }
 
@@ -1381,6 +1385,7 @@
       users.push(newUser);
       currentUser = newUser;
       
+      // LƯU ĐỒNG BỘ NGAO DỮ LIỆU ĐĂNG KÝ LÊN SERVER D1
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
