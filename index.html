@@ -973,6 +973,7 @@
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
+    let deletedUserIds = new Set(); // MỚI: CHẶN KHÔI PHÚC TÀI KHOẢN ĐÃ XÓA TỪ SERVER CLOUD
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
 
@@ -1110,8 +1111,12 @@
 
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
-            users.forEach(u => uMap.set(String(u.id), u));
-            cloudData.users.forEach(u => uMap.set(String(u.id), u));
+            users.forEach(u => {
+              if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.id), u);
+            });
+            cloudData.users.forEach(u => {
+              if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.id), u);
+            });
             users = Array.from(uMap.values());
             localStorage.setItem('app_users', JSON.stringify(users));
           }
@@ -1424,7 +1429,7 @@
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
-      // SỬA ĐIỀU KIỆN HIỂN THỊ NÚT TẠO MÃ CÔNG VIỆC: MỞ CẢ KHI CẤP QUYỀN WORK ACCESS
+      // MỞ QUYỀN TẠO MÃ CÔNG VIỆC CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
@@ -1671,16 +1676,23 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    function deleteUserByAdmin(targetUserId) {
+    // HÀM XÓA TÀI KHOẢN ĐÃ CÓ CHẶN KHÔI PHÚC TỪ CLOUD
+    async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => u.id === targetUserId);
       if (!targetUser) return;
       if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
 
       if (confirm(`🗑️ Bạn có chắc muốn xóa tài khoản "${targetUser.username}" không?`)) {
+        const idStr = String(targetUserId);
+        deletedUserIds.add(idStr); // Thêm ID vào danh sách chặn khôi phục
+
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
-        users = users.filter(u => u.id !== targetUserId);
-        saveStorage();
+        
+        users = users.filter(u => String(u.id) !== idStr);
+        localStorage.setItem('app_users', JSON.stringify(users));
+
         renderAdminAllUsersList();
+        await saveStorage(); // Đẩy lệnh xóa trực tiếp lên Cloud
       }
     }
 
@@ -2011,7 +2023,6 @@
     }
 
     function toggleWorkForm(forceState) {
-      // SỬA ĐIỀU KIỆN CHẶN: MỞ QUYỀN TẠO MÃ CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       if (currentUser && currentUser.isSubAccount) {
         return alert('⚠️ Tài khoản phụ không có quyền tạo mã công việc mới!');
       }
