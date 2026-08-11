@@ -1101,7 +1101,7 @@
       return false;
     }
 
-    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC)
+    // TẢI TÀI KHOẢN TỪ CLOUD VỀ VÀ CẬP NHẬT TẢI KHOẢN MỚI TẬP TRUNG TỨC THÌ (LỌC SẠCH DỮ LIỆU RÁC VÀ BẢO BỘ BẢN GHI VỪA ĐĂNG KÝ)
     async function fetchCloudData() {
       try {
         const reqUserId = currentUser ? currentUser.id : 'guest';
@@ -1116,15 +1116,20 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Lấy toàn bộ tài khoản từ Cloud D1 trước (chỉ lấy tài khoản có đủ Tên và SĐT)
-            cloudData.users.forEach(u => {
+            // 1. Đưa danh sách local hiện tại vào trước
+            users.forEach(u => {
               if (u && u.phone && u.username) uMap.set(String(u.phone), u);
             });
 
-            // Gộp với local nếu có tài khoản vừa tạo dưới máy
-            users.forEach(u => {
-              if (u && u.phone && u.username && !uMap.has(String(u.phone))) {
-                uMap.set(String(u.phone), u);
+            // 2. Gộp với dữ liệu từ Cloud D1
+            cloudData.users.forEach(u => {
+              if (u && u.phone && u.username) {
+                if (!uMap.has(String(u.phone))) {
+                  uMap.set(String(u.phone), u);
+                } else {
+                  const exist = uMap.get(String(u.phone));
+                  uMap.set(String(u.phone), { ...exist, ...u });
+                }
               }
             });
 
@@ -1366,7 +1371,7 @@
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
 
-      if (users.find(u => u.phone === phone || u.username.toLowerCase() === user.toLowerCase())) {
+      if (users.find(u => u.phone === phone || (u.username && u.username.toLowerCase() === user.toLowerCase()))) {
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
 
@@ -1380,11 +1385,11 @@
         hasWorkAccess: false 
       };
 
-      // THÊM TÀI KHOẢN MỚI VÀO DẢI BỘ NHỚ LẬP TỨC
+      // 1. LƯU NGAY VÀO BỘ NHỚ TRONG CỦA MÁY ĐĂNG KÝ
       users.push(newUser);
       currentUser = newUser;
       
-      // ĐẨY NGAY LÊN SERVER D1 KHÔNG ĐƯỢC CHỜ LỆNH FETCH
+      // 2. ÉP GỬI NGAY ĐẾN DATABASE D1
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1399,7 +1404,7 @@
 
       await fetchCloudData();
 
-      let found = users.find(u => (u.username.toLowerCase() === acc.toLowerCase() || u.phone === acc) && u.password === pwd);
+      let found = users.find(u => u && ((u.username && u.username.toLowerCase() === acc.toLowerCase()) || u.phone === acc) && u.password === pwd);
       
       if (!found) {
         return alert('⚠️ Sai Tên tài khoản / SĐT hoặc Mật khẩu!');
@@ -1417,7 +1422,7 @@
       const pass = document.getElementById('forgot-pass').value;
       const passConf = document.getElementById('forgot-pass-confirm').value;
 
-      const user = users.find(u => u.phone === phone);
+      const user = users.find(u => u && u.phone === phone);
       if (!user) return alert('⚠️ Số điện thoại này chưa đăng ký tài khoản!');
       if (pass !== passConf) return alert('⚠️ Mật khẩu mới chưa khớp!');
 
@@ -1446,8 +1451,8 @@
 
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('main-screen').classList.remove('hidden');
-      document.getElementById('user-display-name').innerText = currentUser.username;
-      document.getElementById('user-display-phone').innerText = currentUser.phone;
+      document.getElementById('user-display-name').innerText = currentUser.username || '';
+      document.getElementById('user-display-phone').innerText = currentUser.phone || '';
 
       const roleBadge = document.getElementById('user-role-badge');
       if (currentUser.phone === '0398567890' || currentUser.isAdmin) {
@@ -1567,8 +1572,8 @@
       } else {
         adminBox.classList.add('hidden');
         userBox.classList.remove('hidden');
-        document.getElementById('settings-my-user').innerText = currentUser.username;
-        document.getElementById('settings-my-phone').innerText = currentUser.phone;
+        document.getElementById('settings-my-user').innerText = currentUser.username || '';
+        document.getElementById('settings-my-phone').innerText = currentUser.phone || '';
         document.getElementById('settings-my-role').innerText = currentUser.isSubAccount ? 'Tài khoản Phụ (Được gán công việc)' : 'Tài khoản Tự Đăng Ký';
       }
 
@@ -1633,7 +1638,7 @@
         alert(`🎉 Đã cập nhật thành công tài khoản "${username}"!`);
         editingSubAccountId = null;
       } else {
-        if (users.find(u => u.phone === phone)) {
+        if (users.find(u => u && u.phone === phone)) {
           return alert('⚠️ Số điện thoại này đã tồn tại!');
         }
 
@@ -1668,7 +1673,7 @@
     }
 
     function editSubAccount(userId) {
-      const u = users.find(item => item.id === userId);
+      const u = users.find(item => item && item.id === userId);
       if (!u) return;
 
       editingSubAccountId = userId;
@@ -1700,7 +1705,7 @@
     }
 
     function toggleUserWorkAccess(targetUserId) {
-      const targetUser = users.find(u => String(u.id) === String(targetUserId));
+      const targetUser = users.find(u => u && String(u.id) === String(targetUserId));
       if (!targetUser) return;
 
       targetUser.hasWorkAccess = !targetUser.hasWorkAccess;
@@ -1711,8 +1716,9 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
+    // HÀM XÓA TÀI KHOẢN ĐỒNG BỘ LÊN D1 ĐỂ BÀN GIAO SĐT ĐĂNG KÝ LẠI
     async function deleteUserByAdmin(targetUserId) {
-      const targetUser = users.find(u => String(u.id) === String(targetUserId));
+      const targetUser = users.find(u => u && String(u.id) === String(targetUserId));
       if (!targetUser) return;
       if (targetUser.phone === '0398567890') return alert('⚠️ Không thể xóa tài khoản Admin chính!');
 
@@ -1721,10 +1727,10 @@
 
         logAction('Xóa tài khoản', `Xóa tài khoản "${targetUser.username}" (${targetUser.phone}).`);
         
-        users = users.filter(u => String(u.id) !== idStr);
+        users = users.filter(u => u && String(u.id) !== idStr);
 
         deletedUserIds.add(idStr);
-        deletedUserIds.add(String(targetUser.phone));
+        if (targetUser.phone) deletedUserIds.add(String(targetUser.phone));
 
         renderAdminAllUsersList();
         await saveStorage();
@@ -1738,7 +1744,8 @@
       container.innerHTML = '';
 
       users.forEach(u => {
-        if (!u || !u.phone || u.phone === '0398567890') return; // Lọc bỏ bản ghi rác và tài khoản Admin chính
+        // LỌC BỎ BẢN GHI RÁC VÀ TÀI KHOẢN ADMIN CHÍNH HOẶC KHÔNG BẤM NÚT ĐƯỢC
+        if (!u || !u.phone || !u.username || u.phone === '0398567890') return;
 
         let roleText = u.isSubAccount ? 'Tài khoản phụ Admin tạo' : 'Thành viên tự đăng ký';
         let allowWorkChk = u.hasWorkAccess ? 'checked' : '';
@@ -1758,7 +1765,7 @@
         container.innerHTML += `
           <div class="flex flex-wrap justify-between items-center bg-slate-100 p-2.5 rounded-lg border border-slate-300 text-xs font-black gap-2">
             <div>
-              <span class="text-slate-900 font-extrabold">👤 ${u.username || 'Tài khoản'}</span> (${u.phone})
+              <span class="text-slate-900 font-extrabold">👤 ${u.username}</span> (${u.phone})
               <span class="text-[10px] text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded ml-1">${roleText}</span>
               <div class="text-[11px] text-red-600 font-black mt-0.5">🔑 <b>Mật khẩu:</b> ${u.password || 'Chưa có'}</div>
               ${permBadge}
