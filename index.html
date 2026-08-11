@@ -11,6 +11,7 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     .sticky-header { position: sticky; top: 0px; z-index: 20; background-color: #ffffff; padding-top: 6px; padding-bottom: 8px; margin-top: -10px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e1; box-shadow: 0px 4px 10px rgba(0,0,0,0.06); }
     .main-app-title { font-size: clamp(18px, 4vw, 28px); font-weight: 900; color: #0f172a; text-align: center; margin-bottom: 6px; }
+    
     .summary-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; }
     .card-box { border-radius: 10px; padding: 8px 4px; text-align: center; box-shadow: 0px 2px 5px rgba(0,0,0,0.04); cursor: pointer; user-select: none; min-width: 0; }
     .card-income { background-color: #f0fdf4; border: 2px solid #22c55e; }
@@ -548,7 +549,7 @@
             <p class="text-[11px] text-slate-600 font-bold">Bấm nút này để ép gửi tất cả Mã công việc & Tài khoản phụ lên Cloud.</p>
           </div>
           <div class="flex gap-2">
-            <button type="button" onclick="fetchCloudData(); alert('✅ Đã tải lại danh sách tài khoản mới nhất!')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-black shadow">📥 TẢI DỮ LIỆU VỀ</button>
+            <button type="button" onclick="fetchCloudData(); alert('✅ Đã tải lại danh sách tài khoản mới nhất từ Cloud!')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-black shadow">📥 TẢI DỮ LIỆU VỀ</button>
             <button type="button" onclick="forceSyncToCloud()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔄 ĐỒNG BỘ LÊN CLOUD</button>
           </div>
         </div>
@@ -975,7 +976,6 @@
     let openProjectIds = new Set();
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
-    let deletedUserIds = new Set(JSON.parse(localStorage.getItem('app_deleted_users')) || []);
 
     let currentBillMaDonVi = '';
     let currentBillTransId = '';
@@ -1100,7 +1100,7 @@
       return false;
     }
 
-    // HÀM TẢI DỮ LIỆU ĐỒNG BỘ ĐẢM BẢO MERGE TOÀN MẠNG CHUẨN XÁC
+    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ CHẾ ĐỘ MERGE CHUẨN XÁC NẠP TOÀN BỘ TÀI KHOẢN MỚI TỪ IPHONE
     async function fetchCloudData() {
       if (!currentUser) return;
 
@@ -1116,14 +1116,14 @@
           if (cloudData.users && Array.isArray(cloudData.users)) {
             const uMap = new Map();
 
-            // Đưa tất cả user dưới máy vào trước (Theo key Số Điện Thoại để ghép chuẩn)
+            // Lấy danh sách local trước
             users.forEach(u => {
-              if (!deletedUserIds.has(String(u.id))) uMap.set(String(u.phone), u);
+              if (u && u.phone) uMap.set(String(u.phone), u);
             });
 
-            // Gộp thêm user từ Cloud về
+            // Gộp tất cả user từ Cloud (Cả tự đăng ký và Admin tạo)
             cloudData.users.forEach(u => {
-              if (!deletedUserIds.has(String(u.id))) {
+              if (u && u.phone) {
                 if (!uMap.has(String(u.phone))) {
                   uMap.set(String(u.phone), u);
                 } else {
@@ -1331,7 +1331,6 @@
       localStorage.setItem('app_transactions', JSON.stringify(transactions));
       localStorage.setItem('app_debts', JSON.stringify(debts));
       localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
-      localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
 
       if (currentUser) {
         try {
@@ -1343,8 +1342,7 @@
               users, 
               workProjects, 
               transactions, 
-              debts,
-              isGlobalUserSync: true // THÊM CỜ ĐẶC BIỆT ÉP SERVER CLOUD LƯU BẢNG USERS
+              debts 
             })
           });
         } catch (e) {
@@ -1378,7 +1376,7 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // LƯU DƯỚI MÁY VÀ ĐẨY NGAO LÊN SERVER CLOUD
+      // LƯU VÀ ÉP ĐẨY NGAO TÀI KHOẢN LÊN SERVER CLOUD
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1701,7 +1699,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
-    // HÀM XÓA TÀI KHOẢN CHO PHÉP ĐĂNG KÝ LẠI
+    // HÀM XÓA TÀI KHOẢN HOÀN TOÀN GIÚP SĐT CÓ THỂ ĐĂNG KÝ LẠI NGAY LẬP TỨC
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
@@ -1715,12 +1713,8 @@
         // Xóa hoàn toàn khỏi danh sách local
         users = users.filter(u => String(u.id) !== idStr);
 
-        // Cho phép SĐT này đăng ký mới lại
-        deletedUserIds.delete(idStr);
-        localStorage.setItem('app_deleted_users', JSON.stringify(Array.from(deletedUserIds)));
-
         renderAdminAllUsersList();
-        await saveStorage(); // Đẩy lệnh xóa lên Server Cloud ngay
+        await saveStorage(); // GỬI LỆNH XÓA LÊN SERVER CLOUD NGAY
         alert(`✅ Đã xóa tài khoản "${targetUser.username}". SĐT này hiện có thể đăng ký mới lại bình thường.`);
       }
     }
