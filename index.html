@@ -1368,6 +1368,10 @@
       const passConf = document.getElementById('reg-pass-confirm').value;
 
       if (pass !== passConf) return alert('⚠️ Mật khẩu xác nhận không trùng khớp!');
+
+      // KÉO DỮ LIỆU TỪ SERVER VỀ TRƯỚC ĐỂ KIỂM TRA SĐT ĐÃ TỒN TẠI CHƯA
+      await fetchCloudData();
+
       if (users.find(u => u.phone === phone || u.username.toLowerCase() === user.toLowerCase())) {
         return alert('⚠️ Số điện thoại hoặc Tên tài khoản đã tồn tại!');
       }
