@@ -1029,7 +1029,7 @@
         filteredLogs = auditLogs.filter(log => {
           if (!log) return false;
 
-          // 1. Thao tác do chính tài khoản này thực hiện (khớp userId hoặc phone chuẩn)
+          // 1. Thao tác do chính tài khoản này thực hiện
           const isMyAction = (log.userId && String(log.userId) === String(currentUser.id)) || 
                              (log.user && currentUser.phone && log.user.includes(`(${currentUser.phone})`));
 
@@ -1255,12 +1255,11 @@
 
       let myProjects = [];
       if (isUserAdmin) {
-        myProjects = workProjects; // Admin thấy tất cả các Mã Công Việc
+        myProjects = workProjects;
       } else if (isSub) {
         const allowed = currentUser.allowedProjects || [];
         myProjects = workProjects.filter(p => allowed.includes(p.id));
       } else {
-        // Tài khoản tự đăng ký thấy các công việc do chính mình tạo ra
         myProjects = workProjects.filter(p => String(p.userId) === String(currentUser.id));
       }
 
@@ -1268,7 +1267,7 @@
       let myDebts = debts.filter(d => String(d.userId) === String(currentUser.id));
 
       if (isUserAdmin) {
-        myTrans = transactions; // Admin thấy tất cả giao dịch
+        myTrans = transactions;
       } else if (isSub) {
         const allowedProjIds = currentUser.allowedProjects || [];
         myTrans = transactions.filter(t => {
@@ -1279,7 +1278,6 @@
           return String(t.userId) === String(currentUser.id);
         });
       } else {
-        // Tài khoản tự đăng ký: thấy giao dịch cá nhân CỘNG VỚI giao dịch thuộc Mã Công Việc do chính mình tạo
         const myProjIds = myProjects.map(p => String(p.id));
         myTrans = transactions.filter(t => {
           if (getTransScope(t) === 'Công việc') {
@@ -1382,7 +1380,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: syncUserId, 
-            // CHỈ MÁY ADMIN MỚI ĐƯỢC PHÉP ĐẨY MẢNG USERS LÊN SERVER TRÁNH CÁC MÁY KHÁC ĐẨY LẠI TÀI KHOẢN CŨ ĐÃ XÓA
             users: isUserAdmin ? users : undefined, 
             workProjects, 
             transactions, 
@@ -1417,7 +1414,6 @@
         hasWorkAccess: false 
       };
 
-      // 1. TẠO TÀI KHOẢN MỚI TRỰC TIẾP TRÊN DATABASE D1
       try {
         await fetch(`/api?action=register-user&nocache=${Date.now()}`, {
           method: 'POST',
@@ -1513,7 +1509,6 @@
 
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
-        // Nút tạo mã công việc hiện khi: là Admin CHẶẶC là tài khoản tự đăng ký ĐƯỢC CẤP QUYỀN CÔNG VIỆC RIÊNG
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
         createWorkBtnWrapper.classList.toggle('hidden', !canCreateWork);
       }
@@ -2003,6 +1998,7 @@
       alert('✅ Đã cập nhật xong giao dịch! Lịch sử chỉnh sửa đã được lưu lại.');
     }
 
+    // HÀM XÓA GIAO DỊCH TỨC THÌ TRÊN CẢ SERVER D1 VÀ LOCALSTORAGE
     async function deleteTransaction(transId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
@@ -2012,6 +2008,18 @@
         const idStr = String(transId);
         deletedTransIds.add(idStr);
 
+        // 1. Gọi API xóa trực tiếp vĩnh viễn trên Server D1
+        try {
+          await fetch(`/api?action=delete-trans&nocache=${Date.now()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetId: idStr })
+          });
+        } catch(e) {
+          console.log('Lỗi xóa API trans:', e);
+        }
+
+        // 2. Loại bỏ khỏi mảng local
         transactions = transactions.filter(t => String(t.id) !== idStr);
         localStorage.setItem('app_transactions', JSON.stringify(transactions));
         
@@ -2022,6 +2030,7 @@
 
         updateSummaryAndData();
         await saveStorage();
+        await fetchCloudData();
       }
     }
 
@@ -2279,15 +2288,28 @@
       document.getElementById('work-create-form-box').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // HÀM XÓA MÃ CÔNG VIỆC TỨC THÌ TRÊN CẢ SERVER D1 VÀ LOCALSTORAGE
     async function deleteWorkProject(projId) {
       if (!hasPerm('xoa')) return alert('⚠️ Tài khoản của bạn không được cấp quyền XÓA!');
 
       const proj = workProjects.find(p => String(p.id) === String(projId));
 
-      if (confirm('🗑️ Bạn có chắc muốn xóa mã công việc này không?')) {
+      if (confirm('🗑️ Bạn có chắc muốn xóa vĩnh viễn mã công việc này không?')) {
         const idStr = String(projId);
         deletedProjectIds.add(idStr);
 
+        // 1. Gọi API xóa trực tiếp vĩnh viễn trên Server D1 ngay lập tức
+        try {
+          await fetch(`/api?action=delete-project&nocache=${Date.now()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetId: idStr })
+          });
+        } catch(e) {
+          console.log('Lỗi xóa API project:', e);
+        }
+
+        // 2. Loại bỏ khỏi mảng local
         workProjects = workProjects.filter(p => String(p.id) !== idStr);
         localStorage.setItem('app_work_projects', JSON.stringify(workProjects));
 
@@ -2297,6 +2319,8 @@
 
         renderWorkProjectsList();
         await saveStorage();
+        await fetchCloudData();
+        alert(`✅ Đã xóa vĩnh viễn mã công việc "${proj ? proj.name : ''}".`);
       }
     }
 

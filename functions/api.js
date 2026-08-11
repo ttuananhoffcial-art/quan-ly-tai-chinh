@@ -24,7 +24,7 @@ export async function onRequest(context) {
       CREATE TABLE IF NOT EXISTS debts (id TEXT PRIMARY KEY, user_id TEXT, person_name TEXT, debt_type TEXT, amount REAL, status TEXT, date TEXT);
     `);
 
-    // A. XỬ LÝ XÓA TÀI KHOẢN TỨC THÌ TRÊN D1 (NGẮN CHẶN BỊ HỒI SINH)
+    // A. XÓA TÀI KHOẢN TỨC THÌ TRÊN D1
     if (request.method === "POST" && action === "delete-user") {
       const body = await request.json();
       const { targetId, targetPhone } = body;
@@ -39,7 +39,27 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // B. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI TRỰC TIẾP
+    // B. XÓA MÃ CÔNG VIỆC TỨC THÌ TRÊN D1
+    if (request.method === "POST" && action === "delete-project") {
+      const body = await request.json();
+      const { targetId } = body;
+      if (targetId) {
+        await env.DB.prepare("DELETE FROM work_projects WHERE id = ?").bind(String(targetId)).run();
+      }
+      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    }
+
+    // C. XÓA GIAO DỊCH TỨC THÌ TRÊN D1
+    if (request.method === "POST" && action === "delete-trans") {
+      const body = await request.json();
+      const { targetId } = body;
+      if (targetId) {
+        await env.DB.prepare("DELETE FROM transactions WHERE id = ?").bind(String(targetId)).run();
+      }
+      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    }
+
+    // D. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI TRỰC TIẾP
     if (request.method === "POST" && action === "register-user") {
       const body = await request.json();
       const { user } = body;
@@ -52,12 +72,21 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ error: "Invalid user data" }), { status: 400, headers: corsHeaders });
     }
 
-    // C. ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG LÊN SERVER
+    // E. ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG LÊN SERVER
     if (request.method === "POST" && action === "sync-data") {
       const body = await request.json();
-      const { userId, users, workProjects, transactions, debts, deletedProjectIds, deletedTransIds } = body;
+      const { userId, users, workProjects, transactions, debts, deletedUserIds, deletedProjectIds, deletedTransIds } = body;
 
       const stmts = [];
+
+      // Xóa tất cả các mục nằm trong mảng xóa
+      if (deletedUserIds && Array.isArray(deletedUserIds)) {
+        for (let delId of deletedUserIds) {
+          if (delId) {
+            stmts.push(env.DB.prepare("DELETE FROM sys_users WHERE id = ? OR phone = ?").bind(String(delId), String(delId)));
+          }
+        }
+      }
 
       if (deletedProjectIds && Array.isArray(deletedProjectIds)) {
         for (let pId of deletedProjectIds) {
@@ -75,7 +104,7 @@ export async function onRequest(context) {
         }
       }
 
-      // CHỈ CẬP NHẬT TÀI KHOẢN KHI ĐƯỢC TRUYỀN TỪ MÁY ADMIN
+      // Chỉ cập nhật tài khoản khi được truyền từ máy Admin
       if (users && Array.isArray(users)) {
         for (let u of users) {
           if (u && u.id && u.phone && u.username) {
@@ -89,7 +118,7 @@ export async function onRequest(context) {
 
       if (workProjects && Array.isArray(workProjects)) {
         for (let p of workProjects) {
-          if (p && p.id) {
+          if (p && p.id && (!deletedProjectIds || !deletedProjectIds.includes(String(p.id)))) {
             stmts.push(env.DB.prepare("DELETE FROM work_projects WHERE id = ?").bind(String(p.id)));
             stmts.push(
               env.DB.prepare("INSERT INTO work_projects (id, user_id, data) VALUES (?, ?, ?)").bind(String(p.id), String(p.userId || userId || ''), JSON.stringify(p))
@@ -104,7 +133,7 @@ export async function onRequest(context) {
 
         if (transactions && Array.isArray(transactions)) {
           for (let t of transactions) {
-            if (t && t.id) {
+            if (t && t.id && (!deletedTransIds || !deletedTransIds.includes(String(t.id)))) {
               stmts.push(
                 env.DB.prepare(
                   "INSERT INTO transactions (id, user_id, type, category, amount, note, date) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -153,7 +182,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
     }
 
-    // D. TẢI DỮ LIỆU TỪ SERVER VỀ
+    // F. TẢI DỮ LIỆU TỪ SERVER VỀ
     if (request.method === "GET" && action === "get-data") {
       const trans = await env.DB.prepare("SELECT * FROM transactions").all();
       const debts = await env.DB.prepare("SELECT * FROM debts").all();
