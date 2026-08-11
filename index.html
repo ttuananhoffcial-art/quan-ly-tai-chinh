@@ -132,18 +132,21 @@
 
   <!-- MAN HINH APPLICATION CHINH -->
   <div id="main-screen" class="hidden max-w-5xl mx-auto space-y-4">
-    <!-- USER BAR -->
+    <!-- USER BAR (NÚT LỊCH SỬ THAO TÁC NẰM GIỮA CÀI ĐẶT VÀ ĐĂNG XUẤT) -->
     <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-300 text-sm font-black">
       <div>
         👤 <b>Tài khoản:</b> <span id="user-display-name" class="text-blue-700"></span> 
         <span id="user-role-badge" class="ml-1 text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded border border-amber-300 font-bold"></span> | 
         📞 <b>SĐT:</b> <span id="user-display-phone" class="text-slate-700"></span>
       </div>
-      <div class="flex items-center gap-2">
-        <button type="button" onclick="openSettingsModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 rounded-lg text-xs font-black transition">
+      <div class="flex items-center gap-1.5">
+        <button type="button" onclick="openSettingsModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1 rounded-lg text-xs font-black transition">
           ⚙️ Cài Đặt
         </button>
-        <button type="button" onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-black transition">
+        <button type="button" onclick="switchTab('tab-audit-logs')" id="btn-tab-audit-logs" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg text-xs font-black transition">
+          📜 Lịch Sử Thao Tác
+        </button>
+        <button type="button" onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-lg text-xs font-black transition">
           🚪 Đăng Xuất
         </button>
       </div>
@@ -203,7 +206,6 @@
       <button type="button" onclick="switchTab('tab-debts')" id="btn-tab-debts" class="st-radio-btn">🤝 Quản Lý Nợ</button>
       <button type="button" onclick="switchTab('tab-bill')" id="btn-tab-bill" class="st-radio-btn">🍕 Chia Bill</button>
       <button type="button" onclick="switchTab('tab-reports')" id="btn-tab-reports" class="st-radio-btn">📊 Báo Cáo Chi Tiết</button>
-      <button type="button" onclick="switchTab('tab-audit-logs')" id="btn-tab-audit-logs" class="st-radio-btn bg-amber-50 border-amber-400 text-amber-900">📜 Lịch Sử Thao Tác</button>
     </div>
 
     <hr class="border-slate-300 my-2" />
@@ -504,9 +506,9 @@
       </div>
     </div>
 
-    <!-- TAB 6: LỊCH SỬ THAO TÁC & CHỈNH SỬA CHI TIẾT (ĐÃ BỎ NÚT XÓA) -->
+    <!-- TAB 6: LỊCH SỬ THAO TÁC & CHỈNH SỬA CHI TIẾT -->
     <div id="tab-audit-logs" class="hidden space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
+      <div class="border-b pb-2">
         <h3 class="font-black text-lg text-slate-900">📜 Nhật Ký Tất Cả Thao Tác & Chỉnh Sửa Hệ Thống</h3>
       </div>
 
