@@ -1364,7 +1364,7 @@
       users.push(newUser);
       currentUser = newUser;
       
-      // ĐẨY NGAY DỮ LIỆU ĐĂNG KÝ LÊN CLOUD VÀ LƯU LOCALSTORAGE
+      // ĐẨY NGAO DỮ LIỆU ĐĂNG KÝ LÊN CLOUD VÀ LƯU LOCALSTORAGE
       await saveStorage();
 
       logAction('Đăng ký tài khoản', `Tài khoản "${user}" (${phone}) đăng ký mới.`);
@@ -1438,6 +1438,7 @@
         stickySummary.classList.toggle('hidden', !!currentUser.isSubAccount);
       }
 
+      // MỞ QUYỀN TẠO MÃ CÔNG VIỆC CHO CẢ TÀI KHOẢN TỰ ĐĂNG KÝ KHI ĐƯỢC CẤP
       const createWorkBtnWrapper = document.getElementById('create-work-btn-wrapper');
       if (createWorkBtnWrapper) {
         const canCreateWork = (currentUser.phone === '0398567890' || currentUser.isAdmin || (!currentUser.isSubAccount && currentUser.hasWorkAccess));
@@ -1684,6 +1685,7 @@
       alert(`✅ Đã ${targetUser.hasWorkAccess ? 'CẤP QUYỀN' : 'TẮT QUYỀN'} sử dụng Công Việc riêng cho tài khoản "${targetUser.username}"!`);
     }
 
+    // HÀM XÓA TÀI KHOẢN ĐÃ CÓ CHẶN KHÔI PHÚC TỪ CLOUD
     async function deleteUserByAdmin(targetUserId) {
       const targetUser = users.find(u => String(u.id) === String(targetUserId));
       if (!targetUser) return;
