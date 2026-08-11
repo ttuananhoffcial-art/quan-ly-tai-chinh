@@ -977,7 +977,7 @@
     let deletedTransIds = new Set();
     let deletedProjectIds = new Set();
     
-    // BỘ NHỚ CHẶN XÓA TÀI KHOẢN DƯỚI LOCAL
+    // LƯU CỐ ĐỊNH DANH SÁCH USER ĐÃ XÓA VÀO LOCALSTORAGE
     let deletedUserIds = new Set(JSON.parse(localStorage.getItem('app_deleted_users')) || []);
 
     let currentBillMaDonVi = '';
@@ -1103,7 +1103,6 @@
       return false;
     }
 
-    // HÀM TẢI DỮ LIỆU TỪ CLOUD CÓ BỔ SUNG MERGE KHÔNG TRÙNG LẮP LÊN TỚI BẢNG TÀI KHOẢN
     async function fetchCloudData() {
       if (!currentUser) return;
 
